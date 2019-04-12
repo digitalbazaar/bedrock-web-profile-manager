@@ -1,0 +1,29 @@
+{
+  "name": "bedrock-web-profile-manager",
+  "version": "0.0.1-0",
+  "description": "Profile management for Bedrock Web Apps",
+  "main": "index.js",
+  "scripts": {
+    "generate-readme": "jsdoc2md -t template.hbs *.js > README.md"
+  },
+  "dependencies": {
+    "bedrock-web-data-hub": "^1.0.0",
+    "bedrock-web-did-store": "digitalbazaar/bedrock-web-did-store#initial",
+    "bedrock-web-store": "^1.1.1",
+    "uuid-random": "^1.0.7"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/digitalbazaar/bedrock-web-profile-manager"
+  },
+  "bedrock": {
+    "browserDependencies": "all"
+  },
+  "devDependencies": {
+    "eslint": "^5.15.3",
+    "eslint-config-digitalbazaar": "^2.0.0",
+    "eslint-plugin-jsdoc": "^4.6.0",
+    "jsdoc": "^3.5.5",
+    "jsdoc-to-markdown": "^4.0.1"
+  }
+}
