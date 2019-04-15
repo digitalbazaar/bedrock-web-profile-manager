@@ -9,7 +9,11 @@
   "dependencies": {
     "bedrock-web-data-hub": "^1.0.0",
     "bedrock-web-did-store": "digitalbazaar/bedrock-web-did-store#initial",
-    "bedrock-web-store": "^1.1.1",
+    "bedrock-web-kms": "digitalbazaar/bedrock-web-kms#master",
+    "bedrock-web-session": "^1.2.0",
+    "bedrock-web-store": "^1.2.0",
+    "crypto-ld": "^3.4.0",
+    "did-veres-one": "veres-one/did-veres-one#fix-browser-support",
     "uuid-random": "^1.0.7"
   },
   "repository": {
