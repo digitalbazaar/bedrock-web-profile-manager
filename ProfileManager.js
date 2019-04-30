@@ -86,7 +86,7 @@ export default class ProfileManager {
     return dataHub;
   }
 
-  async createProfile({type, name}) {
+  async createProfile({type, ...rest}) {
     // generate a DID for the profile
     const {did, keyPair} = await generateDid();
 
@@ -108,9 +108,9 @@ export default class ProfileManager {
     const doc = {
       id: uuid(),
       content: {
+        ...rest,
         id: did,
         type: profileType,
-        name,
         dataHub: profileDataHub.config.id
       }
     };
