@@ -7,7 +7,7 @@ import {ControllerKey} from 'web-kms-client';
 import {DataHub, DataHubService} from 'bedrock-web-data-hub';
 import uuid from 'uuid-random';
 import DataHubCache from './DataHubCache.js';
-import {generateDid, storeDidDocument} from './did.js';
+import {generateInvokeKey, generateDidDoc, storeDidDocument} from './did.js';
 
 export default class ProfileManager {
   /**
@@ -94,8 +94,11 @@ export default class ProfileManager {
   }
 
   async createProfile({type, content}) {
-    // generate a DID for the profile
-    const {did, keyPair} = await generateDid();
+    const keyType = 'Ed25519VerificationKey2018';
+    // generate an invocation key and a DID Document for the profile
+    const invokeKey = await generateInvokeKey(keyType);
+    const didDocument = await generateDidDoc({invokeKey, keyType});
+    const {did} = didDocument;
 
     // TODO: support making the profile data hub controlled by the profile
     // instead
@@ -125,7 +128,7 @@ export default class ProfileManager {
 
     // cache the profile data hub and store the unregistered DID document in it
     await this.dataHubCache.set(`profile.${did}`, profileDataHub);
-    await storeDidDocument({dataHub: profileDataHub, keyPair});
+    await storeDidDocument({dataHub: profileDataHub, didDocument});
 
     return doc;
   }

@@ -5,34 +5,21 @@
 
 import {Store as DidStore} from 'bedrock-web-did-store';
 import {LDKeyPair} from 'crypto-ld';
-import didv1 from 'did-veres-one';
+import v1 from 'did-veres-one';
 
-const {VeresOneDidDoc} = didv1;
+const veresDriver = v1.driver({mode: 'test'});
 
-export async function generateDid() {
+export async function generateInvokeKey(keyType) {
   // TODO: add support for key generation via bedrock-web-kms
-  const keyType = 'Ed25519VerificationKey2018';
-  const keyPair = await LDKeyPair.generate({type: keyType});
-  const v1DidDoc = new VeresOneDidDoc();
-  return {
-    did: v1DidDoc.generateId({keyPair, didType: 'nym', mode: 'test'}),
-    keyPair
-  };
+  return LDKeyPair.generate({type: keyType});
 }
 
-export async function storeDidDocument({dataHub, keyPair}) {
+export async function generateDidDoc({invokeKey, keyType}) {
+  return veresDriver.generate({keyType, invokeKey});
+}
+
+export async function storeDidDocument({dataHub, didDocument}) {
   const didStore = new DidStore({dataHub});
-  // don't store private keys with the DID Document (use KMS instead)
-  const keyStore = {
-    get: () => {},
-    put: () => {}
-  };
-  // currently there is no usage of the meta store in did-veres-one
-  const metaStore = {
-    get: () => {},
-    put: () => {}
-  };
-  const invokeKey = keyPair;
-  const v1 = didv1.veres({mode: 'test', keyStore, didStore, metaStore});
-  return v1.generate({invokeKey});
+
+  // DID store will not store private keys, use KMS instead
 }

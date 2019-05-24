@@ -12,7 +12,7 @@
     "bedrock-web-session": "^1.2.0",
     "bedrock-web-store": "^1.2.0",
     "crypto-ld": "^3.4.0",
-    "did-veres-one": "veres-one/did-veres-one#fix-browser-support",
+    "did-veres-one": "veres-one/did-veres-one#did-io-driver",
     "uuid-random": "^1.0.7",
     "web-kms-client": "digitalbazaar/web-kms-client#initial"
   },
