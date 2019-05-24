@@ -9,7 +9,7 @@ import {ControllerKey, KmsClient} from 'web-kms-client';
 import {DataHubClient} from 'secure-data-hub-client';
 import jsigs from 'jsonld-signatures';
 import DataHubClientCache from './DataHubClientCache.js';
-import {generateDid, storeDidDocument} from './did.js';
+import {generateInvokeKey, generateDidDoc, storeDidDocument} from './did.js';
 
 const {SECURITY_CONTEXT_V2_URL, sign, suites} = jsigs;
 const {Ed25519Signature2018} = suites;
@@ -103,8 +103,11 @@ export default class ProfileManager {
   }
 
   async createProfile({type, content}) {
-    // generate a DID for the profile
-    const {did, keyPair} = await generateDid();
+    const keyType = 'Ed25519VerificationKey2018';
+    // generate an invocation key and a DID Document for the profile
+    const invokeKey = await generateInvokeKey(keyType);
+    const didDocument = await generateDidDoc({invokeKey, keyType});
+    const {did} = didDocument;
 
     // TODO: support making the profile data hub controlled by the profile
     // instead
@@ -135,8 +138,9 @@ export default class ProfileManager {
 
     // cache the profile data hub and store the unregistered DID document in it
     await this.dataHubCache.set(`profile.${did}`, profileDataHub);
-    await storeDidDocument(
-      {dataHub: profileDataHub, keyPair, invocationSigner});
+    await storeDidDocument({dataHub: profileDataHub, didDocument});
+    // need to store the rest of the did doc's private keys in a KMS
+    // need to register the did doc with ledger?
 
     return doc;
   }
