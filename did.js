@@ -21,6 +21,6 @@ export async function generateDidDoc({invokeKey, keyType}) {
 export async function storeDidDocument({dataHub, didDocument}) {
   const didStore = new DidStore({hub: dataHub});
 
-  // DID store will not store private keys, use KMS instead
+  // FIXME: DID store will not store private keys, use KMS instead
   return didStore.insert({doc: didDocument, meta: {}});
 }

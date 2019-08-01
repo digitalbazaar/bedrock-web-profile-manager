@@ -139,8 +139,8 @@ export default class ProfileManager {
     // cache the profile data hub and store the unregistered DID document in it
     await this.dataHubCache.set(`profile.${did}`, profileDataHub);
     await storeDidDocument({dataHub: profileDataHub, didDocument});
-    // need to store the rest of the did doc's private keys in a KMS
-    // need to register the did doc with ledger?
+    // FIXME: need to store the rest of the did doc's private keys in a KMS
+    // FIXME: need to register the did doc with ledger?
 
     return doc;
   }
