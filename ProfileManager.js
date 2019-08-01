@@ -9,7 +9,7 @@ import {ControllerKey, KmsClient} from 'web-kms-client';
 import {DataHubClient} from 'secure-data-hub-client';
 import jsigs from 'jsonld-signatures';
 import DataHubClientCache from './DataHubClientCache.js';
-import {generateInvokeKey, generateDidDoc, storeDidDocument} from './did.js';
+import {generateKey, generateDidDoc, storeDidDocument} from './did.js';
 
 const {SECURITY_CONTEXT_V2_URL, sign, suites} = jsigs;
 const {Ed25519Signature2018} = suites;
@@ -105,7 +105,7 @@ export default class ProfileManager {
   async createProfile({type, content}) {
     const keyType = 'Ed25519VerificationKey2018';
     // generate an invocation key and a DID Document for the profile
-    const invokeKey = await generateInvokeKey(keyType);
+    const invokeKey = await generateKey(keyType);
     const didDocument = await generateDidDoc({invokeKey, keyType});
     const {did} = didDocument;
 
