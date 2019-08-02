@@ -13,8 +13,7 @@ export async function generateDidDoc({invokeKey, keyType}) {
 }
 
 export async function storeDidDocument({dataHub, didDoc, invocationSigner}) {
-
   const didStore = new DidStore({hub: dataHub, invocationSigner});
-
-  return didStore.put({doc: didDoc, meta: {}});
+  const {doc, meta} = didDoc;
+  return didStore.put({doc, meta});
 }

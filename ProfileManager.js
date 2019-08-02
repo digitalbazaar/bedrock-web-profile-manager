@@ -109,7 +109,7 @@ export default class ProfileManager {
     // FIXME: add support for key generation via web-kms-client
     const invokeKey = await LDKeyPair.generate({type: keyType});
     const didDoc = await generateDidDoc({invokeKey, keyType});
-    const {did} = didDoc;
+    const {id: did} = didDoc;
 
     // TODO: support making the profile data hub controlled by the profile
     // instead
