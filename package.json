@@ -17,7 +17,7 @@
     "did-veres-one": "^10.0.1",
     "edv-client": "^2.0.0",
     "fast-json-patch": "^2.2.1",
-    "jsonld-signatures": "^4.5.1",
+    "jsonld-signatures": "^5.0.0",
     "ocapld": "^1.4.0",
     "webkms-client": "^1.0.0"
   },
