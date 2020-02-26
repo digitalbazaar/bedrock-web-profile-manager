@@ -315,7 +315,7 @@ export default class ProfileManager {
       // enable zcap via edv client
       await edvClient.enableCapability(
         {capabilityToEnable: zcap, invocationSigner: signer});
-    } else if(targetType === 'urn:edv:authorizations') {
+    } else if(targetType === 'urn:edv:revocations') {
       zcap.invocationTarget = {
         id: target,
         type: targetType
@@ -324,10 +324,10 @@ export default class ProfileManager {
       if(target) {
         // TODO: handle case where an existing target is requested
       } else {
-        zcap.invocationTarget.id = `${edvClient.id}/authorizations`;
+        zcap.invocationTarget.id = `${edvClient.id}/revocations`;
       }
       if(!parentCapability) {
-        parentCapability = `${edvClient.id}/zcaps/authorizations`;
+        parentCapability = `${edvClient.id}/zcaps/revocations`;
       }
       zcap.parentCapability = parentCapability;
       zcap = await _delegate({zcap, signer});
@@ -335,7 +335,7 @@ export default class ProfileManager {
       // enable zcap via edv client
       await edvClient.enableCapability(
         {capabilityToEnable: zcap, invocationSigner: signer});
-    } else if(targetType === 'urn:webkms:authorizations') {
+    } else if(targetType === 'urn:webkms:revocations') {
       zcap.invocationTarget = {
         id: target,
         type: targetType
@@ -345,10 +345,10 @@ export default class ProfileManager {
       if(target) {
         // TODO: handle case where an existing target is requested
       } else {
-        zcap.invocationTarget.id = `${keystore}/authorizations`;
+        zcap.invocationTarget.id = `${keystore}/revocations`;
       }
       if(!parentCapability) {
-        parentCapability = `${keystore}/zcaps/authorizations`;
+        parentCapability = `${keystore}/zcaps/revocations`;
       }
       zcap.parentCapability = parentCapability;
       zcap = await _delegate({zcap, signer});
