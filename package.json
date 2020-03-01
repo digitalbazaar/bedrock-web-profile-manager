@@ -10,15 +10,16 @@
     "axios": "^0.19.0",
     "base64url-universal": "^1.1.0",
     "bedrock-web-account": "^1.0.0",
+    "bedrock-web-profile": "digitalbazaar/bedrock-web-profile#initial",
     "bedrock-web-session": "^1.2.0",
     "bedrock-web-store": "^1.2.0",
     "crypto-ld": "^3.7.0",
     "did-veres-one": "^10.1.0",
-    "edv-client": "^2.0.0",
+    "edv-client": "^2.4.1",
     "fast-json-patch": "^2.2.1",
-    "jsonld-signatures": "^5.0.0",
+    "jsonld-signatures": "^5.0.1",
     "ocapld": "^1.8.0",
-    "webkms-client": "^2.0.1"
+    "webkms-client": "digitalbazaar/webkms-client#master"
   },
   "repository": {
     "type": "git",

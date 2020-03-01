@@ -5,14 +5,20 @@
 
 import axios from 'axios';
 import {AccountService} from 'bedrock-web-account';
+import {ProfileService} from 'bedrock-web-profile';
 import jsonpatch from 'fast-json-patch';
 import {CapabilityDelegation} from 'ocapld';
-import {CapabilityAgent, KeystoreAgent, KmsClient} from 'webkms-client';
+import {
+  AsymmetricKey,
+  CapabilityAgent,
+  KeystoreAgent,
+  KmsClient
+} from 'webkms-client';
 import {EdvClient} from 'edv-client';
 import jsigs from 'jsonld-signatures';
 import EdvClientCache from './EdvClientCache.js';
-import {generateDidDoc} from './did.js';
-import {LDKeyPair} from 'crypto-ld';
+import edvs from './edvs';
+import utils from './utils';
 
 const {SECURITY_CONTEXT_V2_URL, sign, suites} = jsigs;
 const {Ed25519Signature2018} = suites;
@@ -42,6 +48,7 @@ export default class ProfileManager {
     if(typeof kmsBaseUrl !== 'string') {
       throw new TypeError('"kmsBaseUrl" must be a string.');
     }
+    this._profileService = new ProfileService();
     this.session = null;
     this.accountId = null;
     this.capabilityAgent = null;
@@ -75,118 +82,214 @@ export default class ProfileManager {
     // emulate initial session change event
     await this._sessionChanged({newData: session.data});
   }
-
-  async getAccountEdv() {
-    return this.edvClientCache.get('primary');
-  }
-
-  async getProfileEdv({profileId}) {
-    const id = `profile.${profileId}`;
-    let edvClient = await this.edvClientCache.get(id);
-    if(edvClient) {
-      return edvClient;
-    }
-
-    const accountEdv = await this.getAccountEdv();
-    const {capabilityAgent} = this;
-    const invocationSigner = capabilityAgent.getSigner();
-    const [doc] = await accountEdv.find({
-      equals: {'content.id': profileId},
-      invocationSigner
+  async createProfileEdv({profileId, referenceId}) {
+    const {profileAgent} = await this._profileService.getAgentByProfile({
+      account: this.accountId,
+      profile: profileId
     });
-    if(!doc) {
-      // no such profile stored with the given account
-      return null;
-    }
-
-    // FIXME: use separate keystore agent for profile, currently same keystore
-    // is shared across profiles as a *temporary* measure
-
-    // get the profile edv
-    const {content: profile} = doc;
-    const config = await EdvClient.getConfig({id: profile.edv});
-    const [keyAgreementKey, hmac] = await Promise.all([
-      this.keystoreAgent.getKeyAgreementKey(
-        {id: config.keyAgreementKey.id, type: config.keyAgreementKey.type}),
-      this.keystoreAgent.getHmac({id: config.hmac.id, type: config.hmac.type})
+    const {invocationSigner, kmsClient} = await this.getProfileSigner({
+      profileId,
+      profileAgentId: profileAgent.id
+    });
+    const edv = await edvs.create({
+      invocationSigner,
+      kmsClient,
+      kmsModule: this.kmsModule,
+      profileId,
+      referenceId
+    });
+    const delegateEdvConfigurationRequest = {
+      referenceId: `${referenceId}-edv-configuration`,
+      allowedAction: ['read', 'write'],
+      controller: profileAgent.id,
+      invocationTarget: {
+        id: `${edv.id}/documents`,
+        type: 'urn:edv:documents'
+      }
+    };
+    const delegateEdvHmacRequest = {
+      referenceId: `${referenceId}-hmac`,
+      allowedAction: 'sign',
+      controller: profileAgent.id,
+      invocationTarget: {
+        id: edv.hmac.id,
+        type: edv.hmac.type,
+        verificationMethod: edv.hmac.id
+      }
+    };
+    const delegateEdvKakRequest = {
+      referenceId: `${referenceId}-kak`,
+      allowedAction: ['deriveSecret', 'sign'],
+      controller: profileAgent.id,
+      invocationTarget: {
+        id: edv.keyAgreementKey.id,
+        type: edv.keyAgreementKey.type,
+        verificationMethod: edv.keyAgreementKey.id
+      }
+    };
+    const edvZcaps = await Promise.all([
+      utils.delegateCapability({
+        edvClient: edv,
+        signer: invocationSigner,
+        request: delegateEdvConfigurationRequest
+      }),
+      utils.delegateCapability({
+        signer: invocationSigner,
+        request: delegateEdvHmacRequest
+      }),
+      utils.delegateCapability({
+        signer: invocationSigner,
+        request: delegateEdvKakRequest
+      })
     ]);
-    edvClient = new EdvClient(
-      {id: config.id, keyResolver, keyAgreementKey, hmac});
-    await this.edvClientCache.set(id, edvClient);
-    return edvClient;
+    return {
+      edv,
+      edvConfigZcap: edvZcaps[0],
+      invocationSigner,
+      zcaps: edvZcaps,
+      profileAgentId: profileAgent.id
+
+    };
   }
 
-  async createProfile({type, content}) {
-    const keyType = 'Ed25519VerificationKey2018';
-    // generate an invocation key and a DID Document for the profile
-    // FIXME: add support for key generation via webkms-client, invoke key
-    // is currently discarded
-    const invokeKey = await LDKeyPair.generate({type: keyType});
-    const didDoc = await generateDidDoc({invokeKey, keyType});
-    const {id: did} = didDoc;
+  async getProfileEdv({profileId, referenceId}) {
+    const {profileAgent} = await this._profileService.getAgentByProfile({
+      account: this.accountId,
+      profile: profileId
+    });
+    const {zcaps} = await this._profileService.delegateAgentCapabilities({
+      account: this.accountId,
+      id: this.capabilityAgent.id,
+      profileAgentId: profileAgent.id
+    });
+    // TODO: Investigate using a map instead of a list to stop O(n) lookups
+    const [edvConfigZcap] = zcaps.filter(zcap => {
+      return zcap.referenceId === `${referenceId}-edv-configuration`;
+    });
+    const [edvHmacZcap] = zcaps.filter(zcap => {
+      return zcap.referenceId === `${referenceId}-hmac`;
+    });
+    const {kmsClient, invocationSigner} = await this.getProfileSigner({
+      profileId,
+      profileAgentId: profileAgent.id
+    });
+    const keystoreId = _getKeystoreId({zcap: edvHmacZcap});
+    const keystore = await KmsClient.getKeystore({id: keystoreId});
+    const capabilityAgent = new CapabilityAgent(
+      {handle: 'primary', signer: invocationSigner});
+    const keystoreAgent = new KeystoreAgent(
+      {keystore, capabilityAgent, kmsClient});
+    const edv = await edvs.get({
+      keystoreAgent,
+      profileId,
+      referenceId
+    });
+    return {
+      edv,
+      edvConfigZcap,
+      invocationSigner,
+      zcaps,
+      profileAgentId: profileAgent.id
+    };
+  }
 
-    // TODO: support making the profile edv controlled by the profile
-    // instead
-
-    // get primary edv and create an account controlled edv for
-    // the new profile
-    const [accountEdv, profileEdv] = await Promise.all([
-      this.getAccountEdv(),
-      this._createEdv()
-    ]);
-
-    // insert a profile document into the primary edv
+  async createProfile(
+    {type, content, settingsReferenceId, edvReferenceIds = []} = {}) {
+    if(!settingsReferenceId) {
+      settingsReferenceId = edvs.getReferenceId('settings');
+    }
     let profileType = 'Profile';
     if(type) {
       profileType = [profileType, type];
     }
-    const doc = {
-      content: {
-        ...content,
-        id: did,
-        type: profileType,
-        // TODO: might need this to be the specific document -- or a zcap
-        edv: profileEdv.id
-      }
-    };
-    const invocationSigner = this.capabilityAgent.getSigner();
-    await accountEdv.insert({doc, invocationSigner});
-
-    // cache the profile edv
-    await this.edvClientCache.set(`profile.${did}`, profileEdv);
-
-    return doc;
+    const {id} = await this._profileService.create({account: this.accountId});
+    const referenceIds = [...edvReferenceIds, settingsReferenceId];
+    const promises = referenceIds.map(async referenceId => {
+      return this.createProfileEdv({
+        profileId: id,
+        referenceId
+      });
+    });
+    // TODO: Use proper promise-fun library to limit concurrency
+    const results = await Promise.all(promises);
+    const {profileAgentId} = results[0];
+    const newZcaps = [];
+    results.forEach(({zcaps}) => newZcaps.push(...zcaps));
+    const {zcaps} = await this._profileService.getAgentCapabilitySet({
+      account: this.accountId,
+      profileAgentId
+    });
+    await this._profileService.updateAgentCapabilitySet({
+      account: this.accountId,
+      profileAgentId,
+      zcaps: zcaps.concat(newZcaps)
+    });
+    const {
+      edv: profileSettingsEdv,
+      invocationSigner
+    } = results.pop();
+    profileSettingsEdv.ensureIndex({attribute: 'content.id'});
+    profileSettingsEdv.ensureIndex({attribute: 'content.type'});
+    const res = await profileSettingsEdv.insert({
+      doc: {
+        id: await EdvClient.generateId(),
+        content: {
+          ...content,
+          type: profileType,
+          id
+        }
+      },
+      invocationSigner,
+      keyResolver
+    });
+    return res.content;
   }
 
   // TODO: implement adding an existing profile to an account
-
   async getProfile({profileId}) {
-    const edvClient = await this.getAccountEdv();
-    if(!edvClient) {
-      return null;
-    }
-    const invocationSigner = this.capabilityAgent.getSigner();
-    const [doc = null] = await edvClient.find({
+    const settingsReferenceId = edvs.getReferenceId('settings');
+    const {
+      edv: settingsEdv,
+      invocationSigner
+    } = await this.getProfileEdv({
+      profileId,
+      referenceId: settingsReferenceId
+    });
+    const [settingsDoc] = await settingsEdv.find({
       equals: {'content.id': profileId},
       invocationSigner
     });
-    return doc;
+    return settingsDoc.content;
   }
 
   async getProfiles({type} = {}) {
-    const edvClient = await this.getAccountEdv();
-    if(!edvClient) {
-      return [];
-    }
-    const invocationSigner = this.capabilityAgent.getSigner();
-    const profileDocs = await edvClient.find({
-      equals: {'content.type': 'Profile'},
-      invocationSigner
+    const profileAgentRecords = await this._profileService.getAllAgents({
+      account: this.accountId,
     });
+    const promises = profileAgentRecords.map(async ({profileAgent}) => {
+      return this.getProfile({profileId: profileAgent.profile});
+    });
+    // TODO: Use proper promise-fun library to limit concurrency
+    const profiles = await Promise.all(promises);
     if(!type) {
-      return profileDocs;
+      return profiles;
     }
-    return profileDocs.filter(({content}) => content.type.includes(type));
+    return profiles.filter(profile => profile.type.includes(type));
+  }
+
+  async getProfileSigner({profileId, profileAgentId}) {
+    const zcap = await this._getProfileInvocationKeyZcap({
+      profileId,
+      profileAgentId
+    });
+    const keystore = _getKeystoreId({zcap});
+    const kmsClient = new KmsClient({keystore});
+    const invocationSigner = new AsymmetricKey({
+      capability: zcap,
+      invocationSigner: this.capabilityAgent.getSigner(),
+      kmsClient
+    });
+    return {invocationSigner, kmsClient};
   }
 
   async delegateCapability({profileId, request}) {
@@ -359,6 +462,24 @@ export default class ProfileManager {
       throw new Error(`Unsupported invocation target type "${targetType}".`);
     }
     return zcap;
+  }
+
+  async _getProfileInvocationKeyZcap({profileId, profileAgentId}) {
+    const {zcaps} = await this._profileService.delegateAgentCapabilities({
+      account: this.accountId,
+      id: this.capabilityAgent.id,
+      profileAgentId
+    });
+    const [profileInvocationKeyZcap] = zcaps.filter(({referenceId}) => {
+      const capabilityInvokeKeyReference = '-key-capabilityInvocation';
+      return referenceId.includes(profileId) &&
+      referenceId.includes(capabilityInvokeKeyReference);
+    });
+    if(!profileInvocationKeyZcap) {
+      throw new Error(`Unable find the profile invocation key zcap` +
+        ` for "${profileId}"`);
+    }
+    return profileInvocationKeyZcap;
   }
 
   async _sessionChanged({authentication, newData}) {
@@ -585,6 +706,32 @@ async function _delegate({zcap, signer}) {
     }),
     compactProof: false
   });
+}
+
+function _getKeystoreId({zcap}) {
+  const {invocationTarget} = zcap;
+  if(!invocationTarget) {
+    throw new Error('"invocationTarget" not found on zCap.', zcap);
+  }
+  if(typeof invocationTarget === 'string') {
+    return _deriveKeystoreId(invocationTarget);
+  }
+  if(invocationTarget.id && typeof invocationTarget.id === 'string') {
+    return _deriveKeystoreId(invocationTarget.id);
+  }
+  throw new Error('"invocationTarget" does not contain a proper id.', zcap);
+}
+
+function _deriveKeystoreId(id) {
+  const urlObj = new URL(id);
+  const paths = urlObj.pathname.split('/');
+  return urlObj.origin +
+    '/' +
+    paths[1] + // "kms"
+    '/' +
+    paths[2] + // "keystores"
+    '/' +
+    paths[3]; // "<keystore_id>"
 }
 
 // FIXME: make more restrictive, support `did:key` and `did:v1`
