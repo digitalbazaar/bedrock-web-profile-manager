@@ -39,14 +39,12 @@ export async function create(
   if(referenceId) {
     config.referenceId = referenceId;
   }
-  const headers = {host: window.location.host};
-  config = await EdvClient.createEdv({config, invocationSigner, headers});
+  config = await EdvClient.createEdv({config, invocationSigner});
   return new EdvClient({
     id: config.id,
     keyResolver,
     keyAgreementKey,
     hmac,
-    defaultHeaders: headers
   });
 }
 
@@ -72,13 +70,11 @@ export async function get(
       type: config.hmac.type
     })
   ]);
-  const defaultHeaders = {host: window.location.host};
   return new EdvClient({
     id: config.id,
     keyResolver,
     keyAgreementKey,
     hmac,
-    defaultHeaders
   });
 }
 
