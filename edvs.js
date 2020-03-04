@@ -51,9 +51,10 @@ export async function create(
 }
 
 export async function get(
-  {keystoreAgent, referenceId, profileId} = {}) {
+  {invocationSigner, keystoreAgent, referenceId, profileId} = {}) {
   const config = await EdvClient.findConfig({
     controller: profileId,
+    invocationSigner,
     referenceId
   });
   if(config === null) {

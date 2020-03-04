@@ -180,6 +180,7 @@ export default class ProfileManager {
     const keystoreAgent = new KeystoreAgent(
       {keystore, capabilityAgent, kmsClient});
     const edv = await edvs.get({
+      invocationSigner,
       keystoreAgent,
       profileId,
       referenceId
