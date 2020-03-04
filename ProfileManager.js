@@ -513,13 +513,6 @@ export default class ProfileManager {
       this.capabilityAgent = await CapabilityAgent.fromSecret(
         {secret, handle: accountId});
     }
-
-    // ensure primary keystore exists for capability agent
-    await this._ensureKeystore({accountId});
-
-    // ensure the account's primary edv exists and cache it
-    const edvClient = await this._ensureEdv();
-    await this.edvClientCache.set('primary', edvClient);
   }
 
   async _createEdv({referenceId} = {}) {
