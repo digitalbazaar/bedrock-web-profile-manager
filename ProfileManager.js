@@ -16,6 +16,7 @@ import {
 } from 'webkms-client';
 import {EdvClient} from 'edv-client';
 import jsigs from 'jsonld-signatures';
+import uuid from 'uuid-random';
 import EdvClientCache from './EdvClientCache.js';
 import edvs from './edvs';
 import utils from './utils';
@@ -195,18 +196,44 @@ export default class ProfileManager {
       profileAgentId: profileAgent.id
     };
   }
-
+  async createAgent({profileId, accountId}) {
+    return this._profileService.createAgent({
+      account: accountId,
+      profile: profileId
+    });
+  }
+  async getAgentByProfile({profileId}) {
+    return this._profileService.getAgentByProfile({
+      profile: profileId,
+      account: this.accountId
+    });
+  }
   async createProfile(
-    {type, content, settingsReferenceId, edvReferenceIds = []} = {}) {
+    {type, content, settingsReferenceId, usersReferenceId,
+      credentialsReferenceId} = {}) {
     if(!settingsReferenceId) {
       settingsReferenceId = edvs.getReferenceId('settings');
+    }
+    if(!usersReferenceId) {
+      usersReferenceId = edvs.getReferenceId('users');
+    }
+    // FIXME: Creation of credentials edv should be done outside of this
+    //        function. When updating the capability set in parallel for a
+    //        profile agent concurrently/"too fast" - all updates do not get
+    //        applied
+    if(!credentialsReferenceId) {
+      credentialsReferenceId = edvs.getReferenceId('credentials');
     }
     let profileType = 'Profile';
     if(type) {
       profileType = [profileType, type];
     }
     const {id} = await this._profileService.create({account: this.accountId});
-    const referenceIds = [...edvReferenceIds, settingsReferenceId];
+    const referenceIds = [
+      usersReferenceId,
+      credentialsReferenceId,
+      settingsReferenceId
+    ];
     const promises = referenceIds.map(async referenceId => {
       return this.createProfileEdv({
         profileId: id,
@@ -215,7 +242,14 @@ export default class ProfileManager {
     });
     // TODO: Use proper promise-fun library to limit concurrency
     const results = await Promise.all(promises);
-    const {profileAgentId} = results[0];
+    const settings = results[results.length - 1];
+    const {
+      edv: profileSettingsEdv,
+      invocationSigner,
+      profileAgentId
+    } = settings;
+    // update profile agent capability set with newly created zCaps to access
+    // the users EDV and settings EDV
     const newZcaps = [];
     results.forEach(({zcaps}) => newZcaps.push(...zcaps));
     const {zcaps} = await this._profileService.getAgentCapabilitySet({
@@ -227,10 +261,19 @@ export default class ProfileManager {
       profileAgentId,
       zcaps: zcaps.concat(newZcaps)
     });
-    const {
-      edv: profileSettingsEdv,
-      invocationSigner
-    } = results.pop();
+    // TODO: Enable adding newly created agent as
+    // add current profile agent to the users edv
+    // const userContent = {
+    //   name: settings.name,
+    //   email: settings.email, // TODO: Get email
+    //   profileAgent: profileAgentId
+    // };
+    // await this.createUser({
+    //   profileId: id,
+    //   usersReferenceId,
+    //   content: userContent
+    // });
+    // create the settings for the profile
     profileSettingsEdv.ensureIndex({attribute: 'content.id'});
     profileSettingsEdv.ensureIndex({attribute: 'content.type'});
     const res = await profileSettingsEdv.insert({
@@ -245,12 +288,14 @@ export default class ProfileManager {
       invocationSigner,
       keyResolver
     });
-    return res.content;
+    return {...res.content, profileAgent: profileAgentId};
   }
 
   // TODO: implement adding an existing profile to an account
-  async getProfile({profileId}) {
-    const settingsReferenceId = edvs.getReferenceId('settings');
+  async getProfile({profileId, settingsReferenceId} = {}) {
+    if(!settingsReferenceId) {
+      settingsReferenceId = edvs.getReferenceId('settings');
+    }
     const {
       edv: settingsEdv,
       invocationSigner
@@ -293,6 +338,50 @@ export default class ProfileManager {
       kmsClient
     });
     return {invocationSigner, kmsClient};
+  }
+
+  async createUser({profileId, usersReferenceId, content}) {
+    if(!usersReferenceId) {
+      usersReferenceId = edvs.getReferenceId('users');
+    }
+    const userDoc = {
+      id: await EdvClient.generateId(),
+      content: {
+        ...content,
+        id: uuid(),
+        type: 'User',
+        authorizedDate: (new Date()).toISOString()
+      }
+    };
+    const {edv: profileUsersEdv, invocationSigner} = await this.getProfileEdv({
+      profileId,
+      referenceId: usersReferenceId
+    });
+    profileUsersEdv.ensureIndex({attribute: 'content.id'});
+    profileUsersEdv.ensureIndex({attribute: 'content.type'});
+    profileUsersEdv.ensureIndex({attribute: 'content.name'});
+    profileUsersEdv.ensureIndex({attribute: 'content.email'});
+    profileUsersEdv.ensureIndex({attribute: 'content.profileAgent'});
+    await profileUsersEdv.insert({
+      doc: userDoc,
+      invocationSigner,
+      keyResolver
+    });
+  }
+
+  async getUsers({profileId, usersReferenceId}) {
+    if(!usersReferenceId) {
+      usersReferenceId = edvs.getReferenceId('users');
+    }
+    const {edv: profileUsersEdv, invocationSigner} = await this.getProfileEdv({
+      profileId,
+      referenceId: usersReferenceId
+    });
+    const results = await profileUsersEdv.find({
+      equals: {'content.type': 'User'},
+      invocationSigner
+    });
+    return results.map(({content}) => content);
   }
 
   async delegateCapability({profileId, request}) {
@@ -466,7 +555,24 @@ export default class ProfileManager {
     }
     return zcap;
   }
-
+  async delegateAgentCapabilities({to, profileAgentId}) {
+    return this._profileService.delegateAgentCapabilities({
+      account: this.accountId,
+      id: to,
+      profileAgentId
+    });
+  }
+  async updateAgentCapabilitySet({profileAgentId, zcaps}) {
+    const capabilitySet = await this._profileService.getAgentCapabilitySet({
+      account: this.accountId,
+      profileAgentId
+    });
+    await this._profileService.updateAgentCapabilitySet({
+      account: this.accountId,
+      profileAgentId,
+      zcaps: capabilitySet.zcaps.concat(zcaps)
+    });
+  }
   async _getProfileInvocationKeyZcap({profileId, profileAgentId}) {
     const {zcaps} = await this._profileService.delegateAgentCapabilities({
       account: this.accountId,

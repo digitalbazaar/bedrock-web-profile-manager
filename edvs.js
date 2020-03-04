@@ -14,7 +14,6 @@ import kms from './kms';
  */
 export async function create(
   {invocationSigner, kmsClient, referenceId, profileId, kmsModule} = {}) {
-  console.log({invocationSigner, kmsClient, referenceId, profileId, kmsModule});
   const [keyAgreementKey, hmac] = await Promise.all([
     kms.generateKey({
       invocationSigner,
