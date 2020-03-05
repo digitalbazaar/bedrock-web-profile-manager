@@ -82,6 +82,8 @@ export default class ProfileManager {
     // emulate initial session change event
     await this._sessionChanged({newData: session.data});
   }
+
+  // TODO: add docs
   async createProfileEdv({profileId, referenceId}) {
     const {profileAgent} = await this._profileService.getAgentByProfile({
       account: this.accountId,
