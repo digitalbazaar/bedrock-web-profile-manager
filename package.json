@@ -10,7 +10,7 @@
     "axios": "^0.19.0",
     "base64url-universal": "^1.1.0",
     "bedrock-web-account": "^1.0.0",
-    "bedrock-web-profile": "digitalbazaar/bedrock-web-profile#enable-user-management",
+    "bedrock-web-profile": "digitalbazaar/bedrock-web-profile",
     "bedrock-web-session": "^1.2.0",
     "bedrock-web-store": "^1.2.0",
     "crypto-ld": "^3.7.0",
@@ -25,9 +25,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/digitalbazaar/bedrock-web-profile-manager"
-  },
-  "bedrock": {
-    "browserDependencies": "all"
   },
   "devDependencies": {
     "eslint": "^5.15.3",
