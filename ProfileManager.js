@@ -355,6 +355,7 @@ export default class ProfileManager {
     return {invocationSigner, kmsClient};
   }
 
+  // FIXME: split functions up into separate files/services
   async createUser({profileId, usersReferenceId, content}) {
     if(!usersReferenceId) {
       usersReferenceId = edvs.getReferenceId('users');
