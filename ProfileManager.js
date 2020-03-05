@@ -918,7 +918,7 @@ async function _delegate({zcap, signer}) {
 function _getKeystoreId({zcap}) {
   const {invocationTarget} = zcap;
   if(!invocationTarget) {
-    throw new Error('"invocationTarget" not found on zCap.', zcap);
+    throw new Error('"invocationTarget" not found on zCap.');
   }
   if(typeof invocationTarget === 'string') {
     return _deriveKeystoreId(invocationTarget);
@@ -926,7 +926,7 @@ function _getKeystoreId({zcap}) {
   if(invocationTarget.id && typeof invocationTarget.id === 'string') {
     return _deriveKeystoreId(invocationTarget.id);
   }
-  throw new Error('"invocationTarget" does not contain a proper id.', zcap);
+  throw new Error('"invocationTarget" does not contain a proper id.');
 }
 
 function _deriveKeystoreId(id) {
