@@ -34,12 +34,18 @@ describe('Profile Manager API', () => {
       try {
         result = await profileManager.createProfile({
           type: 'Person',
-          content: {name, color: '#000000'}
+          content: {name: 'Mike Smith', color: '#000000'}
         });
       } catch(e) {
         error = e;
       }
       should.not.exist(error);
+      should.exist(result);
+      result.should.have.property('name');
+      result.should.have.property('color');
+      result.should.have.property('type');
+      result.should.have.property('id');
+      result.should.have.property('profileAgentId');
     });
   });
 });
