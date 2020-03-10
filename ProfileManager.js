@@ -227,9 +227,13 @@ export default class ProfileManager {
       account: this.accountId
     });
   }
-  async createProfile(
-    {type, content, settingsReferenceId, usersReferenceId,
-      credentialsReferenceId} = {}) {
+  async createProfile({
+    type, content, settingsReferenceId, usersReferenceId,
+    credentialsReferenceId, capabilitySetReferenceId
+  } = {}) {
+    if(!settingsReferenceId) {
+      capabilitySetReferenceId = edvs.getReferenceId('capability-set');
+    }
     if(!settingsReferenceId) {
       settingsReferenceId = edvs.getReferenceId('settings');
     }
@@ -248,10 +252,19 @@ export default class ProfileManager {
       profileType = [profileType, type];
     }
     const {id} = await this._profileService.create({account: this.accountId});
+
+    const capabilitySetEdv = await this.createProfileEdv({
+      profileId: id,
+      referenceId: capabilitySetReferenceId,
+    });
+
+    console.log('SETTINGS', JSON.stringify(capabilitySetEdv, null, 2));
+
     const referenceIds = [
       usersReferenceId,
       credentialsReferenceId,
-      settingsReferenceId
+      // settings must be the last item in this array
+      settingsReferenceId,
     ];
     const promises = referenceIds.map(async referenceId => {
       return this.createProfileEdv({
@@ -270,6 +283,13 @@ export default class ProfileManager {
     // update profile agent capability set with newly created zCaps to access
     // the users EDV and settings EDV
     const newZcaps = [];
+    // console.log('SETTINGS', JSON.stringify(settings, null, 2));
+
+    // CAPABILITES TO THE CAPABILITYSET NEED TO BE STORED IN THE PROFILE
+    // AGENT
+    // THEN ALL THE OTHER CAPABILITIES NEED TO GO INTO THE CAPABILITY SET
+    // EDV
+
     results.forEach(({zcaps}) => newZcaps.push(...zcaps));
     const {zcaps} = await this._profileService.getAgentCapabilitySet({
       account: this.accountId,
