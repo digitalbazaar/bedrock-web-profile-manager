@@ -37,17 +37,22 @@ export default class ProfileManager {
    * @param {string} options.kmsModule - The KMS module to use to generate keys.
    * @param {string} options.kmsBaseUrl - The base URL for the KMS service,
    *   used to generate keys.
+   * @param {string} options.edvBaseUrl - The base URL for the EDV service,
+   *   used to store documents.
    * @param {string} options.recoveryHost - The recovery host application to
    *   use for keystore configs.
    *
    * @returns {ProfileManager} - The new instance.
    */
-  constructor({kmsModule, kmsBaseUrl, recoveryHost}) {
+  constructor({edvBaseUrl, kmsModule, kmsBaseUrl, recoveryHost} = {}) {
     if(typeof kmsModule !== 'string') {
       throw new TypeError('"kmsModule" must be a string.');
     }
     if(typeof kmsBaseUrl !== 'string') {
       throw new TypeError('"kmsBaseUrl" must be a string.');
+    }
+    if(typeof edvBaseUrl !== 'string') {
+      throw new TypeError('"edvBaseUrl" must be a string.');
     }
     this._profileService = new ProfileService();
     this.session = null;
@@ -56,6 +61,7 @@ export default class ProfileManager {
     this.edvClientCache = new EdvClientCache();
     this.keystoreAgent = null;
     this.kmsModule = kmsModule;
+    this.edvBaseUrl = edvBaseUrl;
     this.kmsBaseUrl = kmsBaseUrl;
     if(recoveryHost) {
       this.recoveryHost = recoveryHost.startsWith('https://') ?
@@ -99,7 +105,8 @@ export default class ProfileManager {
       kmsClient,
       kmsModule: this.kmsModule,
       profileId,
-      referenceId
+      referenceId,
+      edvBaseUrl: this.edvBaseUrl,
     });
     const delegateEdvConfigurationRequest = {
       referenceId: `${referenceId}-edv-configuration`,

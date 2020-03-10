@@ -14,13 +14,16 @@ require('bedrock-edv-storage');
 
 const brPassport = require('bedrock-passport');
 // const mockData = require('./web/mock-data');
-// brPassport.optionallyAuthenticated = (req, res, next) => {
-//   req.user = {
-//     account: {},
-//     actor: mockData.actors.alpha
-//   };
-//   next();
-// };
+brPassport.optionallyAuthenticated = (req, res, next) => {
+  req.user = {
+    account: {
+      id: 'urn:uuid:ffaf5d84-7dc2-4f7b-9825-cc8d2e5a5d06',
+    },
+    actor: {},
+    // actor: mockData.actors.alpha
+  };
+  next();
+};
 
 require('bedrock-test');
 require('bedrock-karma');

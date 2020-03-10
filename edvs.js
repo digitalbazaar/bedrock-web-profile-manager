@@ -12,8 +12,9 @@ import kms from './kms';
  *
  * @returns {Promise<EdvClient>} Resolves to a EdvClient.
  */
-export async function create(
-  {invocationSigner, kmsClient, referenceId, profileId, kmsModule} = {}) {
+export async function create({
+  invocationSigner, kmsClient, referenceId, profileId, kmsModule, edvBaseUrl
+} = {}) {
   const [keyAgreementKey, hmac] = await Promise.all([
     kms.generateKey({
       invocationSigner,
@@ -38,7 +39,8 @@ export async function create(
   if(referenceId) {
     config.referenceId = referenceId;
   }
-  config = await EdvClient.createEdv({config, invocationSigner});
+  config = await EdvClient.createEdv(
+    {config, invocationSigner, url: edvBaseUrl});
   return new EdvClient({
     id: config.id,
     keyResolver,
