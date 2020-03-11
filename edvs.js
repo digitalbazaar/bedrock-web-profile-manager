@@ -58,8 +58,7 @@ export async function get(
   });
   if(config === null) {
     throw new Error(
-      `Unable to find edv config with reference id: "${referenceId}".`,
-      'NotFoundError');
+      `Unable to find edv config with reference id: "${referenceId}".`);
   }
   const [keyAgreementKey, hmac] = await Promise.all([
     keystoreAgent.getKeyAgreementKey({
