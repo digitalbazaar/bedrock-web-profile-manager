@@ -294,6 +294,7 @@ export default class ProfileManager {
       profileAgentId: profileAgent.id
     };
   }
+
   async createAgent({profileId, accountId}) {
     return this._profileService.createAgent({
       account: accountId,
@@ -306,18 +307,21 @@ export default class ProfileManager {
       account: this.accountId
     });
   }
+
   async getAgent({id}) {
     return this._profileService.getAgent({
       id,
       account: this.accountId
     });
   }
+
   async deleteAgent({id}) {
     return this._profileService.deleteAgent({
       id,
       account: this.accountId
     });
   }
+
   async createProfile({
     type, content, settingsReferenceId, usersReferenceId,
     credentialsReferenceId, capabilitySetReferenceId
@@ -521,6 +525,7 @@ export default class ProfileManager {
     });
     return userDoc.content;
   }
+
   async updateUser({profileId, usersReferenceId, content}) {
     if(!usersReferenceId) {
       usersReferenceId = edvs.getReferenceId('users');
@@ -551,6 +556,7 @@ export default class ProfileManager {
     });
     return updatedUserDoc.content;
   }
+
   async getUser({profileId, userId, usersReferenceId} = {}) {
     if(!usersReferenceId) {
       usersReferenceId = edvs.getReferenceId('users');
@@ -573,6 +579,7 @@ export default class ProfileManager {
     });
     return userDoc.content;
   }
+
   async getUsers({profileId, usersReferenceId}) {
     if(!usersReferenceId) {
       usersReferenceId = edvs.getReferenceId('users');
@@ -592,6 +599,7 @@ export default class ProfileManager {
     });
     return results.map(({content}) => content);
   }
+
   async deleteUser({profileId, userId, usersReferenceId} = {}) {
     if(!usersReferenceId) {
       usersReferenceId = edvs.getReferenceId('users');
@@ -617,6 +625,7 @@ export default class ProfileManager {
       invocationSigner
     });
   }
+
   async delegateCapability({profileId, request}) {
     const {
       invocationTarget, invoker, delegator, referenceId, allowedAction, caveat
@@ -788,6 +797,7 @@ export default class ProfileManager {
     }
     return zcap;
   }
+
   async delegateAgentCapabilities({to, profileAgentId}) {
     return this._profileService.delegateAgentCapabilities({
       account: this.accountId,
@@ -795,6 +805,7 @@ export default class ProfileManager {
       profileAgentId
     });
   }
+
   async updateAgentCapabilitySet({profileAgentId, zcaps}) {
     return this._profileService.updateAgentCapabilitySet({
       account: this.accountId,
@@ -802,6 +813,7 @@ export default class ProfileManager {
       zcaps
     });
   }
+
   async deleteAgentCapabilitySet({profileAgentId}) {
     return this._profileService.deleteAgentCapabilitySet({
       account: this.accountId,
