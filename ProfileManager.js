@@ -835,12 +835,6 @@ export default class ProfileManager {
       profileAgentId
     });
   }
-  async getAgentCapabilitySet({profileAgentId}) {
-    return this._profileService.getAgentCapabilitySet({
-      account: this.accountId,
-      profileAgentId
-    });
-  }
   async updateAgentCapabilitySet({profileAgentId, zcaps}) {
     return this._profileService.updateAgentCapabilitySet({
       account: this.accountId,
