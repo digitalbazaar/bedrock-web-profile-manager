@@ -284,13 +284,13 @@ export default class ProfileManager {
       account: this.accountId,
       profile: profileId
     });
+
+    // FIXME: zcap is not used, is this call required?
     const {zcap} = await this._profileService.delegateAgentCapabilities({
       account: this.accountId,
       invoker: this.capabilityAgent.id,
       profileAgentId: profileAgent.id
     });
-
-    console.log('YYYYYYYYYYYYY', JSON.stringify(zcap, null, 2));
 
     // FIXME: `zcaps` are coming out of the capabilitySet EDV which is
     // read deep in the call stack. Need to clean this up.
@@ -410,10 +410,6 @@ export default class ProfileManager {
       profile: profileId
     });
 
-    console.log(
-      'profileCapabilityInvocationKey',
-      profileAgent.zcaps.profileCapabilityInvocationKey);
-
     // update profile agent capability set with newly created zCaps to access
     // the users EDV and settings EDV
     // TODO: explore making zcaps/newZcaps a map with keys for referenceId
@@ -511,7 +507,7 @@ export default class ProfileManager {
         profileAgentId,
         profileAgent,
       });
-    console.log('zcap for using profile zcap key', zcap);
+
     // FIXME: remove `kmsClient` here if not needed
     const keystore = _getKeystoreId({zcap});
     const kmsClient = new KmsClient({keystore});
@@ -520,8 +516,7 @@ export default class ProfileManager {
       invocationSigner,
       kmsClient
     });
-    console.log('invocationSigner for using profile zcap key',
-      profileZcapKey.id);
+
     return {
       invocationSigner: profileZcapKey,
       kmsClient,
@@ -862,7 +857,6 @@ export default class ProfileManager {
       invoker: this.capabilityAgent.id,
       profileAgentId
     });
-    console.log('zcap for using profile agent zcap key', zcap);
 
     // get the zcaps to read the capability set EDV document
     // ALSO! in order to invoke `zcap` we need `this.capabilityAgent`
@@ -876,8 +870,6 @@ export default class ProfileManager {
       capability: zcap,
       invocationSigner: this.capabilityAgent.getSigner(),
     });
-    console.log('invocationSigner for using profile agent zcap key',
-      invocationSigner.id);
 
     // return profile capability invocation key if it hasn't been
     // moved to a capability set EDV document yet; this only happens
@@ -888,7 +880,6 @@ export default class ProfileManager {
         invocationSigner
       };
     }
-    console.log('PROFILEAGENTBEFOREACCESSCAPABILITYSETEDV', profileAgent);
 
     const c = new EdvClient({keyResolver});
 
@@ -905,7 +896,6 @@ export default class ProfileManager {
       })
     });
 
-    console.log('!!!!!!!capabilitySetDocument', capabilitySetDocument);
     const {zcaps} = capabilitySetDocument.content;
 
     const [profileInvocationKeyZcap] = zcaps.filter(({referenceId}) => {
@@ -918,9 +908,6 @@ export default class ProfileManager {
         ` for "${profileId}"`);
     }
 
-    // TODO: RETURN ALL ZCAPS FROM THE CAPABILITY SET DOCUMENT
-    // zcaps by referenceId
-    //profileInvocationKeyZcap
     return {
       // FIXME: make zcaps a map by referenceId?
       zcaps,
