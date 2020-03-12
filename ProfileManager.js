@@ -286,7 +286,7 @@ export default class ProfileManager {
     });
     const {zcap} = await this._profileService.delegateAgentCapabilities({
       account: this.accountId,
-      id: this.capabilityAgent.id,
+      invoker: this.capabilityAgent.id,
       profileAgentId: profileAgent.id
     });
 
@@ -831,7 +831,7 @@ export default class ProfileManager {
   async delegateAgentCapabilities({to, profileAgentId}) {
     return this._profileService.delegateAgentCapabilities({
       account: this.accountId,
-      id: to,
+      invoker: to,
       profileAgentId
     });
   }
@@ -865,7 +865,7 @@ export default class ProfileManager {
     // this zcap is the profileAgent capabilityInvocation key aka zcap key
     const {zcap} = await this._profileService.delegateAgentCapabilities({
       account: this.accountId,
-      id: this.capabilityAgent.id,
+      invoker: this.capabilityAgent.id,
       profileAgentId
     });
     console.log('zcap for using profile agent zcap key', zcap);
