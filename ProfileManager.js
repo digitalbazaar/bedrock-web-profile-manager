@@ -12,6 +12,7 @@ import {
   AsymmetricKey,
   CapabilityAgent,
   KeystoreAgent,
+  KeyAgreementKey,
   KmsClient
 } from 'webkms-client';
 import {EdvClient} from 'edv-client';
@@ -103,7 +104,8 @@ export default class ProfileManager {
     });
     const {invocationSigner, kmsClient} = await this.getProfileSigner({
       profileId,
-      profileAgentId: profileAgent.id
+      profileAgentId: profileAgent.id,
+      profileAgent,
     });
     const edv = await edvs.create({
       invocationSigner,
@@ -212,7 +214,8 @@ export default class ProfileManager {
     });
     const {invocationSigner, kmsClient} = await this.getProfileSigner({
       profileId,
-      profileAgentId: profileAgent.id
+      profileAgentId: profileAgent.id,
+      profileAgent,
     });
     const edv = await edvs.create({
       invocationSigner,
@@ -281,11 +284,23 @@ export default class ProfileManager {
       account: this.accountId,
       profile: profileId
     });
-    const {zcaps} = await this._profileService.delegateAgentCapabilities({
+    const {zcap} = await this._profileService.delegateAgentCapabilities({
       account: this.accountId,
       id: this.capabilityAgent.id,
       profileAgentId: profileAgent.id
     });
+
+    console.log('YYYYYYYYYYYYY', JSON.stringify(zcap, null, 2));
+
+    // FIXME: `zcaps` are coming out of the capabilitySet EDV which is
+    // read deep in the call stack. Need to clean this up.
+    const {kmsClient, invocationSigner, zcaps} = await this.getProfileSigner({
+      profileId,
+      // FIXME: probably don't need id if passing full profileAgent
+      profileAgentId: profileAgent.id,
+      profileAgent,
+    });
+
     // TODO: Investigate using a map instead of a list to stop O(n) lookups
     const [edvConfigZcap] = zcaps.filter(zcap => {
       return zcap.referenceId === `${referenceId}-edv-configuration`;
@@ -293,10 +308,7 @@ export default class ProfileManager {
     const [edvHmacZcap] = zcaps.filter(zcap => {
       return zcap.referenceId === `${referenceId}-hmac`;
     });
-    const {kmsClient, invocationSigner} = await this.getProfileSigner({
-      profileId,
-      profileAgentId: profileAgent.id
-    });
+
     const keystoreId = _getKeystoreId({zcap: edvHmacZcap});
     const keystore = await KmsClient.getKeystore({id: keystoreId});
     const capabilityAgent = new CapabilityAgent(
@@ -365,7 +377,8 @@ export default class ProfileManager {
     if(type) {
       profileType = [profileType, type];
     }
-    const {id} = await this._profileService.create({account: this.accountId});
+    const {id: profileId} = await this._profileService.create(
+      {account: this.accountId});
 
     const referenceIds = [
       // FIXME: users EDV is only need for a shared profile?
@@ -378,7 +391,7 @@ export default class ProfileManager {
     ];
     const promises = referenceIds.map(async referenceId => {
       return this.createProfileEdv({
-        profileId: id,
+        profileId,
         referenceId
       });
     });
@@ -392,13 +405,25 @@ export default class ProfileManager {
       profileAgentId
     } = settings;
 
+    const {profileAgent} = await this._profileService.getAgentByProfile({
+      account: this.accountId,
+      profile: profileId
+    });
+
+    console.log(
+      'profileCapabilityInvocationKey',
+      profileAgent.zcaps.profileCapabilityInvocationKey);
+
     // update profile agent capability set with newly created zCaps to access
     // the users EDV and settings EDV
-    const newZcaps = [];
+    // TODO: explore making zcaps/newZcaps a map with keys for referenceId
+    const newZcaps = [
+      profileAgent.zcaps.profileCapabilityInvocationKey
+    ];
     results.forEach(({zcaps}) => newZcaps.push(...zcaps));
 
     const capabilitySetEdv = await this.createCapabilitySetEdv({
-      profileId: id,
+      profileId,
       referenceId: capabilitySetReferenceId,
       zcaps: newZcaps,
     });
@@ -430,7 +455,7 @@ export default class ProfileManager {
         content: {
           ...content,
           type: profileType,
-          id
+          id: profileId,
         }
       },
       invocationSigner,
@@ -476,19 +501,34 @@ export default class ProfileManager {
     return profiles.filter(profile => profile.type.includes(type));
   }
 
-  async getProfileSigner({profileId, profileAgentId}) {
-    const zcap = await this._getProfileInvocationKeyZcap({
-      profileId,
-      profileAgentId
-    });
+  async getProfileSigner({profileId, profileAgentId, profileAgent}) {
+    // FIXME: `zcaps` are coming out of the capabilitySet EDV which is
+    // read deep in the call stack. Need to clean this up.
+    const {zcap, invocationSigner, zcaps} =
+      await this._getProfileInvocationKeyZcap({
+        profileId,
+        // FIXME: REMOVE ID
+        profileAgentId,
+        profileAgent,
+      });
+    console.log('zcap for using profile zcap key', zcap);
+    // FIXME: remove `kmsClient` here if not needed
     const keystore = _getKeystoreId({zcap});
     const kmsClient = new KmsClient({keystore});
-    const invocationSigner = new AsymmetricKey({
+    const profileZcapKey = new AsymmetricKey({
       capability: zcap,
-      invocationSigner: this.capabilityAgent.getSigner(),
+      invocationSigner,
       kmsClient
     });
-    return {invocationSigner, kmsClient};
+    console.log('invocationSigner for using profile zcap key',
+      profileZcapKey.id);
+    return {
+      invocationSigner: profileZcapKey,
+      kmsClient,
+      // FIXME: `zcaps` are coming out of the capabilitySet EDV which is
+      // read deep in the call stack. Need to clean this up.
+      zcaps
+    };
   }
 
   // FIXME: split functions up into separate files/services
@@ -814,12 +854,66 @@ export default class ProfileManager {
       profileAgentId
     });
   }
-  async _getProfileInvocationKeyZcap({profileId, profileAgentId}) {
-    const {zcaps} = await this._profileService.delegateAgentCapabilities({
+
+  // check if profileAgent.zcaps.profileCapabilityInvocationKey
+  // is present, just return it, otherwise, look for it in the
+  // capability set EDV document for the profile agent
+  // ALSO! the way this API is written is smelly.
+  async _getProfileInvocationKeyZcap({
+    profileId, profileAgentId, profileAgent
+  }) {
+    // this zcap is the profileAgent capabilityInvocation key aka zcap key
+    const {zcap} = await this._profileService.delegateAgentCapabilities({
       account: this.accountId,
       id: this.capabilityAgent.id,
       profileAgentId
     });
+    console.log('zcap for using profile agent zcap key', zcap);
+
+    // get the zcaps to read the capability set EDV document
+    // ALSO! in order to invoke `zcap` we need `this.capabilityAgent`
+    // read the capabilitySetEdv document
+    // inside that document is the profile capabilityInvocation key zcap
+    // ...that we want to return -- and we need `zcap` to be able to invoke it
+    // ...so maybe we need to return that as well
+
+    // signer for signing with the profileAgent's capability invocation key
+    const invocationSigner = new AsymmetricKey({
+      capability: zcap,
+      invocationSigner: this.capabilityAgent.getSigner(),
+    });
+    console.log('invocationSigner for using profile agent zcap key',
+      invocationSigner.id);
+
+    // return profile capability invocation key if it hasn't been
+    // moved to a capability set EDV document yet; this only happens
+    // when a new profile is being provisioned
+    if(profileAgent.zcaps.profileCapabilityInvocationKey) {
+      return {
+        zcap: profileAgent.zcaps.profileCapabilityInvocationKey,
+        invocationSigner
+      };
+    }
+    console.log('PROFILEAGENTBEFOREACCESSCAPABILITYSETEDV', profileAgent);
+
+    const c = new EdvClient({keyResolver});
+
+    const capabilitySetDocument = await c.get({
+      id: profileAgent.zcaps.capabilitySetDocument.invocationTarget.id,
+      capability: profileAgent.zcaps.capabilitySetDocument,
+      invocationSigner,
+      keyAgreementKey: new KeyAgreementKey({
+        // FIXME: is this the proper way to get this ID?
+        id: profileAgent.zcaps.capabilitySetKak.invocationTarget.id,
+        type: profileAgent.zcaps.capabilitySetKak.invocationTarget.type,
+        capability: profileAgent.zcaps.capabilitySetKak,
+        invocationSigner,
+      })
+    });
+
+    console.log('!!!!!!!capabilitySetDocument', capabilitySetDocument);
+    const {zcaps} = capabilitySetDocument.content;
+
     const [profileInvocationKeyZcap] = zcaps.filter(({referenceId}) => {
       const capabilityInvokeKeyReference = '-key-capabilityInvocation';
       return referenceId.includes(profileId) &&
@@ -829,7 +923,16 @@ export default class ProfileManager {
       throw new Error(`Unable find the profile invocation key zcap` +
         ` for "${profileId}"`);
     }
-    return profileInvocationKeyZcap;
+
+    // TODO: RETURN ALL ZCAPS FROM THE CAPABILITY SET DOCUMENT
+    // zcaps by referenceId
+    //profileInvocationKeyZcap
+    return {
+      // FIXME: make zcaps a map by referenceId?
+      zcaps,
+      zcap: profileInvocationKeyZcap,
+      invocationSigner
+    };
   }
 
   async _sessionChanged({authentication, newData}) {
