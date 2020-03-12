@@ -97,16 +97,9 @@ export default class ProfileManager {
   // FIXME: rename?
   // create a capabilitySet EDV and create a document in that EDV and create
   // delegations related to that document
-  async createCapabilitySetEdv({profileId, referenceId, zcaps}) {
-    const {profileAgent} = await this._profileService.getAgentByProfile({
-      account: this.accountId,
-      profile: profileId
-    });
-    const {invocationSigner, kmsClient} = await this.getProfileSigner({
-      profileId,
-      profileAgentId: profileAgent.id,
-      profileAgent,
-    });
+  async createCapabilitySetEdv({
+    profileAgentId, profileId, referenceId, zcaps, invocationSigner, kmsClient
+  }) {
     const edv = await edvs.create({
       invocationSigner,
       kmsClient,
@@ -120,7 +113,7 @@ export default class ProfileManager {
     const capabilitySetDocument = await edv.insert({
       doc: {
         content: {
-          profileAgentId: profileAgent.id,
+          profileAgentId,
           zcaps,
         }
       },
@@ -131,7 +124,7 @@ export default class ProfileManager {
       referenceId: `${referenceId}-edv-document`,
       // the profile agent is only allowed read their own doc, not write to it
       allowedAction: ['read'],
-      controller: profileAgent.id,
+      controller: profileAgentId,
       invocationTarget: {
         id: `${edv.id}/documents/${capabilitySetDocument.id}`,
         type: 'urn:edv:document'
@@ -141,7 +134,7 @@ export default class ProfileManager {
     const delegateEdvKakRequest = {
       referenceId: `${referenceId}-kak`,
       allowedAction: ['deriveSecret', 'sign'],
-      controller: profileAgent.id,
+      controller: profileAgentId,
       invocationTarget: {
         id: edv.keyAgreementKey.id,
         type: edv.keyAgreementKey.type,
@@ -161,27 +154,19 @@ export default class ProfileManager {
         })
       ]);
     return {
+      capabilitySetDocument,
       edv,
-      invocationSigner,
       zcaps: {
         capabilitySetDocument: capabilitySetDocumentZcap,
         capabilitySetKak: capabilitySetKakZcap,
       },
-      profileAgentId: profileAgent.id
     };
   }
 
   // TODO: add docs
-  async createProfileEdv({profileId, referenceId}) {
-    const {profileAgent} = await this._profileService.getAgentByProfile({
-      account: this.accountId,
-      profile: profileId
-    });
-    const {invocationSigner, kmsClient} = await this.getProfileSigner({
-      profileId,
-      profileAgentId: profileAgent.id,
-      profileAgent,
-    });
+  async createProfileEdv({
+    invocationSigner, kmsClient, profileAgentId, profileId, referenceId
+  }) {
     const edv = await edvs.create({
       invocationSigner,
       kmsClient,
@@ -193,7 +178,7 @@ export default class ProfileManager {
     const delegateEdvConfigurationRequest = {
       referenceId: `${referenceId}-edv-configuration`,
       allowedAction: ['read', 'write'],
-      controller: profileAgent.id,
+      controller: profileAgentId,
       invocationTarget: {
         id: `${edv.id}/documents`,
         type: 'urn:edv:documents'
@@ -202,7 +187,7 @@ export default class ProfileManager {
     const delegateEdvHmacRequest = {
       referenceId: `${referenceId}-hmac`,
       allowedAction: 'sign',
-      controller: profileAgent.id,
+      controller: profileAgentId,
       invocationTarget: {
         id: edv.hmac.id,
         type: edv.hmac.type,
@@ -212,7 +197,7 @@ export default class ProfileManager {
     const delegateEdvKakRequest = {
       referenceId: `${referenceId}-kak`,
       allowedAction: ['deriveSecret', 'sign'],
-      controller: profileAgent.id,
+      controller: profileAgentId,
       invocationTarget: {
         id: edv.keyAgreementKey.id,
         type: edv.keyAgreementKey.type,
@@ -237,24 +222,15 @@ export default class ProfileManager {
     return {
       edv,
       edvConfigZcap: edvZcaps[0],
-      invocationSigner,
       zcaps: edvZcaps,
-      profileAgentId: profileAgent.id
-
     };
   }
 
+  // FIXME: this function is getting called frequently and is expensive
   async getProfileEdv({profileId, referenceId}) {
     const {profileAgent} = await this._profileService.getAgentByProfile({
       account: this.accountId,
       profile: profileId
-    });
-
-    // FIXME: zcap is not used, is this call required?
-    const {zcap} = await this._profileService.delegateAgentCapabilities({
-      account: this.accountId,
-      invoker: this.capabilityAgent.id,
-      profileAgentId: profileAgent.id
     });
 
     // FIXME: `zcaps` are coming out of the capabilitySet EDV which is
@@ -273,6 +249,11 @@ export default class ProfileManager {
     const [edvHmacZcap] = zcaps.filter(zcap => {
       return zcap.referenceId === `${referenceId}-hmac`;
     });
+
+    if(!(edvConfigZcap && edvHmacZcap)) {
+      throw new Error(
+        `Capabilties not found for accessing EDV: "${referenceId}".`);
+    }
 
     const keystoreId = _getKeystoreId({zcap: edvHmacZcap});
     const keystore = await KmsClient.getKeystore({id: keystoreId});
@@ -324,9 +305,9 @@ export default class ProfileManager {
 
   async createProfile({
     type, content, settingsReferenceId, usersReferenceId,
-    credentialsReferenceId, capabilitySetReferenceId
+    capabilitySetReferenceId
   } = {}) {
-    if(!settingsReferenceId) {
+    if(!capabilitySetReferenceId) {
       capabilitySetReferenceId = edvs.getReferenceId('capability-set');
     }
     if(!settingsReferenceId) {
@@ -334,13 +315,6 @@ export default class ProfileManager {
     }
     if(!usersReferenceId) {
       usersReferenceId = edvs.getReferenceId('users');
-    }
-    // FIXME: Creation of credentials edv should be done outside of this
-    //        function. When updating the capability set in parallel for a
-    //        profile agent concurrently/"too fast" - all updates do not get
-    //        applied
-    if(!credentialsReferenceId) {
-      credentialsReferenceId = edvs.getReferenceId('credentials');
     }
     let profileType = 'Profile';
     if(type) {
@@ -352,14 +326,30 @@ export default class ProfileManager {
     const referenceIds = [
       // FIXME: users EDV is only need for a shared profile?
       usersReferenceId,
-      // FIXME: credentials EDV creation is a wallet function, a credentials
-      // EDV is not needed in an issuer use case
-      credentialsReferenceId,
       // settings must be the last item in this array
       settingsReferenceId,
     ];
+
+    const {profileAgent} = await this._profileService.getAgentByProfile({
+      account: this.accountId,
+      profile: profileId
+    });
+
+    const {id: profileAgentId} = profileAgent;
+
+    const {invocationSigner, kmsClient} = await this.getProfileSigner({
+      profileId,
+      profileAgentId: profileAgent.id,
+      profileAgent,
+    });
+
+    console.log('KMSCLIENT', kmsClient);
+
     const promises = referenceIds.map(async referenceId => {
       return this.createProfileEdv({
+        invocationSigner,
+        kmsClient,
+        profileAgentId,
         profileId,
         referenceId
       });
@@ -368,16 +358,7 @@ export default class ProfileManager {
     // the extraneous operations are removed here, this will not be necessary
     const results = await Promise.all(promises);
     const settings = results[results.length - 1];
-    const {
-      edv: profileSettingsEdv,
-      invocationSigner,
-      profileAgentId
-    } = settings;
-
-    const {profileAgent} = await this._profileService.getAgentByProfile({
-      account: this.accountId,
-      profile: profileId
-    });
+    const {edv: profileSettingsEdv} = settings;
 
     // update profile agent capability set with newly created zCaps to access
     // the users EDV and settings EDV
@@ -388,6 +369,9 @@ export default class ProfileManager {
     results.forEach(({zcaps}) => newZcaps.push(...zcaps));
 
     const capabilitySetEdv = await this.createCapabilitySetEdv({
+      invocationSigner,
+      kmsClient,
+      profileAgentId,
       profileId,
       referenceId: capabilitySetReferenceId,
       zcaps: newZcaps,
@@ -426,7 +410,14 @@ export default class ProfileManager {
       invocationSigner,
       keyResolver
     });
-    return {...res.content, profileAgentId};
+
+    return {
+      invocationSigner,
+      kmsClient,
+      profileAgentId,
+      profileId,
+      profileSettings: res.content,
+    };
   }
 
   // TODO: implement adding an existing profile to an account
