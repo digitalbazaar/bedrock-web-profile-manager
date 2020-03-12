@@ -129,38 +129,14 @@ export default class ProfileManager {
 
     const delegateEdvDocumentRequest = {
       referenceId: `${referenceId}-edv-document`,
-      // FIXME: does allowedAction need to be here or would it be appropriate
-      // to remove
-      allowedAction: ['read', 'write'],
+      // the profile agent is only allowed read their own doc, not write to it
+      allowedAction: ['read'],
       controller: profileAgent.id,
       invocationTarget: {
         id: `${edv.id}/documents/${capabilitySetDocument.id}`,
-        type: 'urn:edv:documents'
+        type: 'urn:edv:document'
       }
     };
-
-    // FIXME: REMOVE, NO DELEGATION TO THE FULL EDV
-    // const delegateEdvConfigurationRequest = {
-    //   referenceId: `${referenceId}-edv-configuration`,
-    //   allowedAction: ['read', 'write'],
-    //   controller: profileAgent.id,
-    //   invocationTarget: {
-    //     id: `${edv.id}/documents`,
-    //     type: 'urn:edv:documents'
-    //   }
-    // };
-
-    // FIXME: REMOVE, NO NEED FOR A HMAC?
-    // const delegateEdvHmacRequest = {
-    //   referenceId: `${referenceId}-hmac`,
-    //   allowedAction: 'sign',
-    //   controller: profileAgent.id,
-    //   invocationTarget: {
-    //     id: edv.hmac.id,
-    //     type: edv.hmac.type,
-    //     verificationMethod: edv.hmac.id
-    //   }
-    // };
 
     const delegateEdvKakRequest = {
       referenceId: `${referenceId}-kak`,
@@ -179,11 +155,6 @@ export default class ProfileManager {
           signer: invocationSigner,
           request: delegateEdvDocumentRequest
         }),
-        // FIXME: REMOVE, NO NEED FOR HMAC
-        // utils.delegateCapability({
-        //   signer: invocationSigner,
-        //   request: delegateEdvHmacRequest
-        // }),
         utils.delegateCapability({
           signer: invocationSigner,
           request: delegateEdvKakRequest
@@ -191,10 +162,7 @@ export default class ProfileManager {
       ]);
     return {
       edv,
-      // FIXME: REMOVE
-      // edvConfigZcap: edvZcaps[0],
       invocationSigner,
-      // FIXME: what capabilities should be returned here?  All?
       zcaps: {
         capabilitySetDocument: capabilitySetDocumentZcap,
         capabilitySetKak: capabilitySetKakZcap,
