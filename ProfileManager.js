@@ -120,10 +120,7 @@ export default class ProfileManager {
     const capabilitySetDocument = await edv.insert({
       doc: {
         content: {
-          // FIXME:
-          // WHAT OTHER PROPERTIES ARE NEEDED
-          // WE MAY NEED DETAILS THAT ASSIST IN IDENTIFYING CAPABILITYSET DOCS
-          // FOR THE PURPOSE OF DELETING THEM FOR INSTANCE.
+          profileAgentId: profileAgent.id,
           zcaps,
         }
       },
