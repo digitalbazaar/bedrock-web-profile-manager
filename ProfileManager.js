@@ -865,8 +865,6 @@ export default class ProfileManager {
 
     const {zcaps} = capabilitySetDocument.content;
 
-    console.log('_getProfileInvocationKeyZcap', JSON.stringify(zcaps, null, 2));
-
     const [profileInvocationKeyZcap] = zcaps.filter(({referenceId}) => {
       const capabilityInvokeKeyReference = '-key-capabilityInvocation';
       return referenceId.includes(profileId) &&
