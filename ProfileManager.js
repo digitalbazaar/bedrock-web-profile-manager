@@ -324,7 +324,8 @@ export default class ProfileManager {
       {account: this.accountId});
 
     const referenceIds = [
-      // FIXME: users EDV is only need for a shared profile?
+      // FIXME: only shared profiles need a users EDV so creating this EDV
+      // should happen at the appropriate time in the top level app
       usersReferenceId,
       // settings must be the last item in this array
       settingsReferenceId,
