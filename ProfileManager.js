@@ -96,12 +96,15 @@ export default class ProfileManager {
   async createCapabilitySetDocument({
     edvClient, invocationSigner, profileAgentId, referenceId, zcaps = []
   }) {
+    edvClient.ensureIndex({attribute: 'content.profileAgentId'});
+
     // create the capabilitySet document for the profile agent
     const capabilitySetDocument = await edvClient.insert({
       doc: {
         content: {
           profileAgentId,
           zcaps,
+          // FIXME: id and type?
         }
       },
       invocationSigner,
@@ -209,6 +212,40 @@ export default class ProfileManager {
       edv,
       edvConfigZcap: edvZcaps[0],
       zcaps: edvZcaps,
+    };
+  }
+
+  async getCapabilitySetEdv({referenceId, profileAgent}) {
+    const profileId = profileAgent.profile;
+
+    const {kmsClient, invocationSigner, zcaps} = await this.getProfileSigner({
+      profileId,
+      // FIXME: probably don't need id if passing full profileAgent
+      profileAgentId: profileAgent.id,
+      profileAgent,
+    });
+
+    const zcap = zcaps.find(({referenceId}) => referenceId
+      .endsWith('key-capabilityInvocation'));
+
+    const keystoreId = _getKeystoreId({zcap});
+    const keystore = await KmsClient.getKeystore({id: keystoreId});
+    const capabilityAgent = new CapabilityAgent(
+      {handle: 'primary', signer: invocationSigner});
+    const keystoreAgent = new KeystoreAgent(
+      {keystore, capabilityAgent, kmsClient});
+    const edvClient = await edvs.get({
+      invocationSigner,
+      keystoreAgent,
+      profileId,
+      referenceId,
+    });
+
+    edvClient.ensureIndex({attribute: 'content.profileAgentId'});
+
+    return {
+      edvClient,
+      invocationSigner,
     };
   }
 
@@ -362,6 +399,10 @@ export default class ProfileManager {
       edvBaseUrl: this.edvBaseUrl,
     });
 
+    // FIXME: enable if field is added
+    // edvClient.ensureIndex({attribute: 'content.id'});
+    // edvClient.ensureIndex({attribute: 'content.type'});
+
     const capabilitySetDocumentDetails =
       await this.createCapabilitySetDocument({
         edvClient, invocationSigner, profileAgentId,
@@ -422,6 +463,7 @@ export default class ProfileManager {
     if(!settingsReferenceId) {
       settingsReferenceId = edvs.getReferenceId('settings');
     }
+
     const {
       edv: settingsEdv,
       invocationSigner,
@@ -430,12 +472,14 @@ export default class ProfileManager {
       profileId,
       referenceId: settingsReferenceId
     });
+
     settingsEdv.ensureIndex({attribute: 'content.id'});
     settingsEdv.ensureIndex({attribute: 'content.type'});
     const [settingsDoc] = await settingsEdv.find({
       equals: {'content.id': profileId},
       invocationSigner
     });
+
     return {...settingsDoc.content, profileAgentId};
   }
 
@@ -802,6 +846,7 @@ export default class ProfileManager {
     });
   }
 
+  // FIXME: this API is no longer used as currently implemented
   async deleteAgentCapabilitySet({profileAgentId}) {
     return this._profileService.deleteAgentCapabilitySet({
       account: this.accountId,
