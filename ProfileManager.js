@@ -93,24 +93,11 @@ export default class ProfileManager {
     await this._sessionChanged({newData: session.data});
   }
 
-  // TODO: add docs
-  // FIXME: rename?
-  // create a capabilitySet EDV and create a document in that EDV and create
-  // delegations related to that document
-  async createCapabilitySetEdv({
-    profileAgentId, profileId, referenceId, zcaps, invocationSigner, kmsClient
+  async createCapabilitySetDocument({
+    edvClient, invocationSigner, profileAgentId, referenceId, zcaps = []
   }) {
-    const edv = await edvs.create({
-      invocationSigner,
-      kmsClient,
-      kmsModule: this.kmsModule,
-      profileId,
-      referenceId,
-      edvBaseUrl: this.edvBaseUrl,
-    });
-
     // create the capabilitySet document for the profile agent
-    const capabilitySetDocument = await edv.insert({
+    const capabilitySetDocument = await edvClient.insert({
       doc: {
         content: {
           profileAgentId,
@@ -126,7 +113,7 @@ export default class ProfileManager {
       allowedAction: ['read'],
       controller: profileAgentId,
       invocationTarget: {
-        id: `${edv.id}/documents/${capabilitySetDocument.id}`,
+        id: `${edvClient.id}/documents/${capabilitySetDocument.id}`,
         type: 'urn:edv:document'
       }
     };
@@ -136,15 +123,15 @@ export default class ProfileManager {
       allowedAction: ['deriveSecret', 'sign'],
       controller: profileAgentId,
       invocationTarget: {
-        id: edv.keyAgreementKey.id,
-        type: edv.keyAgreementKey.type,
-        verificationMethod: edv.keyAgreementKey.id
+        id: edvClient.keyAgreementKey.id,
+        type: edvClient.keyAgreementKey.type,
+        verificationMethod: edvClient.keyAgreementKey.id
       }
     };
     const [capabilitySetDocumentZcap, capabilitySetKakZcap] =
       await Promise.all([
         utils.delegateCapability({
-          edvClient: edv,
+          edvClient,
           signer: invocationSigner,
           request: delegateEdvDocumentRequest
         }),
@@ -155,7 +142,6 @@ export default class ProfileManager {
       ]);
     return {
       capabilitySetDocument,
-      edv,
       zcaps: {
         capabilitySetDocument: capabilitySetDocumentZcap,
         capabilitySetKak: capabilitySetKakZcap,
@@ -367,14 +353,34 @@ export default class ProfileManager {
     ];
     results.forEach(({zcaps}) => newZcaps.push(...zcaps));
 
-    const capabilitySetEdvDetails = await this.createCapabilitySetEdv({
+    const edvClient = await edvs.create({
       invocationSigner,
       kmsClient,
-      profileAgentId,
+      kmsModule: this.kmsModule,
       profileId,
       referenceId: capabilitySetReferenceId,
-      zcaps: newZcaps,
+      edvBaseUrl: this.edvBaseUrl,
     });
+
+    // FIXME: REMOVE
+    // const capabilitySetEdvDetails = await this.createCapabilitySetEdv({
+    //   invocationSigner,
+    //   kmsClient,
+    //   profileAgentId,
+    //   profileId,
+    //   referenceId: capabilitySetReferenceId,
+    //   zcaps: newZcaps,
+    // });
+
+    const createCapabilitySetDocument = await this.createCapabilitySetDocument({
+      edvClient, invocationSigner, profileAgentId,
+      referenceId: capabilitySetReferenceId, zcaps: newZcaps
+    });
+
+    const capabilitySetEdvDetails = {
+      ...createCapabilitySetDocument,
+      edvClient,
+    };
 
     await this._profileService.updateAgentCapabilitySet({
       account: this.accountId,
