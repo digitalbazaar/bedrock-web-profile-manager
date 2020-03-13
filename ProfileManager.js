@@ -343,8 +343,6 @@ export default class ProfileManager {
       profileAgent,
     });
 
-    console.log('KMSCLIENT', kmsClient);
-
     const promises = referenceIds.map(async referenceId => {
       return this.createProfileEdv({
         invocationSigner,
@@ -368,7 +366,7 @@ export default class ProfileManager {
     ];
     results.forEach(({zcaps}) => newZcaps.push(...zcaps));
 
-    const capabilitySetEdv = await this.createCapabilitySetEdv({
+    const capabilitySetEdvDetails = await this.createCapabilitySetEdv({
       invocationSigner,
       kmsClient,
       profileAgentId,
@@ -381,7 +379,7 @@ export default class ProfileManager {
       account: this.accountId,
       profileAgentId,
       // this map includes: capabilitySetDocument, capabilitySetKak
-      zcaps: capabilitySetEdv.zcaps,
+      zcaps: capabilitySetEdvDetails.zcaps,
     });
     // TODO: Enable adding newly created agent as
     // add current profile agent to the users edv
@@ -412,6 +410,7 @@ export default class ProfileManager {
     });
 
     return {
+      capabilitySetEdvDetails,
       invocationSigner,
       kmsClient,
       profileAgentId,
@@ -865,6 +864,8 @@ export default class ProfileManager {
     });
 
     const {zcaps} = capabilitySetDocument.content;
+
+    console.log('_getProfileInvocationKeyZcap', JSON.stringify(zcaps, null, 2));
 
     const [profileInvocationKeyZcap] = zcaps.filter(({referenceId}) => {
       const capabilityInvokeKeyReference = '-key-capabilityInvocation';
