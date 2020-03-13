@@ -362,23 +362,14 @@ export default class ProfileManager {
       edvBaseUrl: this.edvBaseUrl,
     });
 
-    // FIXME: REMOVE
-    // const capabilitySetEdvDetails = await this.createCapabilitySetEdv({
-    //   invocationSigner,
-    //   kmsClient,
-    //   profileAgentId,
-    //   profileId,
-    //   referenceId: capabilitySetReferenceId,
-    //   zcaps: newZcaps,
-    // });
-
-    const createCapabilitySetDocument = await this.createCapabilitySetDocument({
-      edvClient, invocationSigner, profileAgentId,
-      referenceId: capabilitySetReferenceId, zcaps: newZcaps
-    });
+    const capabilitySetDocumentDetails =
+      await this.createCapabilitySetDocument({
+        edvClient, invocationSigner, profileAgentId,
+        referenceId: capabilitySetReferenceId, zcaps: newZcaps
+      });
 
     const capabilitySetEdvDetails = {
-      ...createCapabilitySetDocument,
+      ...capabilitySetDocumentDetails,
       edvClient,
     };
 
