@@ -895,7 +895,7 @@ export default class ProfileManager {
     const [profileInvocationKeyZcap] = zcaps.filter(({referenceId}) => {
       const capabilityInvokeKeyReference = '-key-capabilityInvocation';
       return referenceId.includes(profileId) &&
-      referenceId.includes(capabilityInvokeKeyReference);
+        referenceId.includes(capabilityInvokeKeyReference);
     });
     if(!profileInvocationKeyZcap) {
       throw new Error(`Unable find the profile invocation key zcap` +
