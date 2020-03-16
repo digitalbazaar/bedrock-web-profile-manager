@@ -219,10 +219,8 @@ export default class ProfileManager {
     const profileId = profileAgent.profile;
 
     const {kmsClient, invocationSigner, zcaps} = await this.getProfileSigner({
-      profileId,
-      // FIXME: probably don't need id if passing full profileAgent
-      profileAgentId: profileAgent.id,
       profileAgent,
+      profileId,
     });
 
     const zcap = zcaps.find(({referenceId}) => referenceId
@@ -260,8 +258,6 @@ export default class ProfileManager {
     // read deep in the call stack. Need to clean this up.
     const {kmsClient, invocationSigner, zcaps} = await this.getProfileSigner({
       profileId,
-      // FIXME: probably don't need id if passing full profileAgent
-      profileAgentId: profileAgent.id,
       profileAgent,
     });
 
@@ -362,9 +358,8 @@ export default class ProfileManager {
     const {id: profileAgentId} = profileAgent;
 
     const {invocationSigner, kmsClient} = await this.getProfileSigner({
-      profileId,
-      profileAgentId: profileAgent.id,
       profileAgent,
+      profileId,
     });
 
     const promises = referenceIds.map(async referenceId => {
@@ -498,16 +493,11 @@ export default class ProfileManager {
     return profiles.filter(profile => profile.type.includes(type));
   }
 
-  async getProfileSigner({profileId, profileAgentId, profileAgent}) {
+  async getProfileSigner({profileId, profileAgent}) {
     // FIXME: `zcaps` are coming out of the capabilitySet EDV which is
     // read deep in the call stack. Need to clean this up.
     const {zcap, invocationSigner, zcaps} =
-      await this._getProfileInvocationKeyZcap({
-        profileId,
-        // FIXME: REMOVE ID
-        profileAgentId,
-        profileAgent,
-      });
+      await this._getProfileInvocationKeyZcap({profileAgent, profileId});
 
     // FIXME: remove `kmsClient` here if not needed
     const keystore = _getKeystoreId({zcap});
@@ -858,9 +848,8 @@ export default class ProfileManager {
   // is present, just return it, otherwise, look for it in the
   // capability set EDV document for the profile agent
   // ALSO! the way this API is written is smelly.
-  async _getProfileInvocationKeyZcap({
-    profileId, profileAgentId, profileAgent
-  }) {
+  async _getProfileInvocationKeyZcap({profileId, profileAgent}) {
+    const {id: profileAgentId} = profileAgent;
     // this zcap is the profileAgent capabilityInvocation key aka zcap key
     const {zcap} = await this._profileService.delegateAgentCapabilities({
       account: this.accountId,
