@@ -442,8 +442,7 @@ export default class ProfileManager {
       capabilitySetEdvDetails,
       invocationSigner,
       kmsClient,
-      profileAgentId,
-      profileId,
+      profileAgent,
       profileSettings: res.content,
     };
   }

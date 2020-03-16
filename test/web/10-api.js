@@ -46,8 +46,9 @@ describe('Profile Manager API', () => {
       result.profileSettings.should.have.property('color');
       result.profileSettings.should.have.property('type');
       result.profileSettings.should.have.property('id');
-      result.should.have.property('profileAgentId');
-      result.should.have.property('profileId');
+      result.should.have.property('profileAgent');
+      // this is profileId
+      result.profileAgent.should.have.property('profile');
     });
   });
 });
