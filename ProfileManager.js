@@ -218,10 +218,8 @@ export default class ProfileManager {
   async getCapabilitySetEdv({referenceId, profileAgent}) {
     const profileId = profileAgent.profile;
 
-    const {kmsClient, invocationSigner, zcaps} = await this.getProfileSigner({
-      profileAgent,
-      profileId,
-    });
+    const {kmsClient, invocationSigner, zcaps} = await this.getProfileSigner(
+      {profileAgent});
 
     const zcap = zcaps.find(({referenceId}) => referenceId
       .endsWith('key-capabilityInvocation'));
@@ -256,10 +254,8 @@ export default class ProfileManager {
 
     // FIXME: `zcaps` are coming out of the capabilitySet EDV which is
     // read deep in the call stack. Need to clean this up.
-    const {kmsClient, invocationSigner, zcaps} = await this.getProfileSigner({
-      profileId,
-      profileAgent,
-    });
+    const {kmsClient, invocationSigner, zcaps} = await this.getProfileSigner(
+      {profileAgent});
 
     // TODO: Investigate using a map instead of a list to stop O(n) lookups
     const [edvConfigZcap] = zcaps.filter(zcap => {
@@ -357,10 +353,8 @@ export default class ProfileManager {
 
     const {id: profileAgentId} = profileAgent;
 
-    const {invocationSigner, kmsClient} = await this.getProfileSigner({
-      profileAgent,
-      profileId,
-    });
+    const {invocationSigner, kmsClient} = await this.getProfileSigner(
+      {profileAgent});
 
     const promises = referenceIds.map(async referenceId => {
       return this.createProfileEdv({
@@ -493,7 +487,8 @@ export default class ProfileManager {
     return profiles.filter(profile => profile.type.includes(type));
   }
 
-  async getProfileSigner({profileId, profileAgent}) {
+  async getProfileSigner({profileAgent}) {
+    const profileId = profileAgent.profile;
     // FIXME: `zcaps` are coming out of the capabilitySet EDV which is
     // read deep in the call stack. Need to clean this up.
     const {zcap, invocationSigner, zcaps} =
