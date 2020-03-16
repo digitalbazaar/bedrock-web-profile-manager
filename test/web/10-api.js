@@ -41,11 +41,13 @@ describe('Profile Manager API', () => {
       }
       should.not.exist(error);
       should.exist(result);
-      result.should.have.property('name');
-      result.should.have.property('color');
-      result.should.have.property('type');
-      result.should.have.property('id');
+      result.should.have.property('profileSettings');
+      result.profileSettings.should.have.property('name');
+      result.profileSettings.should.have.property('color');
+      result.profileSettings.should.have.property('type');
+      result.profileSettings.should.have.property('id');
       result.should.have.property('profileAgentId');
+      result.should.have.property('profileId');
     });
   });
 });
