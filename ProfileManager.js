@@ -94,7 +94,7 @@ export default class ProfileManager {
   }
 
   async createCapabilitySetDocument({
-    edvClient, invocationSigner, profileAgentId, referenceId, zcaps = []
+    edvClient, invocationSigner, profileAgentId, referenceId, zcaps = {}
   }) {
     edvClient.ensureIndex({attribute: 'content.profileAgentId'});
 
@@ -221,8 +221,10 @@ export default class ProfileManager {
     const {kmsClient, invocationSigner, zcaps} = await this.getProfileSigner(
       {profileAgent});
 
-    const zcap = zcaps.find(({referenceId}) => referenceId
+    // FIXME: is there a way to construct the key without a search?
+    const _zcapMapKey = Object.keys(zcaps).find(referenceId => referenceId
       .endsWith('key-capabilityInvocation'));
+    const zcap = zcaps[_zcapMapKey];
 
     const keystoreId = _getKeystoreId({zcap});
     const keystore = await KmsClient.getKeystore({id: keystoreId});
@@ -257,13 +259,8 @@ export default class ProfileManager {
     const {kmsClient, invocationSigner, zcaps} = await this.getProfileSigner(
       {profileAgent});
 
-    // TODO: Investigate using a map instead of a list to stop O(n) lookups
-    const [edvConfigZcap] = zcaps.filter(zcap => {
-      return zcap.referenceId === `${referenceId}-edv-configuration`;
-    });
-    const [edvHmacZcap] = zcaps.filter(zcap => {
-      return zcap.referenceId === `${referenceId}-hmac`;
-    });
+    const edvConfigZcap = zcaps[`${referenceId}-edv-configuration`];
+    const edvHmacZcap = zcaps[`${referenceId}-hmac`];
 
     if(!(edvConfigZcap && edvHmacZcap)) {
       throw new Error(
@@ -373,11 +370,15 @@ export default class ProfileManager {
 
     // update profile agent capability set with newly created zCaps to access
     // the users EDV and settings EDV
-    // TODO: explore making zcaps/newZcaps a map with keys for referenceId
-    const newZcaps = [
-      profileAgent.zcaps.profileCapabilityInvocationKey
-    ];
-    results.forEach(({zcaps}) => newZcaps.push(...zcaps));
+    const newZcaps = {
+      [profileAgent.zcaps.profileCapabilityInvocationKey.referenceId]:
+        profileAgent.zcaps.profileCapabilityInvocationKey
+    };
+    for(const r of results) {
+      for(const capability of r.zcaps) {
+        newZcaps[capability.referenceId] = capability;
+      }
+    }
 
     const edvClient = await edvs.create({
       invocationSigner,
@@ -892,18 +893,23 @@ export default class ProfileManager {
 
     const {zcaps} = capabilitySetDocument.content;
 
-    const [profileInvocationKeyZcap] = zcaps.filter(({referenceId}) => {
+    // FIXME: can this key be contructed without the search?
+    // the challenge is that the referenceId (zcaps[referenceId]) is a DID
+    // key that includes a hash fragment
+    // e.g. did:key:MOCK_KEY#MOCK_KEY-key-capabilityInvocation
+    const _zcapMapKey = Object.keys(zcaps).find(referenceId => {
       const capabilityInvokeKeyReference = '-key-capabilityInvocation';
-      return referenceId.includes(profileId) &&
-        referenceId.includes(capabilityInvokeKeyReference);
+      return referenceId.startsWith(profileId) &&
+        referenceId.endsWith(capabilityInvokeKeyReference);
     });
+
+    const profileInvocationKeyZcap = zcaps[_zcapMapKey];
     if(!profileInvocationKeyZcap) {
       throw new Error(`Unable find the profile invocation key zcap` +
         ` for "${profileId}"`);
     }
 
     return {
-      // FIXME: make zcaps a map by referenceId?
       zcaps,
       zcap: profileInvocationKeyZcap,
       invocationSigner
