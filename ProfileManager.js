@@ -112,7 +112,7 @@ export default class ProfileManager {
 
     const delegateEdvDocumentRequest = {
       referenceId: `${referenceId}-edv-document`,
-      // the profile agent is only allowed read their own doc, not write to it
+      // the profile agent is only allowed to read its own doc
       allowedAction: ['read'],
       controller: profileAgentId,
       invocationTarget: {
@@ -221,7 +221,10 @@ export default class ProfileManager {
     const {kmsClient, invocationSigner, zcaps} = await this.getProfileSigner(
       {profileAgent});
 
-    // FIXME: is there a way to construct the key without a search?
+    // FIXME: can this key be contructed without the search?
+    // the challenge is that the referenceId (zcaps[referenceId]) is a DID
+    // key that includes a hash fragment
+    // e.g. did:key:MOCK_KEY#MOCK_KEY-key-capabilityInvocation
     const _zcapMapKey = Object.keys(zcaps).find(referenceId => referenceId
       .endsWith('key-capabilityInvocation'));
     const zcap = zcaps[_zcapMapKey];
@@ -842,7 +845,6 @@ export default class ProfileManager {
   // check if profileAgent.zcaps.profileCapabilityInvocationKey
   // is present, just return it, otherwise, look for it in the
   // capability set EDV document for the profile agent
-  // ALSO! the way this API is written is smelly.
   async _getProfileInvocationKeyZcap({profileId, profileAgent}) {
     const {id: profileAgentId} = profileAgent;
     // this zcap is the profileAgent capabilityInvocation key aka zcap key
@@ -851,13 +853,6 @@ export default class ProfileManager {
       invoker: this.capabilityAgent.id,
       profileAgentId
     });
-
-    // get the zcaps to read the capability set EDV document
-    // ALSO! in order to invoke `zcap` we need `this.capabilityAgent`
-    // read the capabilitySetEdv document
-    // inside that document is the profile capabilityInvocation key zcap
-    // ...that we want to return -- and we need `zcap` to be able to invoke it
-    // ...so maybe we need to return that as well
 
     // signer for signing with the profileAgent's capability invocation key
     const invocationSigner = new AsymmetricKey({
