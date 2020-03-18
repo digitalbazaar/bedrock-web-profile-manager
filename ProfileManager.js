@@ -491,6 +491,20 @@ export default class ProfileManager {
     return profiles.filter(profile => profile.type.includes(type));
   }
 
+  async getProfileAgentSigner({profileAgentId}) {
+    const {zcap} = await this._profileService.delegateAgentCapabilities({
+      account: this.accountId,
+      invoker: this.capabilityAgent.id,
+      profileAgentId
+    });
+
+    // signer for signing with the profileAgent's capability invocation key
+    return new AsymmetricKey({
+      capability: zcap,
+      invocationSigner: this.capabilityAgent.getSigner(),
+    });
+  }
+
   async getProfileSigner({profileAgent}) {
     const profileId = profileAgent.profile;
     // FIXME: `zcaps` are coming out of the capabilitySet EDV which is
@@ -848,18 +862,8 @@ export default class ProfileManager {
   // capability set EDV document for the profile agent
   async _getProfileInvocationKeyZcap({profileId, profileAgent}) {
     const {id: profileAgentId} = profileAgent;
-    // this zcap is the profileAgent capabilityInvocation key aka zcap key
-    const {zcap} = await this._profileService.delegateAgentCapabilities({
-      account: this.accountId,
-      invoker: this.capabilityAgent.id,
-      profileAgentId
-    });
 
-    // signer for signing with the profileAgent's capability invocation key
-    const invocationSigner = new AsymmetricKey({
-      capability: zcap,
-      invocationSigner: this.capabilityAgent.getSigner(),
-    });
+    const invocationSigner = await this.getProfileAgentSigner({profileAgentId});
 
     // return profile capability invocation key if it hasn't been
     // moved to a capability set EDV document yet; this only happens
