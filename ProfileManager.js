@@ -251,6 +251,7 @@ export default class ProfileManager {
   }
 
   // FIXME: this function is getting called frequently and is expensive
+  // consider using EDV Client cache
   async getProfileEdv({profileId, referenceId}) {
     const {profileAgent} = await this._profileService.getAgentByProfile({
       account: this.accountId,
