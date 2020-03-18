@@ -506,11 +506,10 @@ export default class ProfileManager {
   }
 
   async getProfileSigner({profileAgent}) {
-    const profileId = profileAgent.profile;
     // FIXME: `zcaps` are coming out of the capabilitySet EDV which is
     // read deep in the call stack. Need to clean this up.
     const {zcap, invocationSigner, zcaps} =
-      await this._getProfileInvocationKeyZcap({profileAgent, profileId});
+      await this._getProfileInvocationKeyZcap({profileAgent});
 
     // FIXME: remove `kmsClient` here if not needed
     const keystore = _getKeystoreId({zcap});
@@ -860,8 +859,8 @@ export default class ProfileManager {
   // check if profileAgent.zcaps.profileCapabilityInvocationKey
   // is present, just return it, otherwise, look for it in the
   // capability set EDV document for the profile agent
-  async _getProfileInvocationKeyZcap({profileId, profileAgent}) {
-    const {id: profileAgentId} = profileAgent;
+  async _getProfileInvocationKeyZcap({profileAgent}) {
+    const {id: profileAgentId, profile: profileId} = profileAgent;
 
     const invocationSigner = await this.getProfileAgentSigner({profileAgentId});
 
