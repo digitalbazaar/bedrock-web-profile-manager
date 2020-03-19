@@ -319,19 +319,7 @@ export default class ProfileManager {
     });
   }
 
-  async createProfile({
-    type, content, settingsReferenceId, usersReferenceId,
-    capabilitySetReferenceId
-  } = {}) {
-    if(!capabilitySetReferenceId) {
-      capabilitySetReferenceId = edvs.getReferenceId('capability-set');
-    }
-    if(!settingsReferenceId) {
-      settingsReferenceId = edvs.getReferenceId('settings');
-    }
-    if(!usersReferenceId) {
-      usersReferenceId = edvs.getReferenceId('users');
-    }
+  async createProfile({content, type} = {}) {
     let profileType = 'Profile';
     if(type) {
       profileType = [profileType, type];
@@ -339,115 +327,20 @@ export default class ProfileManager {
     const {id: profileId} = await this._profileService.create(
       {account: this.accountId});
 
-    const referenceIds = [
-      // FIXME: only shared profiles need a users EDV so creating this EDV
-      // should happen at the appropriate time in the top level app
-      usersReferenceId,
-      // settings must be the last item in this array
-      settingsReferenceId,
-    ];
-
     const {profileAgent} = await this._profileService.getAgentByProfile({
       account: this.accountId,
       profile: profileId
     });
 
-    const {id: profileAgentId} = profileAgent;
-
-    const {invocationSigner, kmsClient} = await this.getProfileSigner(
-      {profileAgent});
-
-    const promises = referenceIds.map(async referenceId => {
-      return this.createProfileEdv({
-        invocationSigner,
-        kmsClient,
-        profileAgentId,
-        profileId,
-        referenceId
-      });
-    });
-    // TODO: Use proper promise-fun library to limit concurrency. After
-    // the extraneous operations are removed here, this will not be necessary
-    const results = await Promise.all(promises);
-    const settings = results[results.length - 1];
-    const {edv: profileSettingsEdv} = settings;
-
-    // update profile agent capability set with newly created zCaps to access
-    // the users EDV and settings EDV
-    const newZcaps = {
-      [profileAgent.zcaps.profileCapabilityInvocationKey.referenceId]:
-        profileAgent.zcaps.profileCapabilityInvocationKey
+    const profileSettings = {
+      ...content,
+      type: profileType,
+      id: profileId,
     };
-    for(const r of results) {
-      for(const capability of r.zcaps) {
-        newZcaps[capability.referenceId] = capability;
-      }
-    }
-
-    const edvClient = await edvs.create({
-      invocationSigner,
-      kmsClient,
-      kmsModule: this.kmsModule,
-      profileId,
-      referenceId: capabilitySetReferenceId,
-      edvBaseUrl: this.edvBaseUrl,
-    });
-
-    // FIXME: enable if field is added
-    // edvClient.ensureIndex({attribute: 'content.id'});
-    // edvClient.ensureIndex({attribute: 'content.type'});
-
-    const capabilitySetDocumentDetails =
-      await this.createCapabilitySetDocument({
-        edvClient, invocationSigner, profileAgentId,
-        referenceId: capabilitySetReferenceId, zcaps: newZcaps
-      });
-
-    const capabilitySetEdvDetails = {
-      ...capabilitySetDocumentDetails,
-      edvClient,
-    };
-
-    await this._profileService.updateAgentCapabilitySet({
-      account: this.accountId,
-      profileAgentId,
-      // this map includes: capabilitySetDocument, capabilitySetKak
-      zcaps: capabilitySetEdvDetails.zcaps,
-    });
-    // TODO: Enable adding newly created agent as
-    // add current profile agent to the users edv
-    // const userContent = {
-    //   name: settings.name,
-    //   email: settings.email, // TODO: Get email
-    //   profileAgent: profileAgentId
-    // };
-    // await this.createUser({
-    //   profileId: id,
-    //   usersReferenceId,
-    //   content: userContent
-    // });
-    // create the settings for the profile
-    profileSettingsEdv.ensureIndex({attribute: 'content.id'});
-    profileSettingsEdv.ensureIndex({attribute: 'content.type'});
-    const res = await profileSettingsEdv.insert({
-      doc: {
-        id: await EdvClient.generateId(),
-        content: {
-          ...content,
-          type: profileType,
-          id: profileId,
-        }
-      },
-      invocationSigner,
-      keyResolver
-    });
 
     return {
-      capabilitySetEdvDetails,
-      invocationSigner,
-      kmsClient,
       profileAgent,
-      profileSettings: res.content,
+      profileSettings,
     };
   }
 
