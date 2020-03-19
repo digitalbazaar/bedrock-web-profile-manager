@@ -94,7 +94,8 @@ export default class ProfileManager {
   }
 
   async createUserDocument({
-    edvClient, invocationSigner, profileAgentId, referenceId, content = {}
+    edvClient, invocationSigner, profileAgentId, referenceId,
+    content = {zcaps: {}}
   }) {
     edvClient.ensureIndex({attribute: 'content.profileAgentId'});
 
@@ -211,11 +212,13 @@ export default class ProfileManager {
     };
   }
 
-  async getCapabilitySetEdv({referenceId, profileAgent}) {
+  async getUsersEdv({referenceId, profileAgent}) {
     const profileId = profileAgent.profile;
 
     const {kmsClient, invocationSigner, zcaps} = await this.getProfileSigner(
       {profileAgent});
+
+    console.log('ZZZZZZZZZZCAPS', zcaps);
 
     // FIXME: can this key be contructed without the search?
     // the challenge is that the referenceId (zcaps[referenceId]) is a DID
@@ -340,9 +343,17 @@ export default class ProfileManager {
     };
   }
 
-  async getProfile({profileAgent} = {}) {
+  async getProfile({profileAgent, profileId} = {}) {
+    if(!(profileAgent || profileId)) {
+      throw new TypeError(
+        'One of "profileAgent" or "profileId" parameters is required.');
+    }
     if(!profileAgent) {
-      throw new TypeError('"profileAgent" parameter is required.');
+      // profileId will be defined here
+      ({profileAgent} = await this._profileService.getAgentByProfile({
+        account: this.accountId,
+        profile: profileId
+      }));
     }
 
     const invocationSigner = await this.getProfileAgentSigner(
@@ -413,7 +424,7 @@ export default class ProfileManager {
   }
 
   // FIXME: split functions up into separate files/services
-  async createUser({profileId, usersReferenceId, content}) {
+  async createUser({profileAgent, usersReferenceId, content}) {
     if(!usersReferenceId) {
       usersReferenceId = edvs.getReferenceId('users');
     }
@@ -426,16 +437,19 @@ export default class ProfileManager {
         authorizedDate: (new Date()).toISOString()
       }
     };
-    const {edv: usersEdv, invocationSigner} = await this.getProfileEdv({
-      profileId,
+
+    const {edvClient, invocationSigner} = await this.getUsersEdv({
+      profileAgent,
       referenceId: usersReferenceId
     });
-    usersEdv.ensureIndex({attribute: 'content.id'});
-    usersEdv.ensureIndex({attribute: 'content.type'});
-    usersEdv.ensureIndex({attribute: 'content.name'});
-    usersEdv.ensureIndex({attribute: 'content.email'});
-    usersEdv.ensureIndex({attribute: 'content.profileAgent'});
-    await usersEdv.insert({
+
+    // FIXME: should these ensureIndex calls be in getUsersEdv?
+    edvClient.ensureIndex({attribute: 'content.id'});
+    edvClient.ensureIndex({attribute: 'content.type'});
+    edvClient.ensureIndex({attribute: 'content.name'});
+    edvClient.ensureIndex({attribute: 'content.email'});
+    edvClient.ensureIndex({attribute: 'content.profileAgent'});
+    await edvClient.insert({
       doc: userDoc,
       invocationSigner,
       keyResolver
@@ -501,16 +515,28 @@ export default class ProfileManager {
     if(!usersReferenceId) {
       usersReferenceId = edvs.getReferenceId('users');
     }
-    const {edv: usersEdv, invocationSigner} = await this.getProfileEdv({
-      profileId,
-      referenceId: usersReferenceId
+    // const {edv: usersEdv, invocationSigner} = await this.getProfileEdv({
+    //   profileId,
+    //   referenceId: usersReferenceId
+    // });
+
+    const {profileAgent} = await this._profileService.getAgentByProfile({
+      account: this.accountId,
+      profile: profileId
     });
-    usersEdv.ensureIndex({attribute: 'content.id'});
-    usersEdv.ensureIndex({attribute: 'content.type'});
-    usersEdv.ensureIndex({attribute: 'content.name'});
-    usersEdv.ensureIndex({attribute: 'content.email'});
-    usersEdv.ensureIndex({attribute: 'content.profileAgent'});
-    const results = await usersEdv.find({
+
+    const {edvClient, invocationSigner} = await this.getUsersEdv(
+      {profileAgent, referenceId: usersReferenceId});
+
+    edvClient.ensureIndex({attribute: 'content.type'});
+
+    // FIXME: remove unneeded indexes
+    // edvClient.ensureIndex({attribute: 'content.id'});
+    // edvClient.ensureIndex({attribute: 'content.name'});
+    // edvClient.ensureIndex({attribute: 'content.email'});
+    // edvClient.ensureIndex({attribute: 'content.profileAgent'});
+
+    const results = await edvClient.find({
       equals: {'content.type': 'User'},
       invocationSigner
     });
