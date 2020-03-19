@@ -15,7 +15,7 @@ import {
   KeyAgreementKey,
   KmsClient
 } from 'webkms-client';
-import {EdvClient} from 'edv-client';
+import {EdvClient, EdvDocument} from 'edv-client';
 import jsigs from 'jsonld-signatures';
 import uuid from 'uuid-random';
 import EdvClientCache from './EdvClientCache.js';
@@ -94,18 +94,14 @@ export default class ProfileManager {
   }
 
   async createCapabilitySetDocument({
-    edvClient, invocationSigner, profileAgentId, referenceId, zcaps = {}
+    edvClient, invocationSigner, profileAgentId, referenceId, content = {}
   }) {
     edvClient.ensureIndex({attribute: 'content.profileAgentId'});
 
     // create the capabilitySet document for the profile agent
     const capabilitySetDocument = await edvClient.insert({
       doc: {
-        content: {
-          profileAgentId,
-          zcaps,
-          // FIXME: id and type?
-        }
+        content: {...content, profileAgentId},
       },
       invocationSigner,
     });
@@ -268,7 +264,7 @@ export default class ProfileManager {
 
     if(!(edvConfigZcap && edvHmacZcap)) {
       throw new Error(
-        `Capabilties not found for accessing EDV: "${referenceId}".`);
+        `Capabilities not found for accessing EDV: "${referenceId}".`);
     }
 
     const keystoreId = _getKeystoreId({zcap: edvHmacZcap});
@@ -344,38 +340,37 @@ export default class ProfileManager {
     };
   }
 
-  // TODO: implement adding an existing profile to an account
-  async getProfile({profileId, settingsReferenceId} = {}) {
-    if(!settingsReferenceId) {
-      settingsReferenceId = edvs.getReferenceId('settings');
+  async getProfile({profileAgent} = {}) {
+    if(!profileAgent) {
+      throw new TypeError('"profileAgent" parameter is required.');
     }
 
-    const {
-      edv: settingsEdv,
+    const invocationSigner = await this.getProfileAgentSigner(
+      {profileAgentId: profileAgent.id});
+
+    const edvDocument = new EdvDocument({
+      capability: profileAgent.zcaps.capabilitySetDocument,
+      keyAgreementKey: new KeyAgreementKey({
+        id: profileAgent.zcaps.capabilitySetKak.invocationTarget.id,
+        type: profileAgent.zcaps.capabilitySetKak.invocationTarget.type,
+        capability: profileAgent.zcaps.capabilitySetKak,
+        invocationSigner,
+      }),
       invocationSigner,
-      profileAgentId
-    } = await this.getProfileEdv({
-      profileId,
-      referenceId: settingsReferenceId
     });
 
-    settingsEdv.ensureIndex({attribute: 'content.id'});
-    settingsEdv.ensureIndex({attribute: 'content.type'});
-    const [settingsDoc] = await settingsEdv.find({
-      equals: {'content.id': profileId},
-      invocationSigner
-    });
+    const {content} = await edvDocument.read();
 
-    return {...settingsDoc.content, profileAgentId};
+    return content;
   }
 
   async getProfiles({type} = {}) {
     const profileAgentRecords = await this._profileService.getAllAgents({
       account: this.accountId,
     });
-    const promises = profileAgentRecords.map(async ({profileAgent}) => {
-      return this.getProfile({profileId: profileAgent.profile});
-    });
+    const promises = profileAgentRecords.map(async ({profileAgent}) =>
+      this.getProfile({profileAgent}));
+
     // TODO: Use proper promise-fun library to limit concurrency
     const profiles = await Promise.all(promises);
     if(!type) {
@@ -774,7 +769,6 @@ export default class ProfileManager {
       capability: profileAgent.zcaps.capabilitySetDocument,
       invocationSigner,
       keyAgreementKey: new KeyAgreementKey({
-        // FIXME: is this the proper way to get this ID?
         id: profileAgent.zcaps.capabilitySetKak.invocationTarget.id,
         type: profileAgent.zcaps.capabilitySetKak.invocationTarget.type,
         capability: profileAgent.zcaps.capabilitySetKak,
