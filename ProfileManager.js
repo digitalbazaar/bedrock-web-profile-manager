@@ -93,13 +93,13 @@ export default class ProfileManager {
     await this._sessionChanged({newData: session.data});
   }
 
-  async createCapabilitySetDocument({
+  async createUserDocument({
     edvClient, invocationSigner, profileAgentId, referenceId, content = {}
   }) {
     edvClient.ensureIndex({attribute: 'content.profileAgentId'});
 
-    // create the capabilitySet document for the profile agent
-    const capabilitySetDocument = await edvClient.insert({
+    // create the user document for the profile agent
+    const userDocument = await edvClient.insert({
       doc: {
         content: {...content, profileAgentId},
       },
@@ -112,7 +112,7 @@ export default class ProfileManager {
       allowedAction: ['read'],
       controller: profileAgentId,
       invocationTarget: {
-        id: `${edvClient.id}/documents/${capabilitySetDocument.id}`,
+        id: `${edvClient.id}/documents/${userDocument.id}`,
         type: 'urn:edv:document'
       }
     };
@@ -127,23 +127,23 @@ export default class ProfileManager {
         verificationMethod: edvClient.keyAgreementKey.id
       }
     };
-    const [capabilitySetDocumentZcap, capabilitySetKakZcap] =
-      await Promise.all([
-        utils.delegateCapability({
-          edvClient,
-          signer: invocationSigner,
-          request: delegateEdvDocumentRequest
-        }),
-        utils.delegateCapability({
-          signer: invocationSigner,
-          request: delegateEdvKakRequest
-        })
-      ]);
+    const [userDocumentZcap, userKakZcap] = await Promise.all([
+      utils.delegateCapability({
+        edvClient,
+        signer: invocationSigner,
+        request: delegateEdvDocumentRequest
+      }),
+      utils.delegateCapability({
+        signer: invocationSigner,
+        request: delegateEdvKakRequest
+      })
+    ]);
+
     return {
-      capabilitySetDocument,
+      userDocument,
       zcaps: {
-        capabilitySetDocument: capabilitySetDocumentZcap,
-        capabilitySetKak: capabilitySetKakZcap,
+        userDocument: userDocumentZcap,
+        userKak: userKakZcap,
       },
     };
   }
@@ -349,13 +349,8 @@ export default class ProfileManager {
       {profileAgentId: profileAgent.id});
 
     const edvDocument = new EdvDocument({
-      capability: profileAgent.zcaps.capabilitySetDocument,
-      keyAgreementKey: new KeyAgreementKey({
-        id: profileAgent.zcaps.capabilitySetKak.invocationTarget.id,
-        type: profileAgent.zcaps.capabilitySetKak.invocationTarget.type,
-        capability: profileAgent.zcaps.capabilitySetKak,
-        invocationSigner,
-      }),
+      capability: profileAgent.zcaps.userDocument,
+      keyAgreementKey: _userDocumentKak({invocationSigner, profileAgent}),
       invocationSigner,
     });
 
@@ -764,19 +759,14 @@ export default class ProfileManager {
 
     const c = new EdvClient({keyResolver});
 
-    const capabilitySetDocument = await c.get({
-      id: profileAgent.zcaps.capabilitySetDocument.invocationTarget.id,
-      capability: profileAgent.zcaps.capabilitySetDocument,
+    const userDocument = await c.get({
+      id: profileAgent.zcaps.userDocument.invocationTarget.id,
+      capability: profileAgent.zcaps.userDocument,
       invocationSigner,
-      keyAgreementKey: new KeyAgreementKey({
-        id: profileAgent.zcaps.capabilitySetKak.invocationTarget.id,
-        type: profileAgent.zcaps.capabilitySetKak.invocationTarget.type,
-        capability: profileAgent.zcaps.capabilitySetKak,
-        invocationSigner,
-      })
+      keyAgreementKey: _userDocumentKak({invocationSigner, profileAgent}),
     });
 
-    const {zcaps} = capabilitySetDocument.content;
+    const {content: {zcaps}} = userDocument;
 
     // FIXME: can this key be contructed without the search?
     // the challenge is that the referenceId (zcaps[referenceId]) is a DID
@@ -1052,4 +1042,13 @@ async function keyResolver({id}) {
     headers: DEFAULT_HEADERS
   });
   return response.data;
+}
+
+function _userDocumentKak({invocationSigner, profileAgent}) {
+  return new KeyAgreementKey({
+    id: profileAgent.zcaps.userKak.invocationTarget.id,
+    type: profileAgent.zcaps.userKak.invocationTarget.type,
+    capability: profileAgent.zcaps.userKak,
+    invocationSigner,
+  });
 }
