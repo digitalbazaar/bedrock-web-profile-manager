@@ -93,13 +93,14 @@ export default class ProfileManager {
     await this._sessionChanged({newData: session.data});
   }
 
-  async createCapabilitySetDocument({
-    edvClient, invocationSigner, profileAgentId, referenceId, content = {}
+  async createUserDocument({
+    edvClient, invocationSigner, profileAgentId, referenceId,
+    content = {zcaps: {}}
   }) {
     edvClient.ensureIndex({attribute: 'content.profileAgentId'});
 
-    // create the capabilitySet document for the profile agent
-    const capabilitySetDocument = await edvClient.insert({
+    // create the user document for the profile agent
+    const userDocument = await edvClient.insert({
       doc: {
         content: {...content, profileAgentId},
       },
@@ -112,7 +113,7 @@ export default class ProfileManager {
       allowedAction: ['read'],
       controller: profileAgentId,
       invocationTarget: {
-        id: `${edvClient.id}/documents/${capabilitySetDocument.id}`,
+        id: `${edvClient.id}/documents/${userDocument.id}`,
         type: 'urn:edv:document'
       }
     };
@@ -127,23 +128,23 @@ export default class ProfileManager {
         verificationMethod: edvClient.keyAgreementKey.id
       }
     };
-    const [capabilitySetDocumentZcap, capabilitySetKakZcap] =
-      await Promise.all([
-        utils.delegateCapability({
-          edvClient,
-          signer: invocationSigner,
-          request: delegateEdvDocumentRequest
-        }),
-        utils.delegateCapability({
-          signer: invocationSigner,
-          request: delegateEdvKakRequest
-        })
-      ]);
+    const [userDocumentZcap, userKakZcap] = await Promise.all([
+      utils.delegateCapability({
+        edvClient,
+        signer: invocationSigner,
+        request: delegateEdvDocumentRequest
+      }),
+      utils.delegateCapability({
+        signer: invocationSigner,
+        request: delegateEdvKakRequest
+      })
+    ]);
+
     return {
-      capabilitySetDocument,
+      userDocument,
       zcaps: {
-        capabilitySetDocument: capabilitySetDocumentZcap,
-        capabilitySetKak: capabilitySetKakZcap,
+        userDocument: userDocumentZcap,
+        userKak: userKakZcap,
       },
     };
   }
@@ -211,7 +212,7 @@ export default class ProfileManager {
     };
   }
 
-  async getCapabilitySetEdv({referenceId, profileAgent}) {
+  async getUsersEdv({referenceId, profileAgent}) {
     const profileId = profileAgent.profile;
 
     const {kmsClient, invocationSigner, zcaps} = await this.getProfileSigner(
@@ -340,22 +341,25 @@ export default class ProfileManager {
     };
   }
 
-  async getProfile({profileAgent} = {}) {
+  async getProfile({profileAgent, profileId} = {}) {
+    if(!(profileAgent || profileId)) {
+      throw new TypeError(
+        'One of "profileAgent" or "profileId" parameters is required.');
+    }
     if(!profileAgent) {
-      throw new TypeError('"profileAgent" parameter is required.');
+      // profileId will be defined here
+      ({profileAgent} = await this._profileService.getAgentByProfile({
+        account: this.accountId,
+        profile: profileId
+      }));
     }
 
     const invocationSigner = await this.getProfileAgentSigner(
       {profileAgentId: profileAgent.id});
 
     const edvDocument = new EdvDocument({
-      capability: profileAgent.zcaps.capabilitySetDocument,
-      keyAgreementKey: new KeyAgreementKey({
-        id: profileAgent.zcaps.capabilitySetKak.invocationTarget.id,
-        type: profileAgent.zcaps.capabilitySetKak.invocationTarget.type,
-        capability: profileAgent.zcaps.capabilitySetKak,
-        invocationSigner,
-      }),
+      capability: profileAgent.zcaps.userDocument,
+      keyAgreementKey: _userDocumentKak({invocationSigner, profileAgent}),
       invocationSigner,
     });
 
@@ -418,7 +422,7 @@ export default class ProfileManager {
   }
 
   // FIXME: split functions up into separate files/services
-  async createUser({profileId, usersReferenceId, content}) {
+  async createUser({profileAgent, usersReferenceId, content}) {
     if(!usersReferenceId) {
       usersReferenceId = edvs.getReferenceId('users');
     }
@@ -431,16 +435,19 @@ export default class ProfileManager {
         authorizedDate: (new Date()).toISOString()
       }
     };
-    const {edv: usersEdv, invocationSigner} = await this.getProfileEdv({
-      profileId,
+
+    const {edvClient, invocationSigner} = await this.getUsersEdv({
+      profileAgent,
       referenceId: usersReferenceId
     });
-    usersEdv.ensureIndex({attribute: 'content.id'});
-    usersEdv.ensureIndex({attribute: 'content.type'});
-    usersEdv.ensureIndex({attribute: 'content.name'});
-    usersEdv.ensureIndex({attribute: 'content.email'});
-    usersEdv.ensureIndex({attribute: 'content.profileAgent'});
-    await usersEdv.insert({
+
+    // FIXME: should these ensureIndex calls be in getUsersEdv?
+    edvClient.ensureIndex({attribute: 'content.id'});
+    edvClient.ensureIndex({attribute: 'content.type'});
+    edvClient.ensureIndex({attribute: 'content.name'});
+    edvClient.ensureIndex({attribute: 'content.email'});
+    edvClient.ensureIndex({attribute: 'content.profileAgent'});
+    await edvClient.insert({
       doc: userDoc,
       invocationSigner,
       keyResolver
@@ -506,16 +513,18 @@ export default class ProfileManager {
     if(!usersReferenceId) {
       usersReferenceId = edvs.getReferenceId('users');
     }
-    const {edv: usersEdv, invocationSigner} = await this.getProfileEdv({
-      profileId,
-      referenceId: usersReferenceId
+
+    const {profileAgent} = await this._profileService.getAgentByProfile({
+      account: this.accountId,
+      profile: profileId
     });
-    usersEdv.ensureIndex({attribute: 'content.id'});
-    usersEdv.ensureIndex({attribute: 'content.type'});
-    usersEdv.ensureIndex({attribute: 'content.name'});
-    usersEdv.ensureIndex({attribute: 'content.email'});
-    usersEdv.ensureIndex({attribute: 'content.profileAgent'});
-    const results = await usersEdv.find({
+
+    const {edvClient, invocationSigner} = await this.getUsersEdv(
+      {profileAgent, referenceId: usersReferenceId});
+
+    edvClient.ensureIndex({attribute: 'content.type'});
+
+    const results = await edvClient.find({
       equals: {'content.type': 'User'},
       invocationSigner
     });
@@ -764,19 +773,14 @@ export default class ProfileManager {
 
     const c = new EdvClient({keyResolver});
 
-    const capabilitySetDocument = await c.get({
-      id: profileAgent.zcaps.capabilitySetDocument.invocationTarget.id,
-      capability: profileAgent.zcaps.capabilitySetDocument,
+    const userDocument = await c.get({
+      id: profileAgent.zcaps.userDocument.invocationTarget.id,
+      capability: profileAgent.zcaps.userDocument,
       invocationSigner,
-      keyAgreementKey: new KeyAgreementKey({
-        id: profileAgent.zcaps.capabilitySetKak.invocationTarget.id,
-        type: profileAgent.zcaps.capabilitySetKak.invocationTarget.type,
-        capability: profileAgent.zcaps.capabilitySetKak,
-        invocationSigner,
-      })
+      keyAgreementKey: _userDocumentKak({invocationSigner, profileAgent}),
     });
 
-    const {zcaps} = capabilitySetDocument.content;
+    const {content: {zcaps}} = userDocument;
 
     // FIXME: can this key be contructed without the search?
     // the challenge is that the referenceId (zcaps[referenceId]) is a DID
@@ -1052,4 +1056,13 @@ async function keyResolver({id}) {
     headers: DEFAULT_HEADERS
   });
   return response.data;
+}
+
+function _userDocumentKak({invocationSigner, profileAgent}) {
+  return new KeyAgreementKey({
+    id: profileAgent.zcaps.userKak.invocationTarget.id,
+    type: profileAgent.zcaps.userKak.invocationTarget.type,
+    capability: profileAgent.zcaps.userKak,
+    invocationSigner,
+  });
 }
