@@ -264,7 +264,7 @@ export default class ProfileManager {
 
     if(!(edvConfigZcap && edvHmacZcap)) {
       throw new Error(
-        `Capabilties not found for accessing EDV: "${referenceId}".`);
+        `Capabilities not found for accessing EDV: "${referenceId}".`);
     }
 
     const keystoreId = _getKeystoreId({zcap: edvHmacZcap});
