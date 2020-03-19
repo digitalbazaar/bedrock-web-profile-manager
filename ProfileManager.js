@@ -351,7 +351,6 @@ export default class ProfileManager {
     const edvDocument = new EdvDocument({
       capability: profileAgent.zcaps.capabilitySetDocument,
       keyAgreementKey: new KeyAgreementKey({
-        // FIXME: is this the proper way to get this ID?
         id: profileAgent.zcaps.capabilitySetKak.invocationTarget.id,
         type: profileAgent.zcaps.capabilitySetKak.invocationTarget.type,
         capability: profileAgent.zcaps.capabilitySetKak,
@@ -770,7 +769,6 @@ export default class ProfileManager {
       capability: profileAgent.zcaps.capabilitySetDocument,
       invocationSigner,
       keyAgreementKey: new KeyAgreementKey({
-        // FIXME: is this the proper way to get this ID?
         id: profileAgent.zcaps.capabilitySetKak.invocationTarget.id,
         type: profileAgent.zcaps.capabilitySetKak.invocationTarget.type,
         capability: profileAgent.zcaps.capabilitySetKak,
