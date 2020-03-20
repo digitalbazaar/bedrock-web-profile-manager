@@ -218,8 +218,6 @@ export default class ProfileManager {
     const {kmsClient, invocationSigner, zcaps} = await this.getProfileSigner(
       {profileAgent});
 
-    console.log('ZZZZZZZZZZCAPS', zcaps);
-
     // FIXME: can this key be contructed without the search?
     // the challenge is that the referenceId (zcaps[referenceId]) is a DID
     // key that includes a hash fragment
