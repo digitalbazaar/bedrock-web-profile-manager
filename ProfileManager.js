@@ -95,14 +95,21 @@ export default class ProfileManager {
 
   async createUserDocument({
     edvClient, invocationSigner, profileAgentId, referenceId,
-    content = {zcaps: {}}
+    content = {}
   }) {
     edvClient.ensureIndex({attribute: 'content.profileAgentId'});
 
     // create the user document for the profile agent
     const userDocument = await edvClient.insert({
       doc: {
-        content: {...content, profileAgentId},
+        content: {
+          ...content,
+          // in some cases, this is profileId, should this always be case?
+          id: content.id || uuid(),
+          profileAgentId,
+          type: ['Person', 'User'],
+          zcaps: content.zcaps || {},
+        },
       },
       invocationSigner,
     });
