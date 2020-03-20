@@ -99,13 +99,18 @@ export default class ProfileManager {
   }) {
     edvClient.ensureIndex({attribute: 'content.profileAgentId'});
 
+    // FIXME: content.id *must* be the profileId if this is by design
+    // how can the ID best be validated?
+    // content.id is used to dereference profileAgents
+    if(!content.id) {
+      throw new TypeError('"content.id" is required.');
+    }
+
     // create the user document for the profile agent
     const userDocument = await edvClient.insert({
       doc: {
         content: {
           ...content,
-          // in some cases, this is profileId, should this always be case?
-          id: content.id || uuid(),
           profileAgentId,
           type: ['Person', 'User'],
           zcaps: content.zcaps || {},
