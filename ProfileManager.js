@@ -515,8 +515,6 @@ export default class ProfileManager {
     const {edvClient, invocationSigner} = await this.getUsersEdv(
       {profileAgent, referenceId: usersReferenceId});
 
-    edvClient.ensureIndex({attribute: 'content.type'});
-
     const results = await edvClient.find({
       equals: {'content.type': 'User'},
       invocationSigner
