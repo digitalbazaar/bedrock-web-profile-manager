@@ -513,10 +513,6 @@ export default class ProfileManager {
     if(!usersReferenceId) {
       usersReferenceId = edvs.getReferenceId('users');
     }
-    // const {edv: usersEdv, invocationSigner} = await this.getProfileEdv({
-    //   profileId,
-    //   referenceId: usersReferenceId
-    // });
 
     const {profileAgent} = await this._profileService.getAgentByProfile({
       account: this.accountId,
@@ -527,12 +523,6 @@ export default class ProfileManager {
       {profileAgent, referenceId: usersReferenceId});
 
     edvClient.ensureIndex({attribute: 'content.type'});
-
-    // FIXME: remove unneeded indexes
-    // edvClient.ensureIndex({attribute: 'content.id'});
-    // edvClient.ensureIndex({attribute: 'content.name'});
-    // edvClient.ensureIndex({attribute: 'content.email'});
-    // edvClient.ensureIndex({attribute: 'content.profileAgent'});
 
     const results = await edvClient.find({
       equals: {'content.type': 'User'},
