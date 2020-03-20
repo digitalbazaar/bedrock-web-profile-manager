@@ -248,6 +248,11 @@ export default class ProfileManager {
 
     edvClient.ensureIndex({attribute: 'content.profileAgentId'});
     edvClient.ensureIndex({attribute: 'content.id'});
+    edvClient.ensureIndex({attribute: 'content.type'});
+    edvClient.ensureIndex({attribute: 'content.name'});
+    edvClient.ensureIndex({attribute: 'content.email'});
+    // FIXME: profileAgent needs to be factored out in favor of profileAgentId
+    edvClient.ensureIndex({attribute: 'content.profileAgent'});
 
     return {
       edvClient,
