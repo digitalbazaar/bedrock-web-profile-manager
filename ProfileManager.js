@@ -454,12 +454,6 @@ export default class ProfileManager {
       referenceId: usersReferenceId
     });
 
-    // FIXME: should these ensureIndex calls be in getUsersEdv?
-    edvClient.ensureIndex({attribute: 'content.id'});
-    edvClient.ensureIndex({attribute: 'content.type'});
-    edvClient.ensureIndex({attribute: 'content.name'});
-    edvClient.ensureIndex({attribute: 'content.email'});
-    edvClient.ensureIndex({attribute: 'content.profileAgent'});
     await edvClient.insert({
       doc: userDoc,
       invocationSigner,
