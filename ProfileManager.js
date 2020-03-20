@@ -240,6 +240,7 @@ export default class ProfileManager {
     });
 
     edvClient.ensureIndex({attribute: 'content.profileAgentId'});
+    edvClient.ensureIndex({attribute: 'content.id'});
 
     return {
       edvClient,
@@ -455,24 +456,19 @@ export default class ProfileManager {
     return userDoc.content;
   }
 
-  async updateUser({profileId, usersReferenceId, content}) {
+  async updateUser({profileAgent, usersReferenceId, content}) {
     if(!usersReferenceId) {
       usersReferenceId = edvs.getReferenceId('users');
     }
-    const {edv: usersEdv, invocationSigner} = await this.getProfileEdv({
-      profileId,
-      referenceId: usersReferenceId
-    });
-    const [userDoc] = await usersEdv.find({
+    const {edvClient, invocationSigner} = await this.getUsersEdv(
+      {profileAgent, referenceId: usersReferenceId});
+
+    const [userDoc] = await edvClient.find({
       equals: {'content.id': content.id},
       invocationSigner
     });
-    usersEdv.ensureIndex({attribute: 'content.id'});
-    usersEdv.ensureIndex({attribute: 'content.type'});
-    usersEdv.ensureIndex({attribute: 'content.name'});
-    usersEdv.ensureIndex({attribute: 'content.email'});
-    usersEdv.ensureIndex({attribute: 'content.profileAgent'});
-    const updatedUserDoc = await usersEdv.update({
+
+    const updatedUserDoc = await edvClient.update({
       doc: {
         ...userDoc,
         content: {
@@ -486,23 +482,14 @@ export default class ProfileManager {
     return updatedUserDoc.content;
   }
 
-  async getUser({profileId, userId, usersReferenceId} = {}) {
+  async getUser({profileAgent, userId, usersReferenceId} = {}) {
     if(!usersReferenceId) {
       usersReferenceId = edvs.getReferenceId('users');
     }
-    const {
-      edv: usersEdv,
-      invocationSigner
-    } = await this.getProfileEdv({
-      profileId,
-      referenceId: usersReferenceId
-    });
-    usersEdv.ensureIndex({attribute: 'content.id'});
-    usersEdv.ensureIndex({attribute: 'content.type'});
-    usersEdv.ensureIndex({attribute: 'content.name'});
-    usersEdv.ensureIndex({attribute: 'content.email'});
-    usersEdv.ensureIndex({attribute: 'content.profileAgent'});
-    const [userDoc] = await usersEdv.find({
+    const {edvClient, invocationSigner} = await this.getUsersEdv(
+      {profileAgent, referenceId: usersReferenceId});
+
+    const [userDoc] = await edvClient.find({
       equals: {'content.id': userId},
       invocationSigner
     });
@@ -531,27 +518,18 @@ export default class ProfileManager {
     return results.map(({content}) => content);
   }
 
-  async deleteUser({profileId, userId, usersReferenceId} = {}) {
+  async deleteUser({profileAgent, userId, usersReferenceId} = {}) {
     if(!usersReferenceId) {
       usersReferenceId = edvs.getReferenceId('users');
     }
-    const {
-      edv: usersEdv,
-      invocationSigner
-    } = await this.getProfileEdv({
-      profileId,
-      referenceId: usersReferenceId
-    });
-    usersEdv.ensureIndex({attribute: 'content.id'});
-    usersEdv.ensureIndex({attribute: 'content.type'});
-    usersEdv.ensureIndex({attribute: 'content.name'});
-    usersEdv.ensureIndex({attribute: 'content.email'});
-    usersEdv.ensureIndex({attribute: 'content.profileAgent'});
-    const [userDoc] = await usersEdv.find({
+    const {edvClient, invocationSigner} = await this.getUsersEdv(
+      {profileAgent, referenceId: usersReferenceId});
+
+    const [userDoc] = await edvClient.find({
       equals: {'content.id': userId},
       invocationSigner
     });
-    return usersEdv.delete({
+    return edvClient.delete({
       id: userDoc.id,
       invocationSigner
     });
