@@ -97,11 +97,12 @@ export default class ProfileManager {
     edvClient, invocationSigner, profileAgentId, referenceId,
     content = {}
   }) {
+    if(!referenceId) {
+      referenceId = edvs.getReferenceId('users');
+    }
+
     edvClient.ensureIndex({attribute: 'content.profileAgentId'});
 
-    // FIXME: content.id *must* be the profileId if this is by design
-    // how can the ID best be validated?
-    // content.id is used to dereference profileAgents
     if(!content.id) {
       throw new TypeError('"content.id" is required.');
     }
@@ -112,7 +113,6 @@ export default class ProfileManager {
         content: {
           ...content,
           profileAgentId,
-          type: ['Person', 'User'],
           zcaps: content.zcaps || {},
         },
       },
@@ -439,19 +439,17 @@ export default class ProfileManager {
     };
   }
 
+  // FIXME: usage of this API has been replaced with
+  // createUserDocument API
   // FIXME: split functions up into separate files/services
   async createUser({profileAgent, usersReferenceId, content}) {
+    // TODO: validate content
     if(!usersReferenceId) {
       usersReferenceId = edvs.getReferenceId('users');
     }
     const userDoc = {
       id: await EdvClient.generateId(),
-      content: {
-        ...content,
-        id: uuid(),
-        type: 'User',
-        authorizedDate: (new Date()).toISOString()
-      }
+      content,
     };
 
     const {edvClient, invocationSigner} = await this.getUsersEdv({
@@ -748,13 +746,19 @@ export default class ProfileManager {
 
     const invocationSigner = await this.getProfileAgentSigner({profileAgentId});
 
+    console.log('NEWPROFILEAGENT', JSON.stringify(profileAgent, null, 2));
+
     // return profile capability invocation key if it hasn't been
     // moved to a capability set EDV document yet; this only happens
     // when a new profile is being provisioned
     if(profileAgent.zcaps.profileCapabilityInvocationKey) {
       return {
         zcap: profileAgent.zcaps.profileCapabilityInvocationKey,
-        invocationSigner
+        invocationSigner,
+        zcaps: {
+          [profileAgent.zcaps.profileCapabilityInvocationKey.referenceId]:
+            profileAgent.zcaps.profileCapabilityInvocationKey
+        }
       };
     }
 
