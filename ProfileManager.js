@@ -97,11 +97,12 @@ export default class ProfileManager {
     edvClient, invocationSigner, profileAgentId, referenceId,
     content = {}
   }) {
+    if(!referenceId) {
+      referenceId = edvs.getReferenceId('users');
+    }
+
     edvClient.ensureIndex({attribute: 'content.profileAgentId'});
 
-    // FIXME: content.id *must* be the profileId if this is by design
-    // how can the ID best be validated?
-    // content.id is used to dereference profileAgents
     if(!content.id) {
       throw new TypeError('"content.id" is required.');
     }
@@ -111,8 +112,6 @@ export default class ProfileManager {
       doc: {
         content: {
           ...content,
-          profileAgentId,
-          type: ['Person', 'User'],
           zcaps: content.zcaps || {},
         },
       },
@@ -372,6 +371,29 @@ export default class ProfileManager {
       }));
     }
 
+    const profileAgentDetails = await this.getProfileAgent({profileAgent});
+    const referenceId = edvs.getReferenceId('users-edv-document');
+    const capability = profileAgentDetails.zcaps[referenceId];
+
+    const invocationSigner = await this.getProfileAgentSigner(
+      {profileAgentId: profileAgent.id});
+
+    const edvDocument = new EdvDocument({
+      capability,
+      keyAgreementKey: _userDocumentKak({invocationSigner, profileAgent}),
+      invocationSigner,
+    });
+
+    const {content} = await edvDocument.read();
+
+    return content;
+  }
+
+  async getProfileAgent({profileAgent} = {}) {
+    if(!(profileAgent)) {
+      throw new TypeError('"profileAgent" parameter is required.');
+    }
+
     const invocationSigner = await this.getProfileAgentSigner(
       {profileAgentId: profileAgent.id});
 
@@ -439,19 +461,17 @@ export default class ProfileManager {
     };
   }
 
+  // FIXME: usage of this API has been replaced with
+  // createUserDocument API
   // FIXME: split functions up into separate files/services
   async createUser({profileAgent, usersReferenceId, content}) {
+    // TODO: validate content
     if(!usersReferenceId) {
       usersReferenceId = edvs.getReferenceId('users');
     }
     const userDoc = {
       id: await EdvClient.generateId(),
-      content: {
-        ...content,
-        id: uuid(),
-        type: 'User',
-        authorizedDate: (new Date()).toISOString()
-      }
+      content,
     };
 
     const {edvClient, invocationSigner} = await this.getUsersEdv({
@@ -521,7 +541,9 @@ export default class ProfileManager {
       {profileAgent, referenceId: usersReferenceId});
 
     const results = await edvClient.find({
-      equals: {'content.type': 'User'},
+      // FIXME: bug in equals implementation here
+      // equals: {'content.type': ['Person', 'User']},
+      has: 'content.type',
       invocationSigner
     });
     return results.map(({content}) => content);
@@ -754,7 +776,11 @@ export default class ProfileManager {
     if(profileAgent.zcaps.profileCapabilityInvocationKey) {
       return {
         zcap: profileAgent.zcaps.profileCapabilityInvocationKey,
-        invocationSigner
+        invocationSigner,
+        zcaps: {
+          [profileAgent.zcaps.profileCapabilityInvocationKey.referenceId]:
+            profileAgent.zcaps.profileCapabilityInvocationKey
+        }
       };
     }
 
