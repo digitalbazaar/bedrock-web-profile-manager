@@ -112,7 +112,6 @@ export default class ProfileManager {
       doc: {
         content: {
           ...content,
-          profileAgentId,
           zcaps: content.zcaps || {},
         },
       },
@@ -370,6 +369,30 @@ export default class ProfileManager {
         account: this.accountId,
         profile: profileId
       }));
+    }
+
+    const x = await this.getProfileAgent({profileAgent});
+
+    // FIXME: compute the referenceId
+    const capability = x.zcaps['localhost:users-edv-document'];
+
+    const invocationSigner = await this.getProfileAgentSigner(
+      {profileAgentId: profileAgent.id});
+
+    const edvDocument = new EdvDocument({
+      capability,
+      keyAgreementKey: _userDocumentKak({invocationSigner, profileAgent}),
+      invocationSigner,
+    });
+
+    const {content} = await edvDocument.read();
+
+    return content;
+  }
+
+  async getProfileAgent({profileAgent} = {}) {
+    if(!(profileAgent)) {
+      throw new TypeError('"profileAgent" parameter is required.');
     }
 
     const invocationSigner = await this.getProfileAgentSigner(
@@ -745,8 +768,6 @@ export default class ProfileManager {
     const {id: profileAgentId, profile: profileId} = profileAgent;
 
     const invocationSigner = await this.getProfileAgentSigner({profileAgentId});
-
-    console.log('NEWPROFILEAGENT', JSON.stringify(profileAgent, null, 2));
 
     // return profile capability invocation key if it hasn't been
     // moved to a capability set EDV document yet; this only happens
