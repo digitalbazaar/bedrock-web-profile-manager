@@ -542,7 +542,9 @@ export default class ProfileManager {
       {profileAgent, referenceId: usersReferenceId});
 
     const results = await edvClient.find({
-      equals: {'content.type': 'User'},
+      // FIXME: bug in equals implementation here
+      // equals: {'content.type': ['Person', 'User']},
+      has: 'content.type',
       invocationSigner
     });
     return results.map(({content}) => content);
