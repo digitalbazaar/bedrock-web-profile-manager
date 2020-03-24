@@ -371,10 +371,9 @@ export default class ProfileManager {
       }));
     }
 
-    const x = await this.getProfileAgent({profileAgent});
-
-    // FIXME: compute the referenceId
-    const capability = x.zcaps['localhost:users-edv-document'];
+    const profileAgentDetails = await this.getProfileAgent({profileAgent});
+    const referenceId = edvs.getReferenceId('users-edv-document');
+    const capability = profileAgentDetails.zcaps[referenceId];
 
     const invocationSigner = await this.getProfileAgentSigner(
       {profileAgentId: profileAgent.id});
