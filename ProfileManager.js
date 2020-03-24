@@ -17,7 +17,6 @@ import {
 } from 'webkms-client';
 import {EdvClient, EdvDocument} from 'edv-client';
 import jsigs from 'jsonld-signatures';
-import uuid from 'uuid-random';
 import EdvClientCache from './EdvClientCache.js';
 import edvs from './edvs';
 import utils from './utils';
