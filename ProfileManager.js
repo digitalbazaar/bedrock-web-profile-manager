@@ -372,8 +372,8 @@ export default class ProfileManager {
     }
 
     const profileAgentDetails = await this.getProfileAgent({profileAgent});
-    const referenceId = edvs.getReferenceId('users-edv-document');
-    const capability = profileAgentDetails.zcaps[referenceId];
+    const documentReferenceId = edvs.getReferenceId('users-edv-document');
+    const capability = profileAgentDetails.zcaps[documentReferenceId];
 
     const invocationSigner = await this.getProfileAgentSigner(
       {profileAgentId: profileAgent.id});
