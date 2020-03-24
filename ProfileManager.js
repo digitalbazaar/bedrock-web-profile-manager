@@ -17,7 +17,6 @@ import {
 } from 'webkms-client';
 import {EdvClient, EdvDocument} from 'edv-client';
 import jsigs from 'jsonld-signatures';
-import uuid from 'uuid-random';
 import EdvClientCache from './EdvClientCache.js';
 import edvs from './edvs';
 import utils from './utils';
@@ -93,7 +92,7 @@ export default class ProfileManager {
     await this._sessionChanged({newData: session.data});
   }
 
-  async createUserDocument({
+  async createUser({
     edvClient, invocationSigner, profileAgentId, referenceId,
     content = {}
   }) {
@@ -372,8 +371,8 @@ export default class ProfileManager {
     }
 
     const profileAgentDetails = await this.getProfileAgent({profileAgent});
-    const referenceId = edvs.getReferenceId('users-edv-document');
-    const capability = profileAgentDetails.zcaps[referenceId];
+    const documentReferenceId = edvs.getReferenceId('users-edv-document');
+    const capability = profileAgentDetails.zcaps[documentReferenceId];
 
     const invocationSigner = await this.getProfileAgentSigner(
       {profileAgentId: profileAgent.id});
@@ -459,32 +458,6 @@ export default class ProfileManager {
       // read deep in the call stack. Need to clean this up.
       zcaps
     };
-  }
-
-  // FIXME: usage of this API has been replaced with
-  // createUserDocument API
-  // FIXME: split functions up into separate files/services
-  async createUser({profileAgent, usersReferenceId, content}) {
-    // TODO: validate content
-    if(!usersReferenceId) {
-      usersReferenceId = edvs.getReferenceId('users');
-    }
-    const userDoc = {
-      id: await EdvClient.generateId(),
-      content,
-    };
-
-    const {edvClient, invocationSigner} = await this.getUsersEdv({
-      profileAgent,
-      referenceId: usersReferenceId
-    });
-
-    await edvClient.insert({
-      doc: userDoc,
-      invocationSigner,
-      keyResolver
-    });
-    return userDoc.content;
   }
 
   async updateUser({profileAgent, usersReferenceId, content}) {
