@@ -100,6 +100,12 @@ export default class ProfileManager {
       referenceId = edvs.getReferenceId('users');
     }
 
+    edvClient.ensureIndex({attribute: 'content.id'});
+    edvClient.ensureIndex({attribute: 'content.type'});
+    edvClient.ensureIndex({attribute: 'content.name'});
+    edvClient.ensureIndex({attribute: 'content.email'});
+    // FIXME: profileAgent needs to be factored out in favor of profileAgentId
+    edvClient.ensureIndex({attribute: 'content.profileAgent'});
     edvClient.ensureIndex({attribute: 'content.profileAgentId'});
 
     if(!content.id) {
