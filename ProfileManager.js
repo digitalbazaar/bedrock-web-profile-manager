@@ -159,6 +159,69 @@ export default class ProfileManager {
     };
   }
 
+  async initializeAccessManagement({
+    edvClient,
+    invocationSigner,
+    profileAgentDetails,
+    profileAgentId,
+    profileAgentZcaps,
+    profileDetails,
+    profileDocumentReferenceId,
+    profileId,
+  }) {
+    // create the user document for the profile
+    // NOTE: profileDetails = {name: 'ACME', color: '#aaaaaa'}
+    const profileUserDocumentDetails = await this.createUser({
+      edvClient, invocationSigner, profileAgentId,
+      referenceId: profileDocumentReferenceId,
+      // referenceId: config.DEFAULT_EDVS.users,
+      content: {
+        ...profileDetails,
+        id: profileId,
+        // FIXME: select one of profileAgent or profileAgentId
+        profileAgent: profileAgentId,
+        profileAgentId,
+      },
+    });
+
+    // capablities to enable the profile agent to read the profile's user doc
+    for(const capability of Object.values(profileUserDocumentDetails.zcaps)) {
+      profileAgentZcaps[capability.referenceId] = capability;
+    }
+
+    const profileAgentUserDocumentDetails =
+      await this.createUser({
+        edvClient, invocationSigner, profileAgentId,
+        content: {
+          // includes: name, email
+          ...profileAgentDetails,
+          id: profileAgentId,
+          type: ['User', 'Person'],
+          // FIXME: removal of profileAgent in favor of profileAgentId needs
+          // further discussion, possibly use `type` of 'agent` possibly
+          profileAgent: profileAgentId,
+          profileAgentId,
+          access: 'full',
+          zcaps: profileAgentZcaps,
+          authorizedDate: (new Date()).toISOString(),
+        }
+      });
+
+    // store capabilities for accessing the profile agent's user document and
+    // the kak in the profileAgent record in the backend
+    await this._profileService.updateAgentCapabilitySet({
+      account: this.accountId,
+      profileAgentId,
+      // this map includes capabilities for user document and kak
+      zcaps: profileAgentUserDocumentDetails.zcaps,
+    });
+
+    return {
+      profileAgentUserDocumentDetails,
+      profileUserDocumentDetails,
+    };
+  }
+
   // TODO: add docs
   async createProfileEdv({
     invocationSigner, kmsClient, profileAgentId, profileId, referenceId
