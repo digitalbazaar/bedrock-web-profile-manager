@@ -228,6 +228,7 @@ export default class ProfileManager {
     profileDetails,
     profileDocumentReferenceId,
     profileId,
+    profileZcaps = {},
   }) {
     // create the user document for the profile
     // NOTE: profileDetails = {name: 'ACME', color: '#aaaaaa'}
@@ -241,6 +242,7 @@ export default class ProfileManager {
         // FIXME: select one of profileAgent or profileAgentId
         profileAgent: profileAgentId,
         profileAgentId,
+        zcaps: profileZcaps,
       },
     });
 
