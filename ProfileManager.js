@@ -620,7 +620,7 @@ export default class ProfileManager {
     });
   }
 
-  async delegateCapability({profileId, request}) {
+  async delegateCapability({request}) {
     const {
       invocationTarget, invoker, delegator, referenceId, allowedAction, caveat
     } = request;
@@ -630,10 +630,8 @@ export default class ProfileManager {
         '"invocationTarget" must be an object that includes a "type".');
     }
 
-    const edvClient = await this.getProfileEdv({profileId});
-
-    // TODO: to reduce correlation between the account and multiple profiles,
-    // generate a unique capability agent per profile DID
+    // TODO: delegator should be a profile the user selected and
+    // we should use a profile agent to invoke its zcap for delegating
     const signer = this.capabilityAgent.getSigner();
 
     let zcap = {
@@ -684,92 +682,46 @@ export default class ProfileManager {
         type: targetType
       };
 
-      if(target) {
-        // TODO: handle case where an existing target is requested
-      } else {
-        // use 128-bit random multibase encoded value
-        const docId = await EdvClient.generateId();
-        zcap.invocationTarget.id = `${edvClient.id}/documents/${docId}`;
-        // insert empty doc to establish self as a recipient
-        const doc = {
-          id: docId,
-          content: {}
-        };
-        // TODO: this is not clean; zcap query needs work! ... another
-        // option is to get a `keyAgreement` verification method from
-        // the controller of the `invoker`
-        const recipients = [{
-          header: {
-            kid: edvClient.keyAgreementKey.id,
-            alg: JWE_ALG
-          }
-        }];
-        if(invocationTarget.recipient) {
-          recipients.push(invocationTarget.recipient);
-        }
-        const invocationSigner = this.capabilityAgent.getSigner();
-        await edvClient.insert({doc, recipients, invocationSigner});
-      }
+      // FIXME: always pass parentCapability
       if(!parentCapability) {
-        const idx = zcap.invocationTarget.id.lastIndexOf('/');
-        const docId = zcap.invocationTarget.id.substr(idx + 1);
-        parentCapability = `${edvClient.id}/zcaps/documents/${docId}`;
+        throw new Error('Not implemented: FIXME, parentCapability required');
+        // const idx = zcap.invocationTarget.id.lastIndexOf('/');
+        // const docId = zcap.invocationTarget.id.substr(idx + 1);
+        //parentCapability = `${edvClient.id}/zcaps/documents/${docId}`;
       }
       zcap.parentCapability = parentCapability;
       zcap = await _delegate({zcap, signer});
-
-      // enable zcap via edv client
-      await edvClient.enableCapability(
-        {capabilityToEnable: zcap, invocationSigner: signer});
     } else if(targetType === 'urn:edv:documents') {
       zcap.invocationTarget = {
         id: target,
         type: targetType
       };
 
-      if(target) {
-        // TODO: handle case where an existing target is requested
-      } else {
-        // TODO: note that only the recipient of the zcap will be able
-        // to read the documents it writes -- as no recipient is specified
-        // here ... could add this to the zcap as a special caveat that
-        // requires the recipient always be present for every document written
-        zcap.invocationTarget.id = `${edvClient.id}/documents`;
-      }
       if(!parentCapability) {
-        parentCapability = `${edvClient.id}/zcaps/documents`;
+        throw new Error('Not implemented: FIXME, parentCapability required');
+        //parentCapability = `${edvClient.id}/zcaps/documents`;
       }
       zcap.parentCapability = parentCapability;
       zcap = await _delegate({zcap, signer});
-
-      // enable zcap via edv client
-      await edvClient.enableCapability(
-        {capabilityToEnable: zcap, invocationSigner: signer});
     } else if(targetType === 'urn:edv:revocations') {
       zcap.invocationTarget = {
         id: target,
         type: targetType
       };
 
-      if(target) {
-        // TODO: handle case where an existing target is requested
-      } else {
-        zcap.invocationTarget.id = `${edvClient.id}/revocations`;
-      }
       if(!parentCapability) {
-        parentCapability = `${edvClient.id}/zcaps/revocations`;
+        throw new Error('Not implemented: FIXME, parentCapability required');
+        //parentCapability = `${edvClient.id}/zcaps/revocations`;
       }
       zcap.parentCapability = parentCapability;
       zcap = await _delegate({zcap, signer});
-
-      // enable zcap via edv client
-      await edvClient.enableCapability(
-        {capabilityToEnable: zcap, invocationSigner: signer});
     } else if(targetType === 'urn:webkms:revocations') {
       zcap.invocationTarget = {
         id: target,
         type: targetType
       };
+      // FIXME: need to get the keystoreAgent associated with a profile
+      // that is delegating the zcap
       const keystore = this.keystoreAgent.keystore.id;
 
       if(target) {
