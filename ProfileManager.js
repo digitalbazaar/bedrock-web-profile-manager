@@ -159,6 +159,60 @@ export default class ProfileManager {
     };
   }
 
+  async delegateEdvCapabilities({
+    edvClient,
+    invocationSigner,
+    profileAgentId,
+    referenceId
+  }) {
+    const delegateEdvConfigurationRequest = {
+      referenceId: `${referenceId}-edv-configuration`,
+      allowedAction: ['read', 'write'],
+      controller: profileAgentId,
+      invocationTarget: {
+        id: `${edvClient.id}/documents`,
+        type: 'urn:edv:documents'
+      }
+    };
+    const delegateEdvHmacRequest = {
+      referenceId: `${referenceId}-hmac`,
+      allowedAction: 'sign',
+      controller: profileAgentId,
+      invocationTarget: {
+        id: edvClient.hmac.id,
+        type: edvClient.hmac.type,
+        verificationMethod: edvClient.hmac.id
+      }
+    };
+    const delegateEdvKakRequest = {
+      referenceId: `${referenceId}-kak`,
+      allowedAction: ['deriveSecret', 'sign'],
+      controller: profileAgentId,
+      invocationTarget: {
+        id: edvClient.keyAgreementKey.id,
+        type: edvClient.keyAgreementKey.type,
+        verificationMethod: edvClient.keyAgreementKey.id
+      }
+    };
+    const zcaps = await Promise.all([
+      utils.delegateCapability({
+        edvClient,
+        signer: invocationSigner,
+        request: delegateEdvConfigurationRequest
+      }),
+      utils.delegateCapability({
+        signer: invocationSigner,
+        request: delegateEdvHmacRequest
+      }),
+      utils.delegateCapability({
+        signer: invocationSigner,
+        request: delegateEdvKakRequest
+      })
+    ]);
+
+    return {zcaps};
+  }
+
   async initializeAccessManagement({
     edvClient,
     invocationSigner,
@@ -224,9 +278,12 @@ export default class ProfileManager {
 
   // TODO: add docs
   async createProfileEdv({
-    invocationSigner, kmsClient, profileAgentId, profileId, referenceId
+    invocationSigner,
+    kmsClient,
+    profileId,
+    referenceId,
   }) {
-    const edv = await edvs.create({
+    const edvClient = await edvs.create({
       invocationSigner,
       kmsClient,
       kmsModule: this.kmsModule,
@@ -234,55 +291,8 @@ export default class ProfileManager {
       referenceId,
       edvBaseUrl: this.edvBaseUrl,
     });
-    const delegateEdvConfigurationRequest = {
-      referenceId: `${referenceId}-edv-configuration`,
-      allowedAction: ['read', 'write'],
-      controller: profileAgentId,
-      invocationTarget: {
-        id: `${edv.id}/documents`,
-        type: 'urn:edv:documents'
-      }
-    };
-    const delegateEdvHmacRequest = {
-      referenceId: `${referenceId}-hmac`,
-      allowedAction: 'sign',
-      controller: profileAgentId,
-      invocationTarget: {
-        id: edv.hmac.id,
-        type: edv.hmac.type,
-        verificationMethod: edv.hmac.id
-      }
-    };
-    const delegateEdvKakRequest = {
-      referenceId: `${referenceId}-kak`,
-      allowedAction: ['deriveSecret', 'sign'],
-      controller: profileAgentId,
-      invocationTarget: {
-        id: edv.keyAgreementKey.id,
-        type: edv.keyAgreementKey.type,
-        verificationMethod: edv.keyAgreementKey.id
-      }
-    };
-    const edvZcaps = await Promise.all([
-      utils.delegateCapability({
-        edvClient: edv,
-        signer: invocationSigner,
-        request: delegateEdvConfigurationRequest
-      }),
-      utils.delegateCapability({
-        signer: invocationSigner,
-        request: delegateEdvHmacRequest
-      }),
-      utils.delegateCapability({
-        signer: invocationSigner,
-        request: delegateEdvKakRequest
-      })
-    ]);
-    return {
-      edv,
-      edvConfigZcap: edvZcaps[0],
-      zcaps: edvZcaps,
-    };
+
+    return {edvClient};
   }
 
   async getUsersEdv({referenceId, profileAgent}) {
