@@ -167,11 +167,6 @@ export default class ProfileManager {
   }
 
   async delegateEdvCapabilities({
-    // TODO: pass in `edvId` (optional) OR `parentCapabilities` that
-    // includes the edv parent capability from which the invocation
-    // target for the delegation will be created... if `parentCapabilities`
-    // are passed, each `parentCapability` must be referenced in the
-    // delegations that are created
     edvId,
     hmac,
     keyAgreementKey,
@@ -189,13 +184,7 @@ export default class ProfileManager {
       // FIXME: why is this the reference ID?
       referenceId: `${referenceId}-edv-configuration`,
       allowedAction: ['read', 'write'],
-      controller: profileAgentId,
-      invocationTarget: {
-        id: edvId ?
-          `${edvId}/documents` :
-          parentCapabilities.edv.invocationTarget.id,
-        type: 'urn:edv:documents'
-      }
+      controller: profileAgentId
     };
     if(edvId) {
       delegateEdvConfigurationRequest.invocationTarget = {
