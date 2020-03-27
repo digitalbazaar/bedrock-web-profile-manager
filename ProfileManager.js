@@ -285,7 +285,7 @@ export default class ProfileManager {
     };
   }
 
-  async createEdvRecipient({
+  async createEdvRecipientKeys({
     invocationSigner,
     kmsClient,
   }) {
