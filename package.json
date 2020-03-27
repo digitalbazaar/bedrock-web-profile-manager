@@ -18,7 +18,7 @@
     "bedrock-web-session": "^1.2.0",
     "bedrock-web-store": "^1.2.0",
     "crypto-ld": "^3.7.0",
-    "did-veres-one": "^10.1.0",
+    "did-veres-one": "veres-one/did-veres-one#ocapld-next",
     "edv-client": "^2.4.1",
     "fast-json-patch": "^2.2.1",
     "jsonld-signatures": "^5.0.1",
