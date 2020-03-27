@@ -9,19 +9,27 @@ import keyResolver from './keyResolver';
 /**
  * Creates a new EDV and returns an EdvClient for it.
  *
+ * @param {Object} options - The options to use.
+ *
  * @returns {Promise<EdvClient>} Resolves to a EdvClient.
  */
 export async function create({
   invocationSigner, referenceId, profileId, edvBaseUrl,
-  keys: {keyAgreementKey, hmac}
+  keys: {keyAgreementKey, hmac} = {}
 } = {}) {
   // create edv
   let config = {
     sequence: 0,
     controller: profileId,
-    keyAgreementKey: {id: keyAgreementKey.id, type: keyAgreementKey.type},
-    hmac: {id: hmac.id, type: hmac.type}
   };
+  if(keyAgreementKey) {
+    config.keyAgreementKey = {
+      id: keyAgreementKey.id, type: keyAgreementKey.type
+    };
+  }
+  if(hmac) {
+    config.hmac = {id: hmac.id, type: hmac.type};
+  }
   if(referenceId) {
     config.referenceId = referenceId;
   }
