@@ -167,6 +167,9 @@ export default class ProfileManager {
   }
 
   async delegateEdvCapabilities({
+    // TODO: pass in `edvId` (optional) OR `parentCapabilities` that
+    // includes the edv parent capability from which the invocation
+    // target for the delegation will be created
     edvClient,
     invocationSigner,
     profileAgentId,
