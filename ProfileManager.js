@@ -212,22 +212,12 @@ export default class ProfileManager {
       delegateEdvHmacRequest.invocationTarget = {...invocationTarget};
     }
 
-    if(parentCapabilities.hmac) {
-      delegateEdvHmacRequest.parentCapability =
-        parentCapabilities.hmac.id;
-    }
-
     const delegateEdvKakRequest = {
       referenceId: `${referenceId}-kak`,
       allowedAction: ['deriveSecret', 'sign'],
-      controller: profileAgentId,
-      invocationTarget: {
-        id: keyAgreementKey.id,
-        type: keyAgreementKey.type,
-        verificationMethod: keyAgreementKey.id
-      }
+      controller: profileAgentId
     };
-    if(hmac) {
+    if(keyAgreementKey) {
       delegateEdvKakRequest.invocationTarget = {
         id: keyAgreementKey.id,
         type: keyAgreementKey.type,
