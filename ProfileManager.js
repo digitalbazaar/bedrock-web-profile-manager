@@ -240,9 +240,6 @@ export default class ProfileManager {
       content: {
         ...profileDetails,
         id: profileId,
-        // FIXME: select one of profileAgent or profileAgentId
-        profileAgent: profileAgentId,
-        profileAgentId,
         zcaps: profileZcaps,
       },
     });
@@ -260,8 +257,8 @@ export default class ProfileManager {
           ...profileAgentDetails,
           id: profileAgentId,
           type: ['User', 'Person'],
-          // FIXME: removal of profileAgent in favor of profileAgentId needs
-          // further discussion, possibly use `type` of 'agent` possibly
+          // FIXME: remove `profileAgent` and `profileAgentId` completely,
+          // these are given via `id`
           profileAgent: profileAgentId,
           profileAgentId,
           access: 'full',
