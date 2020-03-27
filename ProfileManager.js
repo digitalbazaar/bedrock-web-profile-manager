@@ -316,13 +316,19 @@ export default class ProfileManager {
     profileId,
     referenceId,
   }) {
-    const edvClient = await edvs.create({
+    const {hmac, keyAgreementKey} = await this.createEdvRecipientKeys({
       invocationSigner,
       kmsClient,
-      kmsModule: this.kmsModule,
+    });
+    const edvClient = await edvs.create({
+      invocationSigner,
       profileId,
       referenceId,
       edvBaseUrl: this.edvBaseUrl,
+      keys: {
+        hmac,
+        keyAgreementKey,
+      }
     });
 
     return {edvClient};

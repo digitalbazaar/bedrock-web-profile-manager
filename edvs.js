@@ -5,7 +5,6 @@
 
 import {EdvClient} from 'edv-client';
 import keyResolver from './keyResolver';
-import kms from './kms';
 
 /**
  * Creates a new EDV and returns an EdvClient for it.
@@ -13,22 +12,9 @@ import kms from './kms';
  * @returns {Promise<EdvClient>} Resolves to a EdvClient.
  */
 export async function create({
-  invocationSigner, kmsClient, referenceId, profileId, kmsModule, edvBaseUrl
+  invocationSigner, referenceId, profileId, edvBaseUrl,
+  keys: {keyAgreementKey, hmac}
 } = {}) {
-  const [keyAgreementKey, hmac] = await Promise.all([
-    kms.generateKey({
-      invocationSigner,
-      type: 'keyAgreement',
-      kmsClient,
-      kmsModule
-    }),
-    kms.generateKey({
-      invocationSigner,
-      type: 'hmac',
-      kmsClient,
-      kmsModule
-    })
-  ]);
   // create edv
   let config = {
     sequence: 0,
