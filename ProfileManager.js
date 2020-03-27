@@ -17,6 +17,7 @@ import {
 } from 'webkms-client';
 import {EdvClient, EdvDocument} from 'edv-client';
 import jsigs from 'jsonld-signatures';
+import kms from './kms';
 import EdvClientCache from './EdvClientCache.js';
 import edvs from './edvs';
 import utils from './utils';
@@ -281,6 +282,30 @@ export default class ProfileManager {
     return {
       profileAgentUserDocumentDetails,
       profileUserDocumentDetails,
+    };
+  }
+
+  async createEdvRecipient({
+    invocationSigner,
+    kmsClient,
+  }) {
+    const [keyAgreementKey, hmac] = await Promise.all([
+      kms.generateKey({
+        invocationSigner,
+        type: 'keyAgreement',
+        kmsClient,
+        kmsModule: this.kmsModule,
+      }),
+      kms.generateKey({
+        invocationSigner,
+        type: 'hmac',
+        kmsClient,
+        kmsModule: this.kmsModule,
+      })
+    ]);
+    return {
+      hmac,
+      keyAgreementKey,
     };
   }
 
