@@ -700,7 +700,7 @@ export default class ProfileManager {
     });
   }
 
-  async delegateCapability({request}) {
+  async delegateCapability({profileId, request}) {
     const {
       invocationTarget, invoker, delegator, referenceId, allowedAction, caveat
     } = request;
@@ -710,9 +710,14 @@ export default class ProfileManager {
         '"invocationTarget" must be an object that includes a "type".');
     }
 
-    // TODO: delegator should be a profile the user selected and
-    // we should use a profile agent to invoke its zcap for delegating
-    const signer = this.capabilityAgent.getSigner();
+    // profileId will be defined here
+    const {profileAgent} = await this._profileService.getAgentByProfile({
+      account: this.accountId,
+      profile: profileId
+    });
+
+    const {kmsClient, invocationSigner} = await this.getProfileSigner(
+      {profileAgent});
 
     let zcap = {
       '@context': SECURITY_CONTEXT_V2_URL,
@@ -752,10 +757,10 @@ export default class ProfileManager {
         verificationMethod,
       };
       zcap.parentCapability = parentCapability || target;
-      zcap = await _delegate({zcap, signer});
+      zcap = await _delegate({zcap, signer: invocationSigner});
 
-      await this.keystoreAgent.kmsClient.enableCapability(
-        {capabilityToEnable: zcap, invocationSigner: signer});
+      await kmsClient.enableCapability(
+        {capabilityToEnable: zcap, invocationSigner});
     } else if(targetType === 'urn:edv:document') {
       zcap.invocationTarget = {
         id: target,
@@ -770,7 +775,7 @@ export default class ProfileManager {
         //parentCapability = `${edvClient.id}/zcaps/documents/${docId}`;
       }
       zcap.parentCapability = parentCapability;
-      zcap = await _delegate({zcap, signer});
+      zcap = await _delegate({zcap, signer: invocationSigner});
     } else if(targetType === 'urn:edv:documents') {
       zcap.invocationTarget = {
         id: target,
@@ -782,7 +787,7 @@ export default class ProfileManager {
         //parentCapability = `${edvClient.id}/zcaps/documents`;
       }
       zcap.parentCapability = parentCapability;
-      zcap = await _delegate({zcap, signer});
+      zcap = await _delegate({zcap, signer: invocationSigner});
     } else if(targetType === 'urn:edv:revocations') {
       zcap.invocationTarget = {
         id: target,
@@ -794,7 +799,7 @@ export default class ProfileManager {
         //parentCapability = `${edvClient.id}/zcaps/revocations`;
       }
       zcap.parentCapability = parentCapability;
-      zcap = await _delegate({zcap, signer});
+      zcap = await _delegate({zcap, signer: invocationSigner});
     } else if(targetType === 'urn:webkms:revocations') {
       zcap.invocationTarget = {
         id: target,
@@ -813,11 +818,11 @@ export default class ProfileManager {
         parentCapability = `${keystore}/zcaps/revocations`;
       }
       zcap.parentCapability = parentCapability;
-      zcap = await _delegate({zcap, signer});
+      zcap = await _delegate({zcap, signer: invocationSigner});
 
       // enable zcap via kms client
-      await this.keystoreAgent.kmsClient.enableCapability(
-        {capabilityToEnable: zcap, invocationSigner: signer});
+      await kmsClient.enableCapability(
+        {capabilityToEnable: zcap, invocationSigner});
     } else {
       throw new Error(`Unsupported invocation target type "${targetType}".`);
     }
