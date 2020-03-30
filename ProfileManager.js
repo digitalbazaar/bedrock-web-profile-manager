@@ -767,8 +767,9 @@ export default class ProfileManager {
       zcap.parentCapability = parentCapability || target;
       zcap = await _delegate({zcap, signer: invocationSigner});
 
-      await kmsClient.enableCapability(
-        {capabilityToEnable: zcap, invocationSigner});
+      // TODO: only enable zcap for invocation/delegation keys
+      // await kmsClient.enableCapability(
+      //   {capabilityToEnable: zcap, invocationSigner});
     } else if(targetType === 'urn:edv:document') {
       zcap.invocationTarget = {
         id: target,
@@ -827,8 +828,9 @@ export default class ProfileManager {
       zcap = await _delegate({zcap, signer: invocationSigner});
 
       // enable zcap via kms client
-      await kmsClient.enableCapability(
-        {capabilityToEnable: zcap, invocationSigner});
+      // TODO: only enable zcap for invocation/delegation keys
+      // await kmsClient.enableCapability(
+      //   {capabilityToEnable: zcap, invocationSigner});
     } else {
       throw new Error(`Unsupported invocation target type "${targetType}".`);
     }
