@@ -94,24 +94,24 @@ export default class ProfileManager {
   }
 
   async createUser({
-    edvClient, invocationSigner, profileAgentId, referenceId,
-    content = {}
+    profileId, profileAgentId, referenceId, content = {}
   }) {
+    if(!content.id) {
+      throw new TypeError('"content.id" is required.');
+    }
+
     if(!referenceId) {
       referenceId = edvs.getReferenceId('users');
     }
 
-    edvClient.ensureIndex({attribute: 'content.id'});
-    edvClient.ensureIndex({attribute: 'content.type'});
-    edvClient.ensureIndex({attribute: 'content.name'});
-    edvClient.ensureIndex({attribute: 'content.email'});
-    // FIXME: profileAgent needs to be factored out in favor of profileAgentId
-    edvClient.ensureIndex({attribute: 'content.profileAgent'});
-    edvClient.ensureIndex({attribute: 'content.profileAgentId'});
+    const {profileAgent} = await this._profileService.getAgentByProfile({
+      account: this.accountId,
+      profile: profileId
+    });
 
-    if(!content.id) {
-      throw new TypeError('"content.id" is required.');
-    }
+    // TODO: return profile's zcap for reading EDV to enable delegation
+    const {edvClient, invocationSigner} = await this.getUsersEdv(
+      {profileAgent, referenceId});
 
     // create the user document for the profile agent
     const userDocument = await edvClient.insert({
@@ -132,7 +132,9 @@ export default class ProfileManager {
       invocationTarget: {
         id: `${edvClient.id}/documents/${userDocument.id}`,
         type: 'urn:edv:document'
-      }
+      },
+      // TODO: support using an EDV zcap from the profile instead
+      parentCapability: `${edvClient.id}/zcaps/documents/${userDocument.id}`
     };
 
     const delegateEdvKakRequest = {
@@ -143,11 +145,11 @@ export default class ProfileManager {
         id: edvClient.keyAgreementKey.id,
         type: edvClient.keyAgreementKey.type,
         verificationMethod: edvClient.keyAgreementKey.id
-      }
+      },
+      parentCapability: edvClient.keyAgreementKey.id
     };
     const [userDocumentZcap, userKakZcap] = await Promise.all([
       utils.delegateCapability({
-        edvClient,
         signer: invocationSigner,
         request: delegateEdvDocumentRequest
       }),
@@ -161,7 +163,7 @@ export default class ProfileManager {
       userDocument,
       zcaps: {
         userDocument: userDocumentZcap,
-        userKak: userKakZcap,
+        userKak: userKakZcap
       },
     };
   }
@@ -191,9 +193,12 @@ export default class ProfileManager {
         id: `${edvId}/documents`,
         type: 'urn:edv:documents'
       };
+      delegateEdvConfigurationRequest.parentCapability =
+        `${edvId}/zcaps/documents`;
     } else {
-      const {edv: {invocationTarget}} = parentCapabilities;
+      const {edv: {id, invocationTarget}} = parentCapabilities;
       delegateEdvConfigurationRequest.invocationTarget = {...invocationTarget};
+      delegateEdvConfigurationRequest.parentCapability = id;
     }
 
     const delegateEdvHmacRequest = {
@@ -207,9 +212,11 @@ export default class ProfileManager {
         type: hmac.type,
         verificationMethod: hmac.id
       };
+      delegateEdvHmacRequest.parentCapability = hmac.id;
     } else {
-      const {hmac: {invocationTarget}} = parentCapabilities;
+      const {hmac: {id, invocationTarget}} = parentCapabilities;
       delegateEdvHmacRequest.invocationTarget = {...invocationTarget};
+      delegateEdvHmacRequest.parentCapability = id;
     }
 
     const delegateEdvKakRequest = {
@@ -223,14 +230,15 @@ export default class ProfileManager {
         type: keyAgreementKey.type,
         verificationMethod: keyAgreementKey.id
       };
+      delegateEdvKakRequest.parentCapability = keyAgreementKey.id;
     } else {
-      const {keyAgreementKey: {invocationTarget}} = parentCapabilities;
+      const {keyAgreementKey: {id, invocationTarget}} = parentCapabilities;
       delegateEdvKakRequest.invocationTarget = {...invocationTarget};
+      delegateEdvKakRequest.parentCapability = id;
     }
 
     const zcaps = await Promise.all([
       utils.delegateCapability({
-        edvClient,
         signer: invocationSigner,
         request: delegateEdvConfigurationRequest
       }),
@@ -248,8 +256,6 @@ export default class ProfileManager {
   }
 
   async initializeAccessManagement({
-    edvClient,
-    invocationSigner,
     profileAgentDetails,
     profileAgentId,
     profileAgentZcaps,
@@ -261,8 +267,9 @@ export default class ProfileManager {
     // create the user document for the profile
     // NOTE: profileDetails = {name: 'ACME', color: '#aaaaaa'}
     const profileUserDocumentDetails = await this.createUser({
-      edvClient, invocationSigner, profileAgentId,
+      profileId,
       referenceId: profileDocumentReferenceId,
+      profileAgentId,
       // referenceId: config.DEFAULT_EDVS.users,
       content: {
         ...profileDetails,
@@ -278,7 +285,8 @@ export default class ProfileManager {
 
     const profileAgentUserDocumentDetails =
       await this.createUser({
-        edvClient, invocationSigner, profileAgentId,
+        profileId,
+        profileAgentId,
         content: {
           // includes: name, email
           ...profileAgentDetails,

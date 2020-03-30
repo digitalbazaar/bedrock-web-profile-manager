@@ -16,7 +16,7 @@ const SUPPORTED_KEY_TYPES = [
 ];
 
 export async function delegateCapability(
-  {signer, keystoreAgent, edvClient, request} = {}) {
+  {signer, keystoreAgent, request} = {}) {
   const {
     invocationTarget, invoker, delegator, controller, referenceId,
     allowedAction, caveat
@@ -80,6 +80,8 @@ export async function delegateCapability(
     if(target) {
       // TODO: handle case where an existing target is requested
     } else {
+      throw new Error('Not implemented');
+      /*
       // use 128-bit random multibase encoded value
       const docId = await EdvClient.generateId();
       zcap.invocationTarget.id = `${edvClient.id}/documents/${docId}`;
@@ -101,12 +103,14 @@ export async function delegateCapability(
         recipients.push(invocationTarget.recipient);
       }
       const invocationSigner = signer;
-      await edvClient.insert({doc, recipients, invocationSigner});
+      await edvClient.insert({doc, recipients, invocationSigner});*/
     }
     if(!parentCapability) {
+      throw new Error('"parentCapability" must be given.');
+      /*
       const idx = zcap.invocationTarget.id.lastIndexOf('/');
       const docId = zcap.invocationTarget.id.substr(idx + 1);
-      parentCapability = `${edvClient.id}/zcaps/documents/${docId}`;
+      parentCapability = `${edvClient.id}/zcaps/documents/${docId}`;*/
     }
     zcap.parentCapability = parentCapability;
     zcap = await delegate({zcap, signer});
@@ -125,10 +129,12 @@ export async function delegateCapability(
       // to read the documents it writes -- as no recipient is specified
       // here ... could add this to the zcap as a special caveat that
       // requires the recipient always be present for every document written
-      zcap.invocationTarget.id = `${edvClient.id}/documents`;
+      //zcap.invocationTarget.id = `${edvClient.id}/documents`;
+      throw new Error('Not implemented.');
     }
     if(!parentCapability) {
-      parentCapability = `${edvClient.id}/zcaps/documents`;
+      throw new Error('"parentCapability" must be given.');
+      //parentCapability = `${edvClient.id}/zcaps/documents`;
     }
     zcap.parentCapability = parentCapability;
     zcap = await delegate({zcap, signer});
@@ -143,10 +149,12 @@ export async function delegateCapability(
     if(target) {
       // TODO: handle case where an existing target is requested
     } else {
-      zcap.invocationTarget.id = `${edvClient.id}/authorizations`;
+      //zcap.invocationTarget.id = `${edvClient.id}/authorizations`;
+      throw new Error('Not implemented.');
     }
     if(!parentCapability) {
-      parentCapability = `${edvClient.id}/zcaps/authorizations`;
+      //parentCapability = `${edvClient.id}/zcaps/authorizations`;
+      throw new Error('"parentCapability" must be given.');
     }
     zcap.parentCapability = parentCapability;
     zcap = await delegate({zcap, signer});
