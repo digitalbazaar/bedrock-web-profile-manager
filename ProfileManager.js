@@ -333,6 +333,31 @@ export default class ProfileManager {
     };
   }
 
+  async getProfileKeystoreAgent({profileId}) {
+    // profileId will be defined here
+    const {profileAgent} = await this._profileService.getAgentByProfile({
+      account: this.accountId,
+      profile: profileId
+    });
+
+    const {kmsClient, invocationSigner, zcaps} = await this.getProfileSigner(
+      {profileAgent});
+
+    // FIXME: can this key be contructed without the search?
+    // the challenge is that the referenceId (zcaps[referenceId]) is a DID
+    // key that includes a hash fragment
+    // e.g. did:key:MOCK_KEY#MOCK_KEY-key-capabilityInvocation
+    const _zcapMapKey = Object.keys(zcaps).find(referenceId => referenceId
+      .endsWith('key-capabilityInvocation'));
+    const zcap = zcaps[_zcapMapKey];
+
+    const keystoreId = _getKeystoreId({zcap});
+    const keystore = await KmsClient.getKeystore({id: keystoreId});
+    const capabilityAgent = new CapabilityAgent(
+      {handle: 'primary', signer: invocationSigner});
+    return new KeystoreAgent({keystore, capabilityAgent, kmsClient});
+  }
+
   // TODO: add docs
   async createProfileEdv({
     invocationSigner,
