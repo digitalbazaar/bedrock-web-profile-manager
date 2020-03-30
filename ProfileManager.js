@@ -813,17 +813,15 @@ export default class ProfileManager {
         id: target,
         type: targetType
       };
-      // FIXME: need to get the keystoreAgent associated with a profile
-      // that is delegating the zcap
-      const keystore = this.keystoreAgent.keystore.id;
+      const {id: keystoreId} = kmsClient.keystore;
 
       if(target) {
         // TODO: handle case where an existing target is requested
       } else {
-        zcap.invocationTarget.id = `${keystore}/revocations`;
+        zcap.invocationTarget.id = `${keystoreId}/revocations`;
       }
       if(!parentCapability) {
-        parentCapability = `${keystore}/zcaps/revocations`;
+        parentCapability = `${keystoreId}/zcaps/revocations`;
       }
       zcap.parentCapability = parentCapability;
       zcap = await _delegate({zcap, signer: invocationSigner});
