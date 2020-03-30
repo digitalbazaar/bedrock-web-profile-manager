@@ -256,7 +256,7 @@ export default class ProfileManager {
   }
 
   async initializeAccessManagement({
-    profileAgentDetails,
+    profileAgentDetails = {name: 'root'},
     profileAgentId,
     profileAgentZcaps,
     profileDetails,
@@ -266,6 +266,16 @@ export default class ProfileManager {
   }) {
     // create the user document for the profile
     // NOTE: profileDetails = {name: 'ACME', color: '#aaaaaa'}
+
+    profileDetails = {...profileDetails};
+    let {type = []} = profileDetails;
+    if(!Array.isArray(type)) {
+      type = [type];
+    }
+    if(!type.includes('Profile')) {
+      type = ['Profile', ...type];
+    }
+
     const profileUserDocumentDetails = await this.createUser({
       profileId,
       referenceId: profileDocumentReferenceId,
@@ -274,6 +284,7 @@ export default class ProfileManager {
       content: {
         ...profileDetails,
         id: profileId,
+        type,
         zcaps: profileZcaps,
       },
     });
@@ -296,7 +307,6 @@ export default class ProfileManager {
           // these are given via `id`
           profileAgent: profileAgentId,
           profileAgentId,
-          access: 'full',
           zcaps: profileAgentZcaps,
           authorizedDate: (new Date()).toISOString(),
         }
@@ -411,6 +421,9 @@ export default class ProfileManager {
       {handle: 'primary', signer: invocationSigner});
     const keystoreAgent = new KeystoreAgent(
       {keystore, capabilityAgent, kmsClient});
+    // TODO: can't presume to use `edvs.get` -- this only works for a local
+    // EDV service, need to use a zcap that belongs to the profile if
+    // it exists
     const edvClient = await edvs.get({
       invocationSigner,
       keystoreAgent,
@@ -501,11 +514,7 @@ export default class ProfileManager {
     });
   }
 
-  async createProfile({content, type} = {}) {
-    let profileType = 'Profile';
-    if(type) {
-      profileType = [profileType, type];
-    }
+  async createProfile({} = {}) {
     const {id: profileId} = await this._profileService.create(
       {account: this.accountId});
 
@@ -514,15 +523,9 @@ export default class ProfileManager {
       profile: profileId
     });
 
-    const profileSettings = {
-      ...content,
-      type: profileType,
-      id: profileId,
-    };
-
     return {
-      profileAgent,
-      profileSettings,
+      profileId,
+      profileAgent
     };
   }
 
