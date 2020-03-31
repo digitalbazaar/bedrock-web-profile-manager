@@ -5,7 +5,6 @@ import {ProfileService} from 'bedrock-web-profile';
 import {CapabilityDelegation} from 'ocapld';
 import {EdvClient} from 'edv-client';
 import jsigs from 'jsonld-signatures';
-import utils from './utils';
 
 const {SECURITY_CONTEXT_V2_URL, sign, suites} = jsigs;
 const {Ed25519Signature2018} = suites;
@@ -35,7 +34,7 @@ export default class AccessManager {
     this.users = users;
   }
 
-  async createUser({profileId, content = {}}) {
+  async createUser({content = {}}) {
     // create a profile agent
     const profileService = new ProfileService();
     const {profile, profileManager} = this;
@@ -48,8 +47,8 @@ export default class AccessManager {
 
     // get EDV parent capability for upcoming delegations
     const {accessManagement} = profile;
-    const invocationSigner = await profileManager.getProfileSigner(
-      {profileId});
+    const {invocationSigner} = await profileManager.getProfileSigner(
+      {profileId: profile.id});
     let edvParentCapability;
     if(accessManagement.zcaps.write) {
       edvParentCapability = profile.zcaps[accessManagement.zcaps.write];
@@ -61,7 +60,7 @@ export default class AccessManager {
     // delegate zcap to enable agent to read profile doc
     const {zcaps = {}} = content;
     if(!zcaps['profile-edv-document']) {
-      const agent = await profileManager._getAgent({profileId: profile.id});
+      const agent = await profileManager.getAgent({profileId: profile.id});
       const profileDocCapability = agent.zcaps['profile-edv-document'];
       const profileDocZcap = await profileManager._delegateProfileUserDocZcap({
         edvId: accessManagement.edvId,
@@ -99,10 +98,12 @@ export default class AccessManager {
     const {keyAgreementKey} = accessManagement;
     const agentRecordZcaps = await this.profileManager.
       _delegateAgentRecordZcaps({
+        edvId: accessManagement.edvId,
         profileAgentId,
         docId: agentDoc.id,
         edvParentCapability,
-        keyAgreementKey, invocationSigner
+        keyAgreementKey,
+        invocationSigner
       });
 
     // store capabilities for accessing the profile agent's user document and
@@ -114,7 +115,7 @@ export default class AccessManager {
       zcaps: agentRecordZcaps
     });
 
-    return {user: agentDoc.content};
+    return {...agentDoc.content};
   }
 
   async updateUser({user}) {
@@ -129,12 +130,12 @@ export default class AccessManager {
     return userDoc.content;
   }
 
-  async getUsers({}) {
+  async getUsers({} = {}) {
     const results = await this.users.getAll();
     return results.map(({content}) => content);
   }
 
-  async deleteUser({id} = {}) {
+  async removeUser({id} = {}) {
     // TODO: handle removal of self
     await this.users.remove({id});
 
