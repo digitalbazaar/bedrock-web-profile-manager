@@ -51,6 +51,11 @@ export async function delegateCapability(
     zcap.caveat = caveat;
   }
   let {parentCapability} = request;
+  let capabilityChain;
+  if(typeof parentCapability === 'object') {
+    capabilityChain = [parentCapability.parentCapability, parentCapability];
+    parentCapability = parentCapability.id;
+  }
   const {id: target, type: targetType, verificationMethod} = invocationTarget;
   if(SUPPORTED_KEY_TYPES.includes(targetType)) {
     if(!target) {
@@ -67,8 +72,9 @@ export async function delegateCapability(
       type: targetType,
       verificationMethod,
     };
+    let capabilityChain;
     zcap.parentCapability = parentCapability || target;
-    zcap = await delegate({zcap, signer});
+    zcap = await delegate({zcap, signer, capabilityChain});
 
     return zcap;
   } else if(targetType === 'urn:edv:document') {
@@ -113,7 +119,7 @@ export async function delegateCapability(
       parentCapability = `${edvClient.id}/zcaps/documents/${docId}`;*/
     }
     zcap.parentCapability = parentCapability;
-    zcap = await delegate({zcap, signer});
+    zcap = await delegate({zcap, signer, capabilityChain});
 
     return zcap;
   } else if(targetType === 'urn:edv:documents') {
@@ -137,7 +143,7 @@ export async function delegateCapability(
       //parentCapability = `${edvClient.id}/zcaps/documents`;
     }
     zcap.parentCapability = parentCapability;
-    zcap = await delegate({zcap, signer});
+    zcap = await delegate({zcap, signer, capabilityChain});
 
     return zcap;
   } else if(targetType === 'urn:edv:authorizations') {
@@ -157,7 +163,7 @@ export async function delegateCapability(
       throw new Error('"parentCapability" must be given.');
     }
     zcap.parentCapability = parentCapability;
-    zcap = await delegate({zcap, signer});
+    zcap = await delegate({zcap, signer, capabilityChain});
 
     return zcap;
   } else if(targetType === 'urn:webkms:authorizations') {
@@ -176,7 +182,7 @@ export async function delegateCapability(
       parentCapability = `${keystore}/zcaps/authorizations`;
     }
     zcap.parentCapability = parentCapability;
-    zcap = await delegate({zcap, signer});
+    zcap = await delegate({zcap, signer, capabilityChain});
 
     return zcap;
   } else {
