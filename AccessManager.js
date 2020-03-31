@@ -34,7 +34,6 @@ export default class AccessManager {
     const {profile, profileManager} = this;
     const {accountId} = profileManager;
     const {profileAgent} = await profileService.createAgent({
-      account: accountId,
       profile: profile.id
     });
     const {id: profileAgentId} = profileAgent;
