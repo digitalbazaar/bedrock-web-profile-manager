@@ -1,31 +1,20 @@
 /*!
  * Copyright (c) 2019-2020 Digital Bazaar, Inc. All rights reserved.
  */
-'use strict';
-
-import axios from 'axios';
-import {AccountService} from 'bedrock-web-account';
+import AccessManager from './AccessManager.js';
 import {ProfileService} from 'bedrock-web-profile';
-import jsonpatch from 'fast-json-patch';
-import {CapabilityDelegation} from 'ocapld';
 import {
   AsymmetricKey,
   CapabilityAgent,
   KeystoreAgent,
   KeyAgreementKey,
+  Hmac,
   KmsClient
 } from 'webkms-client';
 import {EdvClient, EdvDocument} from 'edv-client';
-import jsigs from 'jsonld-signatures';
-import kms from './kms';
 import EdvClientCache from './EdvClientCache.js';
-import edvs from './edvs';
-import utils from './utils';
-
-const {SECURITY_CONTEXT_V2_URL, sign, suites} = jsigs;
-const {Ed25519Signature2018} = suites;
-
-const DEFAULT_HEADERS = {Accept: 'application/ld+json, application/json'};
+import keyResolver from './keyResolver.js';
+import utils from './utils.js';
 
 const JWE_ALG = 'ECDH-ES+A256KW';
 
@@ -42,12 +31,10 @@ export default class ProfileManager {
    *   used to generate keys.
    * @param {string} options.edvBaseUrl - The base URL for the EDV service,
    *   used to store documents.
-   * @param {string} options.recoveryHost - The recovery host application to
-   *   use for keystore configs.
    *
    * @returns {ProfileManager} - The new instance.
    */
-  constructor({edvBaseUrl, kmsModule, kmsBaseUrl, recoveryHost} = {}) {
+  constructor({edvBaseUrl, kmsModule, kmsBaseUrl} = {}) {
     if(typeof kmsModule !== 'string') {
       throw new TypeError('"kmsModule" must be a string.');
     }
@@ -66,10 +53,484 @@ export default class ProfileManager {
     this.kmsModule = kmsModule;
     this.edvBaseUrl = edvBaseUrl;
     this.kmsBaseUrl = kmsBaseUrl;
-    if(recoveryHost) {
-      this.recoveryHost = recoveryHost.startsWith('https://') ?
-        recoveryHost : `https://${recoveryHost}`;
+    this._cache = {};
+  }
+
+  /**
+   * Creates a new profile and a profile agent to control it. The profile
+   * agent is assigned to the account associated with the authenticated
+   * session.
+   *
+   * @param {Object} options - The options to use.
+   * @param {string} options.didMethod - The DID method to use to create
+   *   the profile's identifier.
+   *
+   * @returns {Object} The profile with an "id" attribute.
+   */
+  async createProfile({didMethod = 'key'} = {}) {
+    // TODO: add support for `v1`
+    if(didMethod !== 'key') {
+      throw new Error(`Unsupported DID method "${didMethod}".`);
     }
+    const {id} = await this._profileService.create({account: this.accountId});
+    return {id};
+  }
+
+  /**
+   * Initializes access management for a profile. This method will link the
+   * storage location for access management data to the profile and enable
+   * its initial profile agent to access its capabilities to use the profile.
+   * This method must be called after the profile is created and before it is
+   * ready to be used.
+   *
+   * This method is separate from the `createProfile` call to enable
+   * applications to obtain a capability for writing access management data to
+   * an EDV or to create that EDV directly after creating profile but before
+   * it can be fully initialized.
+   *
+   * @param {Object} options - The options to use.
+   * @param {string} options.profileId - The ID of the profile.
+   * @param {Object} options.profileContent - Any content for the profile.
+   * @param {Object} options.profileAgentContent - Any content for the initial
+   *   profile agent.
+   * @param {Object} [options.hmac] - An HMAC API for using the EDV; if not
+   *   provided, one will be generated for the profile as an EDV recipient.
+   * @param {Object} [options.keyAgreementKey] - A KAK API for using the EDV;
+   *   if not provided, one will be generated for the profile as an EDV
+   *   recipient.
+   * @param {Object} [options.edvId] - The ID of the EDV; either this or a
+   *   capability to access the EDV must be given.
+   * @param {Object} [options.capability] - The capability to use to access
+   *   the EDV; either this or an EDV ID must be given.
+   * @param {Object} [options.revocationCapability] - The capability to use to
+   *   revoke delegated EDV zcaps.
+   *
+   * @returns {Object} An object with the content of the profile and profile
+   *   agent documents.
+   */
+  async initializeAccessManagement({
+    profileId,
+    profileContent,
+    profileAgentContent = {},
+    hmac,
+    keyAgreementKey,
+    edvId,
+    capability,
+    revocationCapability,
+    indexes = []
+  }) {
+    if(!!hmac ^ !!keyAgreementKey) {
+      throw new TypeError(
+        'Both "hmac" and "keyAgreementKey" must be given or neither must ' +
+        'be given.');
+    }
+    if(!edvId ^ !capability) {
+      throw new TypeError(
+        'Either "edvId" and "capability" must be given, not both.');
+    }
+
+    // create EDV keys for accessing users EDV if not given
+    const {profileManager} = this;
+    if(!hmac) {
+      ({hmac, keyAgreementKey} = await profileManager.createEdvRecipientKeys(
+        {profileId}));
+    }
+
+    // create access management info
+    const accessManagement = {
+      hmac: {id: hmac.id, type: hmac.type},
+      keyAgreementKey: {id: keyAgreementKey.id, type: keyAgreementKey.type},
+      indexes: [
+        {attribute: 'content.id', unique: true},
+        {attribute: 'content.type'},
+        ...indexes
+      ],
+      zcaps: {}
+    };
+    const profileZcaps = {};
+    if(capability) {
+      profileZcaps[capability.referenceId] = capability;
+      accessManagement.zcaps = {
+        write: capability.referenceId
+      };
+      if(revocationCapability) {
+        accessManagement.zcaps.revoke = revocationCapability.referenceId;
+        profileZcaps[revocationCapability.referenceId] = revocationCapability;
+      }
+    } else {
+      // default capability to root zcap
+      capability = `${edvId}/zcaps/documents`;
+      accessManagement.edvId = edvId;
+    }
+
+    // create client for accessing users EDV
+    const client = new EdvClient({keyResolver, keyAgreementKey, hmac});
+    for(const index of accessManagement.indexes) {
+      client.ensureIndex(index);
+    }
+
+    // create an invocation signer for signing as the profile when writing
+    // to the EDV
+    const profileAgentRecord = await this._getAgentRecord({profileId});
+    const {
+      profileAgent: {
+        id: profileAgentId,
+        zcaps: {
+          profileCapabilityInvocationKey
+        }
+      }
+    } = profileAgentRecord;
+    const invocationSigner = new AsymmetricKey({
+      // TODO: handle case where capability is missing
+      capability: profileCapabilityInvocationKey,
+      invocationSigner: await this._getAgentSigner({id: profileAgentId})
+    });
+
+    // create the user document for the profile
+    // NOTE: profileContent = {name: 'ACME', color: '#aaaaaa'}
+    const recipients = [{
+      header: {kid: keyAgreementKey.id, alg: JWE_ALG}
+    }];
+    const profileDocId = await EdvClient.generateId();
+    const profileUserDoc = new EdvDocument({
+      id: profileDocId, recipients, keyResolver, keyAgreementKey, hmac,
+      capability, invocationSigner, client
+    });
+    let type = ['User', 'Profile'];
+    let {profileTypes = []} = profileContent;
+    if(!Array.isArray(profileTypes)) {
+      profileTypes = [profileTypes];
+    }
+    for(const t of profileTypes) {
+      if(!type.includes(t)) {
+        type.push(t);
+      }
+    }
+    const profile = {
+      ...profileContent,
+      id: profileId,
+      type,
+      accessManagement,
+      zcaps: profileZcaps
+    };
+    await profileUserDoc.write({
+      doc: {
+        id: profileDocId,
+        content: profile
+      }
+    });
+
+    // TODO: once delegate on demand is implemented for agents with that
+    // capability, remove this unnecessary delegation
+    const profileDocZcap = await this._delegateProfileUserDocZcap({
+      profileAgentId,
+      docId: profileDocId,
+      edvParentCapability: capability,
+      invocationSigner
+    });
+
+    // TODO: once delegate on demand is implemented for agents with that
+    // capability, remove these unnecessary delegations
+    const accessManager = await this.getAccessManager();
+    const {zcaps: userEdvZcaps} = await accessManager.delegateEdvCapabilities({
+      hmac,
+      keyAgreementKey,
+      parentCapabilities: {
+        edv: capability,
+        edvRevocations: revocationCapability
+      },
+      invocationSigner,
+      profileAgentId,
+      referenceIdPrefix: 'user-edv'
+    });
+
+    // create the user document for the root profile agent
+    const agentDocId = await EdvClient.generateId();
+    const agentDoc = new EdvDocument({
+      id: agentDocId, recipients, keyResolver, keyAgreementKey, hmac,
+      capability, invocationSigner, client
+    });
+    type = ['User', 'Agent'];
+    let {agentTypes = []} = profileAgentContent;
+    if(!Array.isArray(agentTypes)) {
+      agentTypes = [agentTypes];
+    }
+    for(const t of agentTypes) {
+      if(!type.includes(t)) {
+        type.push(t);
+      }
+    }
+    const profileAgentZcaps = {};
+    for(const zcap of userEdvZcaps) {
+      profileAgentZcaps[zcap.referenceId] = zcap;
+    }
+    const profileAgent = {
+      name: 'root',
+      ...profileAgentContent,
+      id: profileAgentId,
+      type,
+      zcaps: {
+        [profileCapabilityInvocationKey.referenceId]:
+          profileCapabilityInvocationKey,
+        [profileDocZcap.referenceId]: profileDocZcap,
+        ...profileAgentZcaps
+      },
+      authorizedDate: (new Date()).toISOString()
+    };
+    await agentDoc.write({
+      doc: {
+        id: agentDocId,
+        content: profileAgent
+      }
+    });
+
+    // create zcaps for accessing profile agent user doc for storage in
+    // the agent record
+    const agentRecordZcaps = await this._delegateAgentRecordZcaps({
+      profileAgentId,
+      docId: agentDocId,
+      edvParentCapability: capability,
+      keyAgreementKey, invocationSigner
+    });
+
+    // store capabilities for accessing the profile agent's user document and
+    // the kak in the profileAgent record in the backend
+    await this._profileService.updateAgentCapabilitySet({
+      account: this.accountId,
+      profileAgentId,
+      // this map includes capabilities for user document and kak
+      zcaps: agentRecordZcaps
+    });
+
+    return {profile, profileAgent};
+  }
+
+  /**
+   * Creates an API for signing capability invocations and delegations as
+   * the a given profile. The account associated with the authenticated
+   * session must have a profile agent that has this capability or an error
+   * will be thrown.
+   *
+   * @param {Object} options - The options to use.
+   * @param {string} options.profileId - The ID of the profile to get a signer
+   *   for.
+   *
+   * @returns {Object} The signer API for the profile as `invocationSigner`.
+   */
+  async getProfileSigner({profileId}) {
+    // TODO: cache profile signer by profile ID?
+    const agent = await this._getAgent({profileId});
+    const {id: profileAgentId, zcaps} = agent;
+    const zcap = await _getProfileInvocationKeyZcap({profileId, zcaps});
+
+    // get a key API for the profile's zcap invocation key, controlled
+    // by the profile agent
+    const invocationSigner = new AsymmetricKey({
+      capability: zcap,
+      invocationSigner: await this._getAgentSigner({id: profileAgentId})
+    });
+
+    return {invocationSigner};
+  }
+
+  /**
+   * Gets a profile by ID. A profile can only be retrieved if the account
+   * associated with the authenticated session has a profile agent with
+   * the capability to read the profile document -- and if the profile
+   * has had its access management initialized (i.e., it is not still in
+   * the process of being provisioned).
+   *
+   * @param {Object} options - The options to use.
+   * @param {string} options.id - The ID of the profile to get.
+   *
+   * @returns {Object} The signer API for the profile as `invocationSigner`.
+   */
+  async getProfile({id} = {}) {
+    if(typeof id !== 'string') {
+      throw new TypeError('"id" must be a string.');
+    }
+
+    // check for a zcap for getting the profile in this order:
+    // 1. zcap for reading just the profile
+    // 2. zcap for reading entire users EDV
+    const agent = await this._getAgent({profileId: id});
+    const capability =
+      agent.zcaps['profile-edv-document'] ||
+      agent.zcaps['user-edv'];
+    if(!capability) {
+      // TODO: implement on demand delegation; if agent has a zcap for using
+      // the profile's zcap delegation key, delegate a zcap for reading from
+      // the user's EDV
+      throw new Error(
+        `Profile agent ${agent.id} is not authorized to read profile "${id}".`);
+    }
+
+    // read the profile's user doc *as* the profile agent
+    const invocationSigner = await this._getAgentSigner({id: agent.id});
+    const userKakZcap = agent.zcaps['user-edv-kak'];
+    const edvDocument = new EdvDocument({
+      capability,
+      keyAgreementKey: new KeyAgreementKey({
+        id: userKakZcap.invocationTarget.id,
+        type: userKakZcap.invocationTarget.type,
+        capability: userKakZcap,
+        invocationSigner
+      }),
+      invocationSigner
+    });
+
+    const {content} = await edvDocument.read();
+
+    return content;
+  }
+
+  async getProfiles({type} = {}) {
+    const profileAgentRecords = await this._profileService.getAllAgents({
+      account: this.accountId
+    });
+    const promises = profileAgentRecords.map(async ({profileAgent}) =>
+      this.getProfile({id: profileAgent.profileId}));
+
+    // TODO: Use proper promise-fun library to limit concurrency
+    const profiles = await Promise.all(promises);
+    if(!type) {
+      return profiles;
+    }
+    return profiles.filter(profile => profile.type.includes(type));
+  }
+
+  async getProfileKeystoreAgent({profileId}) {
+    // TODO: getting the keystore for the profile should involve reading the
+    // profile instead of parsing it from its zcap key
+    const {invocationSigner} = await this.getProfileSigner({id: profileId});
+    const {capability: zcap} = invocationSigner;
+
+    const keystoreId = _getKeystoreId({zcap});
+    const keystore = await KmsClient.getKeystore({id: keystoreId});
+    const capabilityAgent = new CapabilityAgent(
+      {handle: 'primary', signer: invocationSigner});
+    return new KeystoreAgent({keystore, capabilityAgent});
+  }
+
+  // FIXME: expose this or not?
+  async createEdvRecipientKeys({profileId}) {
+    const keystoreAgent = await this._getProfileKeystoreAgent({profileId});
+    const [keyAgreementKey, hmac] = await Promise.all([
+      keystoreAgent.generateKey({
+        type: 'keyAgreement',
+        kmsModule: this.kmsModule,
+      }),
+      keystoreAgent.generateKey({
+        type: 'hmac',
+        kmsModule: this.kmsModule,
+      })
+    ]);
+    return {hmac, keyAgreementKey};
+  }
+
+  async getAccessManager({profileId}) {
+    const [profile, agent, invocationSigner] = await Promise.all([
+      this.getProfile({profileId}),
+      this._getAgent({profileId}),
+      this._getAgentSigner({profileId})
+    ]);
+    // TODO: consider consolidation with `getProfileEdv`
+    const capability = agent.zcaps['user-edv'];
+    const userKak = agent.zcaps['user-edv-kak'];
+    const userHmac = agent.zcaps['user-edv-hmac'];
+    if(!(capability && userKak && userHmac)) {
+      throw new Error(
+        `Profile agent "${agent.id}" is not authorized to manage access ` +
+        `for profile "${profileId}".`);
+    }
+    const {edvId, indexes} = profile.accessManagement;
+    const edvClient = new EdvClient({
+      id: edvId,
+      keyResolver,
+      keyAgreementKey: new KeyAgreementKey({
+        id: userKak.invocationTarget.id,
+        type: userKak.invocationTarget.type,
+        capability: userKak,
+        invocationSigner
+      }),
+      hmac: new Hmac({
+        id: userHmac.invocationTarget.id,
+        type: userHmac.invocationTarget.type,
+        capability: userHmac,
+        invocationSigner
+      })
+    });
+    for(const index of indexes) {
+      edvClient.ensureIndex(index);
+    }
+    return new AccessManager({
+      profile, profileManager: this, edvClient, capability, invocationSigner
+    });
+  }
+
+  async createProfileEdv({profileId, referenceId}) {
+    const [{invocationSigner}, {hmac, keyAgreementKey}] = await Promise.all([
+      this.getProfileSigner({profileId}),
+      this.createEdvRecipientKeys({profileId})
+    ]);
+
+    // create edv
+    let config = {
+      sequence: 0,
+      controller: profileId,
+      referenceId,
+      keyAgreementKey: {id: keyAgreementKey.id, type: keyAgreementKey.type},
+      hmac: {id: hmac.id, type: hmac.type}
+    };
+    config = await EdvClient.createEdv(
+      {config, invocationSigner, url: this.edvBaseUrl});
+    const edvClient = new EdvClient({
+      id: config.id,
+      keyResolver,
+      keyAgreementKey,
+      hmac,
+    });
+    return {edvClient};
+  }
+
+  async getProfileEdvClient({profileId, referenceIdPrefix}) {
+    const [agent, invocationSigner] = await Promise.all([
+      this._getAgent({profileId}),
+      this._getAgentSigner({profileId})
+    ]);
+
+    const refs = {
+      documents: `${referenceIdPrefix}-documents`,
+      hmac: `${referenceIdPrefix}-hmac`,
+      kak: `${referenceIdPrefix}-kak`
+    };
+    const {zcaps} = agent.zcaps;
+
+    const documentsZcap = zcaps[refs.documents];
+    const hmacZcap = zcaps[refs.hmac];
+    const kakZcap = zcaps[refs.kak];
+    if(!(documentsZcap && hmacZcap && kakZcap)) {
+      throw new Error(
+        `Profile agent "${agent.id}" is not authorized to manage access ` +
+        `for profile "${profileId}".`);
+    }
+
+    const edvClient = new EdvClient({
+      keyResolver,
+      keyAgreementKey: new KeyAgreementKey({
+        id: kakZcap.invocationTarget.id,
+        type: kakZcap.invocationTarget.type,
+        capability: kakZcap,
+        invocationSigner
+      }),
+      hmac: new Hmac({
+        id: hmacZcap.invocationTarget.id,
+        type: hmacZcap.invocationTarget.type,
+        capability: hmacZcap,
+        invocationSigner
+      })
+    });
+    return {edvClient, capability: documentsZcap, invocationSigner};
   }
 
   /**
@@ -93,831 +554,8 @@ export default class ProfileManager {
     await this._sessionChanged({newData: session.data});
   }
 
-  async createUser({
-    profileId, profileAgentId, referenceId, content = {}
-  }) {
-    if(!content.id) {
-      throw new TypeError('"content.id" is required.');
-    }
-
-    if(!referenceId) {
-      referenceId = edvs.getReferenceId('users');
-    }
-
-    const {profileAgent} = await this._profileService.getAgentByProfile({
-      account: this.accountId,
-      profile: profileId
-    });
-
-    // TODO: return profile's zcap for reading EDV to enable delegation
-    const {edvClient, invocationSigner} = await this.getUsersEdv(
-      {profileAgent, referenceId});
-
-    // create the user document for the profile agent
-    const userDocument = await edvClient.insert({
-      doc: {
-        content: {
-          ...content,
-          zcaps: content.zcaps || {},
-        },
-      },
-      invocationSigner,
-    });
-
-    const delegateEdvDocumentRequest = {
-      referenceId: `${referenceId}-edv-document`,
-      // the profile agent is only allowed to read its own doc
-      allowedAction: ['read'],
-      controller: profileAgentId,
-      invocationTarget: {
-        id: `${edvClient.id}/documents/${userDocument.id}`,
-        type: 'urn:edv:document'
-      },
-      // TODO: support using an EDV zcap from the profile instead
-      parentCapability: `${edvClient.id}/zcaps/documents/${userDocument.id}`
-    };
-
-    const delegateEdvKakRequest = {
-      referenceId: `${referenceId}-kak`,
-      allowedAction: ['deriveSecret', 'sign'],
-      controller: profileAgentId,
-      invocationTarget: {
-        id: edvClient.keyAgreementKey.id,
-        type: edvClient.keyAgreementKey.type,
-        verificationMethod: edvClient.keyAgreementKey.id
-      },
-      parentCapability: edvClient.keyAgreementKey.id
-    };
-    const [userDocumentZcap, userKakZcap] = await Promise.all([
-      utils.delegateCapability({
-        signer: invocationSigner,
-        request: delegateEdvDocumentRequest
-      }),
-      utils.delegateCapability({
-        signer: invocationSigner,
-        request: delegateEdvKakRequest
-      })
-    ]);
-
-    return {
-      userDocument,
-      zcaps: {
-        userDocument: userDocumentZcap,
-        userKak: userKakZcap
-      },
-    };
-  }
-
-  async delegateEdvCapabilities({
-    edvId,
-    hmac,
-    keyAgreementKey,
-    parentCapabilities,
-    invocationSigner,
-    profileAgentId,
-    referenceId
-  }) {
-    // TODO: validate `parentCapabilities`
-    // if no `edvId` then `parentCapabilities.edv` required
-    // if no `hmac` then `parentCapabilities.hmac` required
-    // if no `keyAgreement` then `parentCapabilities.keyAgreementKey` required
-
-    const delegateEdvConfigurationRequest = {
-      // FIXME: why is this the reference ID?
-      referenceId: `${referenceId}-edv-configuration`,
-      allowedAction: ['read', 'write'],
-      controller: profileAgentId
-    };
-    if(edvId) {
-      delegateEdvConfigurationRequest.invocationTarget = {
-        id: `${edvId}/documents`,
-        type: 'urn:edv:documents'
-      };
-      delegateEdvConfigurationRequest.parentCapability =
-        `${edvId}/zcaps/documents`;
-    } else {
-      const {edv: {id, invocationTarget}} = parentCapabilities;
-      delegateEdvConfigurationRequest.invocationTarget = {...invocationTarget};
-      delegateEdvConfigurationRequest.parentCapability = id;
-    }
-
-    const delegateEdvHmacRequest = {
-      referenceId: `${referenceId}-hmac`,
-      allowedAction: 'sign',
-      controller: profileAgentId
-    };
-    if(hmac) {
-      delegateEdvHmacRequest.invocationTarget = {
-        id: hmac.id,
-        type: hmac.type,
-        verificationMethod: hmac.id
-      };
-      delegateEdvHmacRequest.parentCapability = hmac.id;
-    } else {
-      const {hmac: {id, invocationTarget}} = parentCapabilities;
-      delegateEdvHmacRequest.invocationTarget = {...invocationTarget};
-      delegateEdvHmacRequest.parentCapability = id;
-    }
-
-    const delegateEdvKakRequest = {
-      referenceId: `${referenceId}-kak`,
-      allowedAction: ['deriveSecret', 'sign'],
-      controller: profileAgentId
-    };
-    if(keyAgreementKey) {
-      delegateEdvKakRequest.invocationTarget = {
-        id: keyAgreementKey.id,
-        type: keyAgreementKey.type,
-        verificationMethod: keyAgreementKey.id
-      };
-      delegateEdvKakRequest.parentCapability = keyAgreementKey.id;
-    } else {
-      const {keyAgreementKey: {id, invocationTarget}} = parentCapabilities;
-      delegateEdvKakRequest.invocationTarget = {...invocationTarget};
-      delegateEdvKakRequest.parentCapability = id;
-    }
-
-    const zcaps = await Promise.all([
-      utils.delegateCapability({
-        signer: invocationSigner,
-        request: delegateEdvConfigurationRequest
-      }),
-      utils.delegateCapability({
-        signer: invocationSigner,
-        request: delegateEdvHmacRequest
-      }),
-      utils.delegateCapability({
-        signer: invocationSigner,
-        request: delegateEdvKakRequest
-      })
-    ]);
-
-    return {zcaps};
-  }
-
-  async initializeAccessManagement({
-    profileAgentDetails = {name: 'root'},
-    profileAgentId,
-    profileAgentZcaps,
-    profileDetails,
-    profileDocumentReferenceId,
-    profileId,
-    profileZcaps = {},
-  }) {
-    // create the user document for the profile
-    // NOTE: profileDetails = {name: 'ACME', color: '#aaaaaa'}
-
-    profileDetails = {...profileDetails};
-    let {type = []} = profileDetails;
-    if(!Array.isArray(type)) {
-      type = [type];
-    }
-    if(!type.includes('Profile')) {
-      type = ['Profile', ...type];
-    }
-
-    const profileUserDocumentDetails = await this.createUser({
-      profileId,
-      referenceId: profileDocumentReferenceId,
-      profileAgentId,
-      // referenceId: config.DEFAULT_EDVS.users,
-      content: {
-        ...profileDetails,
-        id: profileId,
-        type,
-        zcaps: profileZcaps,
-      },
-    });
-
-    // capablities to enable the profile agent to read the profile's user doc
-    for(const capability of Object.values(profileUserDocumentDetails.zcaps)) {
-      profileAgentZcaps[capability.referenceId] = capability;
-    }
-
-    const profileAgentUserDocumentDetails =
-      await this.createUser({
-        profileId,
-        profileAgentId,
-        content: {
-          // includes: name, email
-          ...profileAgentDetails,
-          id: profileAgentId,
-          type: ['User', 'Person'],
-          // FIXME: remove `profileAgent` and `profileAgentId` completely,
-          // these are given via `id`
-          profileAgent: profileAgentId,
-          profileAgentId,
-          zcaps: profileAgentZcaps,
-          authorizedDate: (new Date()).toISOString(),
-        }
-      });
-
-    // store capabilities for accessing the profile agent's user document and
-    // the kak in the profileAgent record in the backend
-    await this._profileService.updateAgentCapabilitySet({
-      account: this.accountId,
-      profileAgentId,
-      // this map includes capabilities for user document and kak
-      zcaps: profileAgentUserDocumentDetails.zcaps,
-    });
-
-    return {
-      profileAgentUserDocumentDetails,
-      profileUserDocumentDetails,
-    };
-  }
-
-  async createEdvRecipientKeys({
-    invocationSigner,
-    kmsClient,
-  }) {
-    const [keyAgreementKey, hmac] = await Promise.all([
-      kms.generateKey({
-        invocationSigner,
-        type: 'keyAgreement',
-        kmsClient,
-        kmsModule: this.kmsModule,
-      }),
-      kms.generateKey({
-        invocationSigner,
-        type: 'hmac',
-        kmsClient,
-        kmsModule: this.kmsModule,
-      })
-    ]);
-    return {
-      hmac,
-      keyAgreementKey,
-    };
-  }
-
-  async getProfileKeystoreAgent({profileId}) {
-    // profileId will be defined here
-    const {profileAgent} = await this._profileService.getAgentByProfile({
-      account: this.accountId,
-      profile: profileId
-    });
-
-    const {kmsClient, invocationSigner, zcaps} = await this.getProfileSigner(
-      {profileAgent});
-
-    // FIXME: can this key be contructed without the search?
-    // the challenge is that the referenceId (zcaps[referenceId]) is a DID
-    // key that includes a hash fragment
-    // e.g. did:key:MOCK_KEY#MOCK_KEY-key-capabilityInvocation
-    const _zcapMapKey = Object.keys(zcaps).find(referenceId => referenceId
-      .endsWith('key-capabilityInvocation'));
-    const zcap = zcaps[_zcapMapKey];
-
-    const keystoreId = _getKeystoreId({zcap});
-    const keystore = await KmsClient.getKeystore({id: keystoreId});
-    const capabilityAgent = new CapabilityAgent(
-      {handle: 'primary', signer: invocationSigner});
-    return new KeystoreAgent({keystore, capabilityAgent, kmsClient});
-  }
-
-  // TODO: add docs
-  async createProfileEdv({
-    invocationSigner,
-    kmsClient,
-    profileId,
-    referenceId,
-  }) {
-    const {hmac, keyAgreementKey} = await this.createEdvRecipientKeys({
-      invocationSigner,
-      kmsClient,
-    });
-    const edvClient = await edvs.create({
-      invocationSigner,
-      profileId,
-      referenceId,
-      edvBaseUrl: this.edvBaseUrl,
-      keys: {
-        hmac,
-        keyAgreementKey,
-      }
-    });
-
-    return {edvClient};
-  }
-
-  async getUsersEdv({referenceId, profileAgent}) {
-    const profileId = profileAgent.profile;
-
-    const {kmsClient, invocationSigner, zcaps} = await this.getProfileSigner(
-      {profileAgent});
-
-    // FIXME: can this key be contructed without the search?
-    // the challenge is that the referenceId (zcaps[referenceId]) is a DID
-    // key that includes a hash fragment
-    // e.g. did:key:MOCK_KEY#MOCK_KEY-key-capabilityInvocation
-    const _zcapMapKey = Object.keys(zcaps).find(referenceId => referenceId
-      .endsWith('key-capabilityInvocation'));
-    const zcap = zcaps[_zcapMapKey];
-
-    const keystoreId = _getKeystoreId({zcap});
-    const keystore = await KmsClient.getKeystore({id: keystoreId});
-    const capabilityAgent = new CapabilityAgent(
-      {handle: 'primary', signer: invocationSigner});
-    const keystoreAgent = new KeystoreAgent(
-      {keystore, capabilityAgent, kmsClient});
-    // TODO: can't presume to use `edvs.get` -- this only works for a local
-    // EDV service, need to use a zcap that belongs to the profile if
-    // it exists
-    const edvClient = await edvs.get({
-      invocationSigner,
-      keystoreAgent,
-      profileId,
-      referenceId,
-    });
-
-    edvClient.ensureIndex({attribute: 'content.profileAgentId'});
-    edvClient.ensureIndex({attribute: 'content.id'});
-    edvClient.ensureIndex({attribute: 'content.type'});
-    edvClient.ensureIndex({attribute: 'content.name'});
-    edvClient.ensureIndex({attribute: 'content.email'});
-    // FIXME: profileAgent needs to be factored out in favor of profileAgentId
-    edvClient.ensureIndex({attribute: 'content.profileAgent'});
-
-    return {
-      edvClient,
-      invocationSigner,
-    };
-  }
-
-  // FIXME: this function is getting called frequently and is expensive
-  // consider using EDV Client cache
-  async getProfileEdv({profileId, referenceId}) {
-    const {profileAgent} = await this._profileService.getAgentByProfile({
-      account: this.accountId,
-      profile: profileId
-    });
-
-    // FIXME: `zcaps` are coming out of the capabilitySet EDV which is
-    // read deep in the call stack. Need to clean this up.
-    const {kmsClient, invocationSigner, zcaps} = await this.getProfileSigner(
-      {profileAgent});
-
-    const edvConfigZcap = zcaps[`${referenceId}-edv-configuration`];
-    const edvHmacZcap = zcaps[`${referenceId}-hmac`];
-
-    if(!(edvConfigZcap && edvHmacZcap)) {
-      throw new Error(
-        `Capabilities not found for accessing EDV: "${referenceId}".`);
-    }
-
-    const keystoreId = _getKeystoreId({zcap: edvHmacZcap});
-    const keystore = await KmsClient.getKeystore({id: keystoreId});
-    const capabilityAgent = new CapabilityAgent(
-      {handle: 'primary', signer: invocationSigner});
-    const keystoreAgent = new KeystoreAgent(
-      {keystore, capabilityAgent, kmsClient});
-    const edv = await edvs.get({
-      invocationSigner,
-      keystoreAgent,
-      profileId,
-      referenceId
-    });
-    return {
-      edv,
-      edvConfigZcap,
-      invocationSigner,
-      zcaps,
-      profileAgentId: profileAgent.id
-    };
-  }
-
-  async createAgent({profileId, accountId}) {
-    return this._profileService.createAgent({
-      account: accountId,
-      profile: profileId
-    });
-  }
-  async getAgentByProfile({profileId}) {
-    return this._profileService.getAgentByProfile({
-      profile: profileId,
-      account: this.accountId
-    });
-  }
-
-  async getAgent({id}) {
-    return this._profileService.getAgent({
-      id,
-      account: this.accountId
-    });
-  }
-
-  async deleteAgent({id}) {
-    return this._profileService.deleteAgent({
-      id,
-      account: this.accountId
-    });
-  }
-
-  async createProfile({} = {}) {
-    const {id: profileId} = await this._profileService.create(
-      {account: this.accountId});
-
-    const {profileAgent} = await this._profileService.getAgentByProfile({
-      account: this.accountId,
-      profile: profileId
-    });
-
-    return {
-      profileId,
-      profileAgent
-    };
-  }
-
-  async getProfile({profileAgent, profileId} = {}) {
-    if(!(profileAgent || profileId)) {
-      throw new TypeError(
-        'One of "profileAgent" or "profileId" parameters is required.');
-    }
-    if(!profileAgent) {
-      // profileId will be defined here
-      ({profileAgent} = await this._profileService.getAgentByProfile({
-        account: this.accountId,
-        profile: profileId
-      }));
-    }
-
-    const profileAgentDetails = await this.getProfileAgent({profileAgent});
-    const documentReferenceId = edvs.getReferenceId('users-edv-document');
-    const capability = profileAgentDetails.zcaps[documentReferenceId];
-
-    const invocationSigner = await this.getProfileAgentSigner(
-      {profileAgentId: profileAgent.id});
-
-    const edvDocument = new EdvDocument({
-      capability,
-      keyAgreementKey: _userDocumentKak({invocationSigner, profileAgent}),
-      invocationSigner,
-    });
-
-    const {content} = await edvDocument.read();
-
-    return content;
-  }
-
-  async getProfileAgent({profileAgent} = {}) {
-    if(!(profileAgent)) {
-      throw new TypeError('"profileAgent" parameter is required.');
-    }
-
-    const invocationSigner = await this.getProfileAgentSigner(
-      {profileAgentId: profileAgent.id});
-
-    const edvDocument = new EdvDocument({
-      capability: profileAgent.zcaps.userDocument,
-      keyAgreementKey: _userDocumentKak({invocationSigner, profileAgent}),
-      invocationSigner,
-    });
-
-    const {content} = await edvDocument.read();
-
-    return content;
-  }
-
-  async getProfiles({type} = {}) {
-    const profileAgentRecords = await this._profileService.getAllAgents({
-      account: this.accountId,
-    });
-    const promises = profileAgentRecords.map(async ({profileAgent}) =>
-      this.getProfile({profileAgent}));
-
-    // TODO: Use proper promise-fun library to limit concurrency
-    const profiles = await Promise.all(promises);
-    if(!type) {
-      return profiles;
-    }
-    return profiles.filter(profile => profile.type.includes(type));
-  }
-
-  async getProfileAgentSigner({profileAgentId}) {
-    const {zcap} = await this._profileService.delegateAgentCapabilities({
-      account: this.accountId,
-      invoker: this.capabilityAgent.id,
-      profileAgentId
-    });
-
-    // signer for signing with the profileAgent's capability invocation key
-    return new AsymmetricKey({
-      capability: zcap,
-      invocationSigner: this.capabilityAgent.getSigner(),
-    });
-  }
-
-  async getProfileSigner({profileAgent}) {
-    // FIXME: `zcaps` are coming out of the capabilitySet EDV which is
-    // read deep in the call stack. Need to clean this up.
-    const {zcap, invocationSigner, zcaps} =
-      await this._getProfileInvocationKeyZcap({profileAgent});
-
-    // FIXME: remove `kmsClient` here if not needed
-    const keystore = _getKeystoreId({zcap});
-    const kmsClient = new KmsClient({keystore});
-    const profileZcapKey = new AsymmetricKey({
-      capability: zcap,
-      invocationSigner,
-      kmsClient
-    });
-
-    return {
-      invocationSigner: profileZcapKey,
-      kmsClient,
-      // FIXME: `zcaps` are coming out of the capabilitySet EDV which is
-      // read deep in the call stack. Need to clean this up.
-      zcaps
-    };
-  }
-
-  async updateUser({profileAgent, usersReferenceId, content}) {
-    if(!usersReferenceId) {
-      usersReferenceId = edvs.getReferenceId('users');
-    }
-    const {edvClient, invocationSigner} = await this.getUsersEdv(
-      {profileAgent, referenceId: usersReferenceId});
-
-    const [userDoc] = await edvClient.find({
-      equals: {'content.id': content.id},
-      invocationSigner
-    });
-
-    const updatedUserDoc = await edvClient.update({
-      doc: {
-        ...userDoc,
-        content: {
-          ...userDoc.content,
-          ...content
-        }
-      },
-      invocationSigner,
-      keyResolver
-    });
-    return updatedUserDoc.content;
-  }
-
-  async getUser({profileAgent, userId, usersReferenceId} = {}) {
-    if(!usersReferenceId) {
-      usersReferenceId = edvs.getReferenceId('users');
-    }
-    const {edvClient, invocationSigner} = await this.getUsersEdv(
-      {profileAgent, referenceId: usersReferenceId});
-
-    const [userDoc] = await edvClient.find({
-      equals: {'content.id': userId},
-      invocationSigner
-    });
-    return userDoc.content;
-  }
-
-  async getUsers({profileId, usersReferenceId}) {
-    if(!usersReferenceId) {
-      usersReferenceId = edvs.getReferenceId('users');
-    }
-
-    const {profileAgent} = await this._profileService.getAgentByProfile({
-      account: this.accountId,
-      profile: profileId
-    });
-
-    const {edvClient, invocationSigner} = await this.getUsersEdv(
-      {profileAgent, referenceId: usersReferenceId});
-
-    const results = await edvClient.find({
-      // FIXME: bug in equals implementation here
-      // equals: {'content.type': ['Person', 'User']},
-      has: 'content.type',
-      invocationSigner
-    });
-    return results.map(({content}) => content);
-  }
-
-  async deleteUser({profileAgent, userId, usersReferenceId} = {}) {
-    if(!usersReferenceId) {
-      usersReferenceId = edvs.getReferenceId('users');
-    }
-    const {edvClient, invocationSigner} = await this.getUsersEdv(
-      {profileAgent, referenceId: usersReferenceId});
-
-    const [userDoc] = await edvClient.find({
-      equals: {'content.id': userId},
-      invocationSigner
-    });
-    return edvClient.delete({
-      id: userDoc.id,
-      invocationSigner
-    });
-  }
-
-  async delegateCapability({profileId, request}) {
-    const {
-      invocationTarget, invoker, delegator, referenceId, allowedAction, caveat
-    } = request;
-    if(!(invocationTarget && typeof invocationTarget === 'object' &&
-      invocationTarget.type)) {
-      throw new TypeError(
-        '"invocationTarget" must be an object that includes a "type".');
-    }
-
-    // profileId will be defined here
-    const {profileAgent} = await this._profileService.getAgentByProfile({
-      account: this.accountId,
-      profile: profileId
-    });
-
-    const {kmsClient, invocationSigner} = await this.getProfileSigner(
-      {profileAgent});
-
-    let zcap = {
-      '@context': SECURITY_CONTEXT_V2_URL,
-      // use 128-bit random multibase encoded value
-      id: `urn:zcap:${await EdvClient.generateId()}`,
-      invoker
-    };
-    if(delegator) {
-      zcap.delegator = delegator;
-    }
-    if(referenceId) {
-      zcap.referenceId = referenceId;
-    }
-    if(allowedAction) {
-      zcap.allowedAction = allowedAction;
-    }
-    if(caveat) {
-      zcap.caveat = caveat;
-    }
-    let {parentCapability} = request;
-    const {id: target, type: targetType, verificationMethod} = invocationTarget;
-    if(targetType === 'Ed25519VerificationKey2018') {
-      if(!target) {
-        throw new TypeError(
-          '"invocationTarget.id" must be set for Web KMS capabilities.');
-      }
-      if(!verificationMethod) {
-        throw new TypeError(
-          '"invocationTarget.verificationMethod" is required when ' +
-          '"invocationTarget.type" is "Ed25519VerificationKey2018".');
-      }
-      // TODO: fetch `target` from a key mapping document in the profile's
-      // edv to get public key ID to set as `referenceId`
-      zcap.invocationTarget = {
-        id: target,
-        type: targetType,
-        verificationMethod,
-      };
-      zcap.parentCapability = parentCapability || target;
-      zcap = await _delegate({zcap, signer: invocationSigner});
-
-      // TODO: only enable zcap for invocation/delegation keys
-      // await kmsClient.enableCapability(
-      //   {capabilityToEnable: zcap, invocationSigner});
-    } else if(targetType === 'urn:edv:document') {
-      zcap.invocationTarget = {
-        id: target,
-        type: targetType
-      };
-
-      // FIXME: always pass parentCapability
-      if(!parentCapability) {
-        throw new Error('Not implemented: FIXME, parentCapability required');
-        // const idx = zcap.invocationTarget.id.lastIndexOf('/');
-        // const docId = zcap.invocationTarget.id.substr(idx + 1);
-        //parentCapability = `${edvClient.id}/zcaps/documents/${docId}`;
-      }
-      zcap.parentCapability = parentCapability;
-      zcap = await _delegate({zcap, signer: invocationSigner});
-    } else if(targetType === 'urn:edv:documents') {
-      zcap.invocationTarget = {
-        id: target,
-        type: targetType
-      };
-
-      if(!parentCapability) {
-        throw new Error('Not implemented: FIXME, parentCapability required');
-        //parentCapability = `${edvClient.id}/zcaps/documents`;
-      }
-      zcap.parentCapability = parentCapability;
-      zcap = await _delegate({zcap, signer: invocationSigner});
-    } else if(targetType === 'urn:edv:revocations') {
-      zcap.invocationTarget = {
-        id: target,
-        type: targetType
-      };
-
-      if(!parentCapability) {
-        throw new Error('Not implemented: FIXME, parentCapability required');
-        //parentCapability = `${edvClient.id}/zcaps/revocations`;
-      }
-      zcap.parentCapability = parentCapability;
-      zcap = await _delegate({zcap, signer: invocationSigner});
-    } else if(targetType === 'urn:webkms:revocations') {
-      zcap.invocationTarget = {
-        id: target,
-        type: targetType
-      };
-      const {id: keystoreId} = kmsClient.keystore;
-
-      if(target) {
-        // TODO: handle case where an existing target is requested
-      } else {
-        zcap.invocationTarget.id = `${keystoreId}/revocations`;
-      }
-      if(!parentCapability) {
-        parentCapability = `${keystoreId}/zcaps/revocations`;
-      }
-      zcap.parentCapability = parentCapability;
-      zcap = await _delegate({zcap, signer: invocationSigner});
-
-      // enable zcap via kms client
-      // TODO: only enable zcap for invocation/delegation keys
-      // await kmsClient.enableCapability(
-      //   {capabilityToEnable: zcap, invocationSigner});
-    } else {
-      throw new Error(`Unsupported invocation target type "${targetType}".`);
-    }
-    return zcap;
-  }
-
-  async delegateAgentCapabilities({to, profileAgentId}) {
-    return this._profileService.delegateAgentCapabilities({
-      account: this.accountId,
-      invoker: to,
-      profileAgentId
-    });
-  }
-
-  async updateAgentCapabilitySet({profileAgentId, zcaps}) {
-    return this._profileService.updateAgentCapabilitySet({
-      account: this.accountId,
-      profileAgentId,
-      zcaps
-    });
-  }
-
-  // FIXME: this API is no longer used as currently implemented
-  async deleteAgentCapabilitySet({profileAgentId}) {
-    return this._profileService.deleteAgentCapabilitySet({
-      account: this.accountId,
-      profileAgentId
-    });
-  }
-
-  // check if profileAgent.zcaps.profileCapabilityInvocationKey
-  // is present, just return it, otherwise, look for it in the
-  // capability set EDV document for the profile agent
-  async _getProfileInvocationKeyZcap({profileAgent}) {
-    const {id: profileAgentId, profile: profileId} = profileAgent;
-
-    const invocationSigner = await this.getProfileAgentSigner({profileAgentId});
-
-    // return profile capability invocation key if it hasn't been
-    // moved to a capability set EDV document yet; this only happens
-    // when a new profile is being provisioned
-    if(profileAgent.zcaps.profileCapabilityInvocationKey) {
-      return {
-        zcap: profileAgent.zcaps.profileCapabilityInvocationKey,
-        invocationSigner,
-        zcaps: {
-          [profileAgent.zcaps.profileCapabilityInvocationKey.referenceId]:
-            profileAgent.zcaps.profileCapabilityInvocationKey
-        }
-      };
-    }
-
-    const c = new EdvClient({keyResolver});
-
-    const userDocument = await c.get({
-      id: profileAgent.zcaps.userDocument.invocationTarget.id,
-      capability: profileAgent.zcaps.userDocument,
-      invocationSigner,
-      keyAgreementKey: _userDocumentKak({invocationSigner, profileAgent}),
-    });
-
-    const {content: {zcaps}} = userDocument;
-
-    // FIXME: can this key be contructed without the search?
-    // the challenge is that the referenceId (zcaps[referenceId]) is a DID
-    // key that includes a hash fragment
-    // e.g. did:key:MOCK_KEY#MOCK_KEY-key-capabilityInvocation
-    const _zcapMapKey = Object.keys(zcaps).find(referenceId => {
-      const capabilityInvokeKeyReference = '-key-capabilityInvocation';
-      return referenceId.startsWith(profileId) &&
-        referenceId.endsWith(capabilityInvokeKeyReference);
-    });
-
-    const profileInvocationKeyZcap = zcaps[_zcapMapKey];
-    if(!profileInvocationKeyZcap) {
-      throw new Error(`Unable find the profile invocation key zcap` +
-        ` for "${profileId}"`);
-    }
-
-    return {
-      zcaps,
-      zcap: profileInvocationKeyZcap,
-      invocationSigner
-    };
+  async _resetCache() {
+    this._cache = {};
   }
 
   async _sessionChanged({authentication, newData}) {
@@ -934,6 +572,7 @@ export default class ProfileManager {
     const accountId = this.accountId = newAccountId;
     this.capabilityAgent = null;
     this.keystoreAgent = null;
+    this._resetCache();
 
     if(!(authentication || newData.account)) {
       // no account in session, return
@@ -953,190 +592,163 @@ export default class ProfileManager {
     }
   }
 
-  async _createEdv({referenceId} = {}) {
-    // create KAK and HMAC keys for edv config
-    const {capabilityAgent, keystoreAgent, kmsModule} = this;
-    const [keyAgreementKey, hmac] = await Promise.all([
-      keystoreAgent.generateKey({type: 'keyAgreement', kmsModule}),
-      keystoreAgent.generateKey({type: 'hmac', kmsModule})
-    ]);
-
-    // create edv
-    let config = {
-      sequence: 0,
-      controller: capabilityAgent.handle,
-      // TODO: add `invoker` and `delegator` using capabilityAgent.id *or*, if
-      // this is a profile's edv, the profile ID
-      invoker: capabilityAgent.id,
-      delegator: capabilityAgent.id,
-      keyAgreementKey: {id: keyAgreementKey.id, type: keyAgreementKey.type},
-      hmac: {id: hmac.id, type: hmac.type}
-    };
-    if(referenceId) {
-      config.referenceId = referenceId;
-    }
-    config = await EdvClient.createEdv({config});
-    return new EdvClient(
-      {id: config.id, keyResolver, keyAgreementKey, hmac});
-  }
-
-  async _ensureEdv() {
-    const {capabilityAgent, keystoreAgent} = this;
-    const config = await EdvClient.findConfig(
-      {controller: capabilityAgent.handle, referenceId: 'primary'});
-    if(config === null) {
-      return await this._createEdv({referenceId: 'primary'});
-    }
-    const [keyAgreementKey, hmac] = await Promise.all([
-      keystoreAgent.getKeyAgreementKey(
-        {id: config.keyAgreementKey.id, type: config.keyAgreementKey.type}),
-      keystoreAgent.getHmac({id: config.hmac.id, type: config.hmac.type})
-    ]);
-    return new EdvClient(
-      {id: config.id, keyResolver, keyAgreementKey, hmac});
-  }
-
-  async _createKeystore({referenceId} = {}) {
-    const {capabilityAgent, recoveryHost} = this;
-
-    // create keystore
-    const config = {
-      sequence: 0,
-      controller: capabilityAgent.id,
-      invoker: capabilityAgent.id,
-      delegator: capabilityAgent.id
-    };
-    if(recoveryHost) {
-      config.invoker = [config.invoker, recoveryHost];
-    }
-    if(referenceId) {
-      config.referenceId = referenceId;
-    }
-    return await KmsClient.createKeystore({
-      url: `${this.kmsBaseUrl}/keystores`,
-      config
+  async _getAgentRecord({profileId}) {
+    // TODO: add cache (ensure cache gets cleared when session changes or
+    // when initializing access management)
+    return this._profileService.getAgentByProfile({
+      profile: profileId,
+      account: this.accountId
     });
   }
 
-  async _ensureKeystore({accountId}) {
-    const {capabilityAgent} = this;
-
-    // see if there is an existing keystore for the account
-    const service = new AccountService();
-    const {account: {keystore}} = await service.get({id: accountId});
-    if(keystore) {
-      // keystore exists, get config and check against capability agent
-      let config = await KmsClient.getKeystore({id: keystore});
-      const {controller} = config;
-      if(controller !== capabilityAgent.id) {
-        // keystore does NOT match; perform recovery
-        config = await this._recoverKeystore({id: keystore});
-        // TODO: handle future case where user has not authorized the
-        // host application to perform recovery
-      }
-      this.keystoreAgent = new KeystoreAgent(
-        {keystore: config, capabilityAgent});
-      return config;
+  async _getAgent({profileId} = {}) {
+    if(typeof profileId !== 'string') {
+      throw new TypeError('"profileId" must be a string.');
     }
 
-    // if there is no existing keystore...
-    let config = await KmsClient.findKeystore({
-      url: `${this.kmsBaseUrl}/keystores`,
-      controller: capabilityAgent.id,
-      referenceId: 'primary'
+    const {profileAgent} = await this._getAgentRecord({profileId});
+
+    // determine if `profileAgent` has a userDocument yet
+    const {userDocument: capability, userKak} = profileAgent.zcaps;
+    if(!capability) {
+      throw new Error('Profile access management not initialized.');
+    }
+
+    const invocationSigner = await this._getAgentSigner({id: profileAgent.id});
+
+    const edvDocument = new EdvDocument({
+      capability: profileAgent.zcaps.userDocument,
+      keyAgreementKey: new KeyAgreementKey({
+        id: userKak.invocationTarget.id,
+        type: userKak.invocationTarget.type,
+        capability: userKak,
+        invocationSigner
+      }),
+      invocationSigner
     });
-    if(config === null) {
-      config = await this._createKeystore({referenceId: 'primary'});
-    }
-    if(config === null) {
-      return null;
-    }
-    this.keystoreAgent = new KeystoreAgent({keystore: config, capabilityAgent});
 
-    await this._addKeystoreToAccount({accountId, keystoreId: config.id});
+    const {content} = await edvDocument.read();
 
-    return config;
-  }
-
-  async _addKeystoreToAccount({accountId, keystoreId}) {
-    const service = new AccountService();
-    while(true) {
-      const {account, meta} = await service.get({id: accountId});
-      if(account.keystore === keystoreId) {
-        break;
-      }
-
-      const {sequence} = meta;
-      const observer = jsonpatch.observe(account);
-      const patch = jsonpatch.generate(observer);
-      account.keystore = keystoreId;
-      jsonpatch.unobserve(account, observer);
-      try {
-        await service.update({id: accountId, sequence, patch});
-        break;
-      } catch(e) {
-        // if e has a conflict response try again, otherwise throw error
-        const {response = {}} = e;
-        if(response.status !== 409) {
-          throw e;
-        }
+    // update zcaps to include zcaps from agent record
+    for(const zcap of Object.values(profileAgent.zcaps)) {
+      const {referenceId} = zcap;
+      if(!content.zcaps[referenceId]) {
+        content.zcaps[referenceId] = zcap;
       }
     }
+
+    return content;
   }
 
-  async _recoverKeystore({id}) {
-    // FIXME: this needs to be posted to a different endpoint that is
-    // able to authenticate the user and ensure that the controller being
-    // updated was under the control of the user's account
-    const {capabilityAgent} = this;
-    const url = `${id}/recover`;
-    const response = await axios.post(url, {
-      '@context': 'https://w3id.org/security/v2',
-      controller: capabilityAgent.id
-    }, {headers: DEFAULT_HEADERS});
-    const keystoreConfig = response.data;
+  async _getAgentSigner({id}) {
+    if(!this._cache.agentSigners) {
+      this._cache.agentSigners = new Map();
+    }
 
-    // clear edv client cache so new instances will use new capability agent
-    this.edvClientCache.clear();
+    let signer = this._cache.agentSigners.get(id);
+    if(!signer) {
+      const {zcap} = await this._profileService.delegateAgentCapabilities({
+        account: this.accountId,
+        invoker: this.capabilityAgent.id,
+        profileAgentId: id
+      });
 
-    // update account edv
-    const edvClient = await this._ensureEdv();
-    await this.edvClientCache.set('primary', edvClient);
-    const config = await EdvClient.getConfig({id: edvClient.id});
-    config.sequence++;
-    config.invoker = config.delegator = capabilityAgent.id;
-    await EdvClient.updateConfig({id: edvClient.id, config});
+      // signer for signing with the profileAgent's capability invocation key
+      signer = new AsymmetricKey({
+        capability: zcap,
+        invocationSigner: this.capabilityAgent.getSigner(),
+      });
+      this._cache.agentSigners.set(id, signer);
+    }
+    return signer;
+  }
 
-    // TODO: updating profile edvs should not be required once profile
-    // edvs properly use the profile's keys for invoker/delegator
-    // instead of the account's capability agent
+  // TODO: delegate this on demand instead, being careful not to create
+  // duplicates as a race condition
+  async _delegateProfileUserDocZcap({
+    profileAgentId, docId, edvParentCapability, invocationSigner
+  }) {
+    const delegateUserDocEdvRequest = {
+      referenceId: 'profile-edv-document',
+      allowedAction: ['read'],
+      controller: profileAgentId,
+      invocationTarget: {
+        id: docId,
+        type: 'urn:edv:document'
+      },
+      parentCapability: edvParentCapability
+    };
 
-    // update all profile edvs
-    const profiles = await this.getProfiles();
-    await Promise.all(profiles.map(async ({content: profile}) => {
-      const config = await EdvClient.getConfig({id: profile.edv});
-      config.sequence++;
-      config.invoker = config.delegator = capabilityAgent.id;
-      await EdvClient.updateConfig({id: profile.edv, config});
-    }));
+    const [profileUserDocZcap] = utils.delegateCapability({
+      signer: invocationSigner,
+      request: delegateUserDocEdvRequest
+    });
 
-    return keystoreConfig;
+    return profileUserDocZcap;
+  }
+
+  async _delegateAgentRecordZcaps({
+    profileAgentId, docId, edvParentCapability,
+    keyAgreementKey, invocationSigner
+  }) {
+    const delegateEdvDocumentRequest = {
+      referenceId: `profile-agent-edv-document`,
+      // the profile agent is only allowed to read its own doc
+      allowedAction: ['read'],
+      controller: profileAgentId,
+      invocationTarget: {
+        id: docId,
+        type: 'urn:edv:document'
+      },
+      parentCapability: edvParentCapability
+    };
+
+    const delegateEdvKakRequest = {
+      referenceId: `user-edv-kak`,
+      allowedAction: ['deriveSecret', 'sign'],
+      controller: profileAgentId,
+      invocationTarget: {
+        id: keyAgreementKey.id,
+        type: keyAgreementKey.type,
+        verificationMethod: keyAgreementKey.id
+      },
+      parentCapability: keyAgreementKey.id
+    };
+    const [userDocumentZcap, userKakZcap] = await Promise.all([
+      utils.delegateCapability({
+        signer: invocationSigner,
+        request: delegateEdvDocumentRequest
+      }),
+      utils.delegateCapability({
+        signer: invocationSigner,
+        request: delegateEdvKakRequest
+      })
+    ]);
+
+    return {
+      userDocument: userDocumentZcap,
+      userKak: userKakZcap
+    };
   }
 }
 
-async function _delegate({zcap, signer}) {
-  // attach capability delegation proof
-  return sign(zcap, {
-    // TODO: map `signer.type` to signature suite
-    suite: new Ed25519Signature2018({
-      signer,
-      verificationMethod: signer.id
-    }),
-    purpose: new CapabilityDelegation({
-      capabilityChain: [zcap.parentCapability]
-    }),
-    compactProof: false
+function _getProfileInvocationKeyZcap({profileId, zcaps}) {
+  // FIXME: simplify reference ID for this; force only one reference ID
+  // for using the agent's profile's capability invocation key using the
+  // literal reference ID: 'profile-capability-invocation-key'
+  const _zcapMapKey = Object.keys(zcaps).find(referenceId => {
+    const capabilityInvokeKeyReference = '-key-capabilityInvocation';
+    return referenceId.startsWith(profileId) &&
+      referenceId.endsWith(capabilityInvokeKeyReference);
   });
+
+  const profileInvocationKeyZcap = zcaps[_zcapMapKey];
+  if(!profileInvocationKeyZcap) {
+    throw new Error(
+      `Unable find the profile invocation key zcap for "${profileId}".`);
+  }
+
+  return profileInvocationKeyZcap;
 }
 
 function _getKeystoreId({zcap}) {
@@ -1163,21 +775,4 @@ function _deriveKeystoreId(id) {
     paths[2] + // "keystores"
     '/' +
     paths[3]; // "<keystore_id>"
-}
-
-// FIXME: make more restrictive, support `did:key` and `did:v1`
-async function keyResolver({id}) {
-  const response = await axios.get(id, {
-    headers: DEFAULT_HEADERS
-  });
-  return response.data;
-}
-
-function _userDocumentKak({invocationSigner, profileAgent}) {
-  return new KeyAgreementKey({
-    id: profileAgent.zcaps.userKak.invocationTarget.id,
-    type: profileAgent.zcaps.userKak.invocationTarget.type,
-    capability: profileAgent.zcaps.userKak,
-    invocationSigner,
-  });
 }
