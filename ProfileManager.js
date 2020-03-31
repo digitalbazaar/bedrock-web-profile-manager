@@ -434,7 +434,7 @@ export default class ProfileManager {
       account: this.accountId
     });
     const promises = profileAgentRecords.map(async ({profileAgent}) =>
-      this.getProfile({id: profileAgent.profileId}));
+      this.getProfile({id: profileAgent.profile}));
 
     // TODO: Use proper promise-fun library to limit concurrency
     const profiles = await Promise.all(promises);
@@ -638,17 +638,15 @@ export default class ProfileManager {
 
   // FIXME: remove exposure of this?
   async getProfileEdvAccess({profileId, referenceIdPrefix} = {}) {
-    const [agent, invocationSigner] = await Promise.all([
-      this.getAgent({profileId}),
-      this._getAgentSigner({profileId})
-    ]);
+    const agent = await this.getAgent({profileId});
+    const invocationSigner = await this._getAgentSigner({id: agent.id});
 
     const refs = {
-      documents: `${referenceIdPrefix}-documents`,
-      hmac: `${referenceIdPrefix}-hmac`,
-      kak: `${referenceIdPrefix}-kak`
+      documents: `${referenceIdPrefix}-edv-documents`,
+      hmac: `${referenceIdPrefix}-edv-hmac`,
+      kak: `${referenceIdPrefix}-edv-kak`
     };
-    const {zcaps} = agent.zcaps;
+    const {zcaps} = agent;
 
     const documentsZcap = zcaps[refs.documents];
     const hmacZcap = zcaps[refs.hmac];

@@ -62,6 +62,7 @@ export default class Collection {
     const updatedDoc = {
       ...doc
     };
+    updatedDoc.content = item;
     if(meta) {
       updatedDoc.meta = meta;
     }
