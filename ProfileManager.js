@@ -78,6 +78,55 @@ export default class ProfileManager {
   }
 
   /**
+   * Gets the profile agent assigned to the account associated with the
+   * authenticated session for the profile identified by the given profile ID.
+   *
+   * @param {Object} options - The options to use.
+   * @param {string} options.profileId - The ID of the profile to get the
+   *   profile agent for.
+   *
+   * @returns {Object} The profile agent.
+   */
+  async getAgent({profileId} = {}) {
+    if(typeof profileId !== 'string') {
+      throw new TypeError('"profileId" must be a string.');
+    }
+
+    const {profileAgent} = await this._getAgentRecord({profileId});
+
+    // determine if `profileAgent` has a userDocument yet
+    const {userDocument: capability, userKak} = profileAgent.zcaps;
+    if(!capability) {
+      throw new Error('Profile access management not initialized.');
+    }
+
+    const invocationSigner = await this._getAgentSigner({id: profileAgent.id});
+
+    const edvDocument = new EdvDocument({
+      capability: profileAgent.zcaps.userDocument,
+      keyAgreementKey: new KeyAgreementKey({
+        id: userKak.invocationTarget.id,
+        type: userKak.invocationTarget.type,
+        capability: userKak,
+        invocationSigner
+      }),
+      invocationSigner
+    });
+
+    const {content} = await edvDocument.read();
+
+    // update zcaps to include zcaps from agent record
+    for(const zcap of Object.values(profileAgent.zcaps)) {
+      const {referenceId} = zcap;
+      if(!content.zcaps[referenceId]) {
+        content.zcaps[referenceId] = zcap;
+      }
+    }
+
+    return content;
+  }
+
+  /**
    * Initializes access management for a profile. This method will link the
    * storage location for access management data to the profile and enable
    * its initial profile agent to access its capabilities to use the profile.
@@ -320,7 +369,7 @@ export default class ProfileManager {
    */
   async getProfileSigner({profileId}) {
     // TODO: cache profile signer by profile ID?
-    const agent = await this._getAgent({profileId});
+    const agent = await this.getAgent({profileId});
     const {id: profileAgentId, zcaps} = agent;
     const zcap = await _getProfileInvocationKeyZcap({profileId, zcaps});
 
@@ -354,7 +403,7 @@ export default class ProfileManager {
     // check for a zcap for getting the profile in this order:
     // 1. zcap for reading just the profile
     // 2. zcap for reading entire users EDV
-    const agent = await this._getAgent({profileId: id});
+    const agent = await this.getAgent({profileId: id});
     const capability =
       agent.zcaps['profile-edv-document'] ||
       agent.zcaps['user-edv'];
@@ -432,7 +481,7 @@ export default class ProfileManager {
   async getAccessManager({profileId}) {
     const [profile, agent, invocationSigner] = await Promise.all([
       this.getProfile({profileId}),
-      this._getAgent({profileId}),
+      this.getAgent({profileId}),
       this._getAgentSigner({profileId})
     ]);
     // TODO: consider consolidation with `getProfileEdv`
@@ -506,7 +555,7 @@ export default class ProfileManager {
   // FIXME: expose?
   async getProfileEdvAccess({profileId, referenceIdPrefix}) {
     const [agent, invocationSigner] = await Promise.all([
-      this._getAgent({profileId}),
+      this.getAgent({profileId}),
       this._getAgentSigner({profileId})
     ]);
 
@@ -610,45 +659,6 @@ export default class ProfileManager {
       profile: profileId,
       account: this.accountId
     });
-  }
-
-  async _getAgent({profileId} = {}) {
-    if(typeof profileId !== 'string') {
-      throw new TypeError('"profileId" must be a string.');
-    }
-
-    const {profileAgent} = await this._getAgentRecord({profileId});
-
-    // determine if `profileAgent` has a userDocument yet
-    const {userDocument: capability, userKak} = profileAgent.zcaps;
-    if(!capability) {
-      throw new Error('Profile access management not initialized.');
-    }
-
-    const invocationSigner = await this._getAgentSigner({id: profileAgent.id});
-
-    const edvDocument = new EdvDocument({
-      capability: profileAgent.zcaps.userDocument,
-      keyAgreementKey: new KeyAgreementKey({
-        id: userKak.invocationTarget.id,
-        type: userKak.invocationTarget.type,
-        capability: userKak,
-        invocationSigner
-      }),
-      invocationSigner
-    });
-
-    const {content} = await edvDocument.read();
-
-    // update zcaps to include zcaps from agent record
-    for(const zcap of Object.values(profileAgent.zcaps)) {
-      const {referenceId} = zcap;
-      if(!content.zcaps[referenceId]) {
-        content.zcaps[referenceId] = zcap;
-      }
-    }
-
-    return content;
   }
 
   async _getAgentSigner({id}) {
