@@ -236,7 +236,7 @@ export default class ProfileManager {
       capability, invocationSigner, client
     });
     let type = ['User', 'Profile'];
-    let {profileTypes = []} = profileContent;
+    let {type: profileTypes = []} = profileContent;
     if(!Array.isArray(profileTypes)) {
       profileTypes = [profileTypes];
     }
@@ -294,7 +294,7 @@ export default class ProfileManager {
       capability, invocationSigner, client
     });
     type = ['User', 'Agent'];
-    let {agentTypes = []} = profileAgentContent;
+    let {type: agentTypes = []} = profileAgentContent;
     if(!Array.isArray(agentTypes)) {
       agentTypes = [agentTypes];
     }

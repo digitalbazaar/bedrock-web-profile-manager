@@ -75,7 +75,7 @@ export default class AccessManager {
 
     // create user doc for profile agent
     const type = ['User', 'Agent'];
-    let {agentTypes = []} = content;
+    let {type: agentTypes = []} = content;
     if(!Array.isArray(agentTypes)) {
       agentTypes = [agentTypes];
     }
