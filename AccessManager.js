@@ -64,6 +64,7 @@ export default class AccessManager {
       const agent = await profileManager._getAgent({profileId: profile.id});
       const profileDocCapability = agent.zcaps['profile-edv-document'];
       const profileDocZcap = await profileManager._delegateProfileUserDocZcap({
+        edvId: accessManagement.edvId,
         profileAgentId,
         docId: profileDocCapability.invocationTarget.id,
         edvParentCapability,
@@ -144,92 +145,6 @@ export default class AccessManager {
       id,
       account: this.profileManager.accountId
     });
-  }
-
-  async delegateEdvCapabilities({
-    edvId,
-    hmac,
-    keyAgreementKey,
-    parentCapabilities,
-    invocationSigner,
-    profileAgentId,
-    referenceIdPrefix
-  }) {
-    // TODO: validate `parentCapabilities`
-    // if no `edvId` then `parentCapabilities.edv` required
-    // if no `hmac` then `parentCapabilities.hmac` required
-    // if no `keyAgreement` then `parentCapabilities.keyAgreementKey` required
-
-    const delegateEdvConfigurationRequest = {
-      referenceId: `${referenceIdPrefix}-documents`,
-      allowedAction: ['read', 'write'],
-      controller: profileAgentId
-    };
-    if(edvId) {
-      delegateEdvConfigurationRequest.invocationTarget = {
-        id: `${edvId}/documents`,
-        type: 'urn:edv:documents'
-      };
-      delegateEdvConfigurationRequest.parentCapability =
-        `${edvId}/zcaps/documents`;
-    } else {
-      const {edv: {id, invocationTarget}} = parentCapabilities;
-      delegateEdvConfigurationRequest.invocationTarget = {...invocationTarget};
-      delegateEdvConfigurationRequest.parentCapability = id;
-    }
-
-    const delegateEdvHmacRequest = {
-      referenceId: `${referenceIdPrefix}-hmac`,
-      allowedAction: 'sign',
-      controller: profileAgentId
-    };
-    if(hmac) {
-      delegateEdvHmacRequest.invocationTarget = {
-        id: hmac.id,
-        type: hmac.type,
-        verificationMethod: hmac.id
-      };
-      delegateEdvHmacRequest.parentCapability = hmac.id;
-    } else {
-      const {hmac: {id, invocationTarget}} = parentCapabilities;
-      delegateEdvHmacRequest.invocationTarget = {...invocationTarget};
-      delegateEdvHmacRequest.parentCapability = id;
-    }
-
-    const delegateEdvKakRequest = {
-      referenceId: `${referenceIdPrefix}-kak`,
-      allowedAction: ['deriveSecret', 'sign'],
-      controller: profileAgentId
-    };
-    if(keyAgreementKey) {
-      delegateEdvKakRequest.invocationTarget = {
-        id: keyAgreementKey.id,
-        type: keyAgreementKey.type,
-        verificationMethod: keyAgreementKey.id
-      };
-      delegateEdvKakRequest.parentCapability = keyAgreementKey.id;
-    } else {
-      const {keyAgreementKey: {id, invocationTarget}} = parentCapabilities;
-      delegateEdvKakRequest.invocationTarget = {...invocationTarget};
-      delegateEdvKakRequest.parentCapability = id;
-    }
-
-    const zcaps = await Promise.all([
-      utils.delegateCapability({
-        signer: invocationSigner,
-        request: delegateEdvConfigurationRequest
-      }),
-      utils.delegateCapability({
-        signer: invocationSigner,
-        request: delegateEdvHmacRequest
-      }),
-      utils.delegateCapability({
-        signer: invocationSigner,
-        request: delegateEdvKakRequest
-      })
-    ]);
-
-    return {zcaps};
   }
 
   async delegateCapability({profileId, request}) {
