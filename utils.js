@@ -53,7 +53,13 @@ export async function delegateCapability(
   let {parentCapability} = request;
   let capabilityChain;
   if(typeof parentCapability === 'object') {
-    capabilityChain = [parentCapability.parentCapability, parentCapability];
+    // TODO: make finding parent capability chain more robust
+    capabilityChain = [
+      ...parentCapability.proof.capabilityChain,
+      parentCapability
+    ];
+    capabilityChain[capabilityChain.length - 2] =
+      parentCapability.parentCapability;
     parentCapability = parentCapability.id;
   }
   const {id: target, type: targetType, verificationMethod} = invocationTarget;
