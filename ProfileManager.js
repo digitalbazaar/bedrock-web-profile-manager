@@ -2,6 +2,7 @@
  * Copyright (c) 2019-2020 Digital Bazaar, Inc. All rights reserved.
  */
 import AccessManager from './AccessManager.js';
+import {CapabilityDelegation} from 'ocapld';
 import {ProfileService} from 'bedrock-web-profile';
 import {
   AsymmetricKey,
@@ -14,9 +15,12 @@ import {
 import Collection from './Collection.js';
 import {EdvClient, EdvDocument} from 'edv-client';
 import EdvClientCache from './EdvClientCache.js';
+import jsigs from 'jsonld-signatures';
 import keyResolver from './keyResolver.js';
 import utils from './utils.js';
 
+const {SECURITY_CONTEXT_V2_URL, sign, suites} = jsigs;
+const {Ed25519Signature2018} = suites;
 const JWE_ALG = 'ECDH-ES+A256KW';
 
 export default class ProfileManager {
@@ -627,6 +631,129 @@ export default class ProfileManager {
     return {zcaps};
   }
 
+  async delegateCapability({profileId, request}) {
+    const {
+      invocationTarget, invoker, delegator, referenceId, allowedAction, caveat
+    } = request;
+    if(!(invocationTarget && typeof invocationTarget === 'object' &&
+      invocationTarget.type)) {
+      throw new TypeError(
+        '"invocationTarget" must be an object that includes a "type".');
+    }
+
+    const {invocationSigner} = await this.getProfileSigner({profileId});
+
+    let zcap = {
+      '@context': SECURITY_CONTEXT_V2_URL,
+      // use 128-bit random multibase encoded value
+      id: `urn:zcap:${await EdvClient.generateId()}`,
+      invoker
+    };
+    if(delegator) {
+      zcap.delegator = delegator;
+    }
+    if(referenceId) {
+      zcap.referenceId = referenceId;
+    }
+    if(allowedAction) {
+      zcap.allowedAction = allowedAction;
+    }
+    if(caveat) {
+      zcap.caveat = caveat;
+    }
+    let {parentCapability} = request;
+    const {id: target, type: targetType, verificationMethod} = invocationTarget;
+    if(targetType === 'Ed25519VerificationKey2018') {
+      if(!target) {
+        throw new TypeError(
+          '"invocationTarget.id" must be set for Web KMS capabilities.');
+      }
+      if(!verificationMethod) {
+        throw new TypeError(
+          '"invocationTarget.verificationMethod" is required when ' +
+          '"invocationTarget.type" is "Ed25519VerificationKey2018".');
+      }
+      // TODO: fetch `target` from a key mapping document in the profile's
+      // edv to get public key ID to set as `referenceId`
+      zcap.invocationTarget = {
+        id: target,
+        type: targetType,
+        verificationMethod,
+      };
+      zcap.parentCapability = parentCapability || target;
+      zcap = await _delegate({zcap, signer: invocationSigner});
+
+      // TODO: only enable zcap for invocation/delegation keys
+      // await kmsClient.enableCapability(
+      //   {capabilityToEnable: zcap, invocationSigner});
+    } else if(targetType === 'urn:edv:document') {
+      zcap.invocationTarget = {
+        id: target,
+        type: targetType
+      };
+
+      // FIXME: always pass parentCapability
+      if(!parentCapability) {
+        throw new Error('Not implemented: FIXME, parentCapability required');
+        // const idx = zcap.invocationTarget.id.lastIndexOf('/');
+        // const docId = zcap.invocationTarget.id.substr(idx + 1);
+        //parentCapability = `${edvClient.id}/zcaps/documents/${docId}`;
+      }
+      zcap.parentCapability = parentCapability;
+      zcap = await _delegate({zcap, signer: invocationSigner});
+    } else if(targetType === 'urn:edv:documents') {
+      zcap.invocationTarget = {
+        id: target,
+        type: targetType
+      };
+
+      if(!parentCapability) {
+        throw new Error('Not implemented: FIXME, parentCapability required');
+        //parentCapability = `${edvClient.id}/zcaps/documents`;
+      }
+      zcap.parentCapability = parentCapability;
+      zcap = await _delegate({zcap, signer: invocationSigner});
+    } else if(targetType === 'urn:edv:revocations') {
+      zcap.invocationTarget = {
+        id: target,
+        type: targetType
+      };
+
+      if(!parentCapability) {
+        throw new Error('Not implemented: FIXME, parentCapability required');
+        //parentCapability = `${edvClient.id}/zcaps/revocations`;
+      }
+      zcap.parentCapability = parentCapability;
+      zcap = await _delegate({zcap, signer: invocationSigner});
+    } else if(targetType === 'urn:webkms:revocations') {
+      zcap.invocationTarget = {
+        id: target,
+        type: targetType
+      };
+      const keystoreAgent = await this.getProfileKeystoreAgent({profileId});
+      const {id: keystoreId} = keystoreAgent.keystore;
+
+      if(target) {
+        // TODO: handle case where an existing target is requested
+      } else {
+        zcap.invocationTarget.id = `${keystoreId}/revocations`;
+      }
+      if(!parentCapability) {
+        parentCapability = `${keystoreId}/zcaps/revocations`;
+      }
+      zcap.parentCapability = parentCapability;
+      zcap = await _delegate({zcap, signer: invocationSigner});
+
+      // enable zcap via kms client
+      // TODO: only enable zcap for invocation/delegation keys
+      // await kmsClient.enableCapability(
+      //   {capabilityToEnable: zcap, invocationSigner});
+    } else {
+      throw new Error(`Unsupported invocation target type "${targetType}".`);
+    }
+    return zcap;
+  }
+
   async getCollection({profileId, referenceIdPrefix, type} = {}) {
     const {edvClient, capability, invocationSigner} =
       await this.getProfileEdvAccess({profileId, referenceIdPrefix});
@@ -921,4 +1048,19 @@ function _deriveKeystoreId(id) {
     paths[2] + // "keystores"
     '/' +
     paths[3]; // "<keystore_id>"
+}
+
+async function _delegate({zcap, signer}) {
+  // attach capability delegation proof
+  return sign(zcap, {
+    // TODO: map `signer.type` to signature suite
+    suite: new Ed25519Signature2018({
+      signer,
+      verificationMethod: signer.id
+    }),
+    purpose: new CapabilityDelegation({
+      capabilityChain: [zcap.parentCapability]
+    }),
+    compactProof: false
+  });
 }
