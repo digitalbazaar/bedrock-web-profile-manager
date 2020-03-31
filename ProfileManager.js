@@ -552,7 +552,7 @@ export default class ProfileManager {
       {type, client: edvClient, capability, invocationSigner});
   }
 
-  // FIXME: expose?
+  // FIXME: remove exposure of this?
   async getProfileEdvAccess({profileId, referenceIdPrefix}) {
     const [agent, invocationSigner] = await Promise.all([
       this.getAgent({profileId}),
@@ -590,6 +590,11 @@ export default class ProfileManager {
         invocationSigner
       })
     });
+
+    // TODO: consider storing indexes for profile EDVs in the profile's
+    // user doc based on `referenceIdPrefix` so that they can always
+    // be applied here, similar to what is done with accessManagement
+
     return {edvClient, capability: documentsZcap, invocationSigner};
   }
 
