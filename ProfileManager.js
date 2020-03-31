@@ -572,9 +572,9 @@ export default class ProfileManager {
       delegateEdvDocumentsRequest.parentCapability =
         `${edvId}/zcaps/documents`;
     } else {
-      const {edv: {id, invocationTarget}} = parentCapabilities;
-      delegateEdvDocumentsRequest.invocationTarget = {...invocationTarget};
-      delegateEdvDocumentsRequest.parentCapability = id;
+      const {edv} = parentCapabilities;
+      delegateEdvDocumentsRequest.invocationTarget = {...edv.invocationTarget};
+      delegateEdvDocumentsRequest.parentCapability = edv;
     }
 
     const delegateEdvHmacRequest = {
@@ -590,9 +590,9 @@ export default class ProfileManager {
       };
       delegateEdvHmacRequest.parentCapability = hmac.id;
     } else {
-      const {hmac: {id, invocationTarget}} = parentCapabilities;
-      delegateEdvHmacRequest.invocationTarget = {...invocationTarget};
-      delegateEdvHmacRequest.parentCapability = id;
+      const {hmac} = parentCapabilities;
+      delegateEdvHmacRequest.invocationTarget = {...hmac.invocationTarget};
+      delegateEdvHmacRequest.parentCapability = hmac;
     }
 
     const delegateEdvKakRequest = {
@@ -608,9 +608,9 @@ export default class ProfileManager {
       };
       delegateEdvKakRequest.parentCapability = keyAgreementKey.id;
     } else {
-      const {keyAgreementKey: {id, invocationTarget}} = parentCapabilities;
-      delegateEdvKakRequest.invocationTarget = {...invocationTarget};
-      delegateEdvKakRequest.parentCapability = id;
+      const {keyAgreementKey: kak} = parentCapabilities;
+      delegateEdvKakRequest.invocationTarget = {...kak.invocationTarget};
+      delegateEdvKakRequest.parentCapability = kak;
     }
 
     const zcaps = await Promise.all([

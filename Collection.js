@@ -58,9 +58,8 @@ export default class Collection {
     }
     const existing = await this.get({id: item.id});
     const edvDoc = await this._getEdvDocument({id: existing.id});
-    const doc = await edvDoc.read();
     const updatedDoc = {
-      ...doc
+      ...existing
     };
     updatedDoc.content = item;
     if(meta) {
