@@ -3,7 +3,6 @@
  */
 import {ProfileService} from 'bedrock-web-profile';
 import {CapabilityDelegation} from 'ocapld';
-import Collection from './Collection.js';
 import {EdvClient} from 'edv-client';
 import jsigs from 'jsonld-signatures';
 import utils from './utils';
@@ -20,15 +19,11 @@ export default class AccessManager {
    * @param {Object} options.profile - The profile to manage access for.
    * @param {string} options.profileManager - The parent `profileManager`
    *  instance.
-   * @param {Object} options.edvClient - The EDV client to use.
-   * @param {Object} options.capability - The EDV capability to use.
-   * @param {Object} options.invocationSigner - The invocation signer to use.
+   * @param {Object} options.users - A `users` Collection instance.
    *
    * @returns {AccessManager} - The new instance.
    */
-  constructor({
-    profile, profileManager, edvClient, capability, invocationSigner
-  } = {}) {
+  constructor({profile, profileManager, users} = {}) {
     if(!(profile && typeof profile === 'object')) {
       throw new TypeError('"profile" must be an object.');
     }
@@ -37,9 +32,7 @@ export default class AccessManager {
     }
     this.profile = profile;
     this.profileManager = profileManager;
-    this.edvClient = edvClient;
-    this.users = new Collection(
-      {type: 'users', client: edvClient, capability, invocationSigner});
+    this.users = users;
   }
 
   async createUser({profileId, content = {}}) {

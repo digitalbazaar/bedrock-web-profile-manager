@@ -11,6 +11,7 @@ import {
   Hmac,
   KmsClient
 } from 'webkms-client';
+import Collection from './Collection.js';
 import {EdvClient, EdvDocument} from 'edv-client';
 import EdvClientCache from './EdvClientCache.js';
 import keyResolver from './keyResolver.js';
@@ -463,9 +464,9 @@ export default class ProfileManager {
     for(const index of indexes) {
       edvClient.ensureIndex(index);
     }
-    return new AccessManager({
-      profile, profileManager: this, edvClient, capability, invocationSigner
-    });
+    const users = new Collection(
+      {type: 'users', client: edvClient, capability, invocationSigner});
+    return new AccessManager({profile, profileManager: this, users});
   }
 
   async createProfileEdv({profileId, referenceId}) {
@@ -493,7 +494,17 @@ export default class ProfileManager {
     return {edvClient};
   }
 
-  async getProfileEdvClient({profileId, referenceIdPrefix}) {
+  async getCollection({profileId, referenceIdPrefix, type}) {
+    const {edvClient, capability, invocationSigner} =
+      await this.getProfileEdvAccess({profileId, referenceIdPrefix});
+    edvClient.ensureIndex({attribute: 'content.id', unique: true});
+    edvClient.ensureIndex({attribute: 'content.type'});
+    return new Collection(
+      {type, client: edvClient, capability, invocationSigner});
+  }
+
+  // FIXME: expose?
+  async getProfileEdvAccess({profileId, referenceIdPrefix}) {
     const [agent, invocationSigner] = await Promise.all([
       this._getAgent({profileId}),
       this._getAgentSigner({profileId})
