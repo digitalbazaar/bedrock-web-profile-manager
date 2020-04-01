@@ -6,10 +6,10 @@ import {EdvClient, EdvDocument} from 'edv-client';
 const JWE_ALG = 'ECDH-ES+A256KW';
 
 export default class Collection {
-  constructor({type, capability, client, invocationSigner}) {
+  constructor({type, capability, edvClient, invocationSigner}) {
     this.type = type;
     this.capability = capability;
-    this.client = client;
+    this.edvClient = edvClient;
     this.invocationSigner = invocationSigner;
   }
 
@@ -80,14 +80,14 @@ export default class Collection {
   }
 
   async _getEdvDocument({id} = {}) {
-    const {capability, client, invocationSigner} = this;
-    const {keyResolver, keyAgreementKey, hmac} = client;
+    const {capability, edvClient, invocationSigner} = this;
+    const {keyResolver, keyAgreementKey, hmac} = edvClient;
     const recipients = [{
       header: {kid: keyAgreementKey.id, alg: JWE_ALG}
     }];
     return new EdvDocument({
       id, recipients, keyResolver, keyAgreementKey, hmac,
-      capability, invocationSigner, client
+      capability, invocationSigner, client: edvClient
     });
   }
 
@@ -111,8 +111,8 @@ export default class Collection {
         equals.push({'content.type': type});
       }
     }
-    const {capability, client, invocationSigner} = this;
-    const results = await client.find(
+    const {capability, edvClient, invocationSigner} = this;
+    const results = await edvClient.find(
       {equals, has, capability, invocationSigner});
     return results;
   }
