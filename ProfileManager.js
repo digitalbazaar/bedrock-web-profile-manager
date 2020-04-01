@@ -516,7 +516,7 @@ export default class ProfileManager {
       edvClient.ensureIndex(index);
     }
     const users = new Collection(
-      {type: 'User', client: edvClient, capability, invocationSigner});
+      {type: 'User', edvClient, capability, invocationSigner});
     return new AccessManager({profile, profileManager: this, users});
   }
 
@@ -759,8 +759,7 @@ export default class ProfileManager {
       await this.getProfileEdvAccess({profileId, referenceIdPrefix});
     edvClient.ensureIndex({attribute: 'content.id', unique: true});
     edvClient.ensureIndex({attribute: 'content.type'});
-    return new Collection(
-      {type, client: edvClient, capability, invocationSigner});
+    return new Collection({type, edvClient, capability, invocationSigner});
   }
 
   // FIXME: remove exposure of this?
