@@ -1,8 +1,6 @@
 /*!
  * Copyright (c) 2020 Digital Bazaar, Inc. All rights reserved.
  */
-'use strict';
-
 import {EdvClient, EdvDocument} from 'edv-client';
 
 const JWE_ALG = 'ECDH-ES+A256KW';
@@ -26,12 +24,12 @@ export default class Collection {
     }
     const edvDoc = await this._getEdvDocument();
     const id = await EdvClient.generateId();
-    return await edvDoc.write({doc: {id, content: item, meta}});
+    return edvDoc.write({doc: {id, content: item, meta}});
   }
 
   async get({id} = {}) {
     if(typeof id !== 'string') {
-      throw new TypeError('"id" or must be given.');
+      throw new TypeError('"id" must be a string.');
     }
     const results = await this._findDocuments({id});
     if(results.length > 0) {
@@ -41,9 +39,8 @@ export default class Collection {
   }
 
   async getAll() {
-    const {instance, capability} = this;
-    const results = await this._findDocuments(
-      {instance, type: this.type, capability});
+    const {instance, capability, type} = this;
+    const results = await this._findDocuments({instance, type, capability});
     return results;
   }
 
@@ -65,14 +62,14 @@ export default class Collection {
     if(meta) {
       updatedDoc.meta = meta;
     }
-    return await edvDoc.write({
+    return edvDoc.write({
       doc: updatedDoc
     });
   }
 
   async remove({id} = {}) {
     if(typeof id !== 'string') {
-      throw new TypeError('"id" or must be given.');
+      throw new TypeError('"id" must be a string.');
     }
     const existing = await this.get({id});
     if(!existing) {

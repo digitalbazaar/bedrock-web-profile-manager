@@ -10,7 +10,7 @@ export default class AccessManager {
    *
    * @param {Object} options - The options to use.
    * @param {Object} options.profile - The profile to manage access for.
-   * @param {string} options.profileManager - The parent `profileManager`
+   * @param {Object} options.profileManager - The parent `profileManager`
    *  instance.
    * @param {Object} options.users - A `users` Collection instance.
    *
@@ -21,7 +21,7 @@ export default class AccessManager {
       throw new TypeError('"profile" must be an object.');
     }
     if(typeof profileManager !== 'object') {
-      throw new TypeError('"profileManager" must be a string.');
+      throw new TypeError('"profileManager" must be an object.');
     }
     this.profile = profile;
     this.profileManager = profileManager;
@@ -108,7 +108,7 @@ export default class AccessManager {
       zcaps: agentRecordZcaps
     });
 
-    return {...agentDoc.content};
+    return agentDoc.content;
   }
 
   async updateUser({user}) {
