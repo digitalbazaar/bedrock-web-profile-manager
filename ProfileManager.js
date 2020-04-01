@@ -256,7 +256,6 @@ export default class ProfileManager {
       accessManagement,
       zcaps: profileZcaps
     };
-    // TODO: edvClient has no edvId ... need to fix
     await profileUserDoc.write({
       doc: {
         id: profileDocId,
