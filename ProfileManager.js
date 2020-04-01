@@ -188,7 +188,7 @@ export default class ProfileManager {
       ],
       zcaps: {}
     };
-    const profileZcaps = {};
+    const profileZcaps = {...profileContent.zcaps};
     if(capability) {
       profileZcaps[capability.referenceId] = capability;
       accessManagement.zcaps = {
