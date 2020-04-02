@@ -14,7 +14,7 @@
     "axios": "^0.19.0",
     "base64url-universal": "^1.1.0",
     "bedrock-web-account": "^1.0.0",
-    "bedrock-web-profile": "^2.0.0",
+    "bedrock-web-profile": "digitalbazaar/bedrock-web-profile#profile-agent-token",
     "bedrock-web-session": "^1.2.0",
     "bedrock-web-store": "^1.2.0",
     "crypto-ld": "^3.7.0",
