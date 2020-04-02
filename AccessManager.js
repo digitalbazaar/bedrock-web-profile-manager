@@ -28,13 +28,13 @@ export default class AccessManager {
     this.users = users;
   }
 
-  async createUser({content = {}}) {
+  async createUser({content = {}, token}) {
     // create a profile agent
     const profileService = new ProfileService();
     const {profile, profileManager} = this;
     const {accountId} = profileManager;
     const {profileAgent} = await profileService.createAgent({
-      profile: profile.id
+      profile: profile.id, token
     });
     const {id: profileAgentId} = profileAgent;
 
