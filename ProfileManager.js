@@ -820,8 +820,6 @@ export default class ProfileManager {
     edvId, profileAgentId, docId, invocationTarget, edvParentCapability,
     invocationSigner
   }) {
-    const documentsUrl = edvId ?
-      `${edvId}/documents` : edvParentCapability.invocationTarget.id;
     const delegateUserDocEdvRequest = {
       referenceId: 'profile-edv-document',
       allowedAction: ['read'],
