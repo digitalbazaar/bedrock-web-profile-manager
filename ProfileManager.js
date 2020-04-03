@@ -933,7 +933,8 @@ export default class ProfileManager {
   // TODO: delegate this on demand instead, being careful not to create
   // duplicates as a race condition
   async _delegateProfileUserDocZcap({
-    edvId, profileAgentId, docId, edvParentCapability, invocationSigner
+    edvId, profileAgentId, docId, invocationTarget, edvParentCapability,
+    invocationSigner
   }) {
     const documentsUrl = edvId ?
       `${edvId}/documents` : edvParentCapability.invocationTarget.id;
@@ -941,13 +942,18 @@ export default class ProfileManager {
       referenceId: 'profile-edv-document',
       allowedAction: ['read'],
       controller: profileAgentId,
-      invocationTarget: {
-        id: `${documentsUrl}/${docId}`,
-        type: 'urn:edv:document'
-      },
       parentCapability: edvParentCapability
     };
-
+    if(invocationTarget) {
+      delegateUserDocEdvRequest.invocationTarget = invocationTarget;
+    } else {
+      const documentsUrl = edvId ?
+        `${edvId}/documents` : edvParentCapability.invocationTarget.id;
+      delegateUserDocEdvRequest.invocationTarget = {
+        id: `${documentsUrl}/${docId}`,
+        type: 'urn:edv:document'
+      }
+    }
     const profileUserDocZcap = await utils.delegateCapability({
       signer: invocationSigner,
       request: delegateUserDocEdvRequest
@@ -957,23 +963,26 @@ export default class ProfileManager {
   }
 
   async _delegateAgentRecordZcaps({
-    edvId, profileAgentId, docId, edvParentCapability,
+    edvId, profileAgentId, docId, invocationTarget, edvParentCapability,
     keyAgreementKey, invocationSigner
   }) {
-    const documentsUrl = edvId ?
-      `${edvId}/documents` : edvParentCapability.invocationTarget.id;
     const delegateEdvDocumentRequest = {
       referenceId: `profile-agent-edv-document`,
       // the profile agent is only allowed to read its own doc
       allowedAction: ['read'],
       controller: profileAgentId,
-      invocationTarget: {
-        id: `${documentsUrl}/${docId}`,
-        type: 'urn:edv:document'
-      },
       parentCapability: edvParentCapability
     };
-
+    if(invocationTarget) {
+      delegateEdvDocumentRequest.invocationTarget = invocationTarget;
+    } else {
+      const documentsUrl = edvId ?
+        `${edvId}/documents` : edvParentCapability.invocationTarget.id;
+      delegateEdvDocumentRequest.invocationTarget = {
+        id: `${documentsUrl}/${docId}`,
+        type: 'urn:edv:document'
+      }
+    }
     const delegateEdvKakRequest = {
       referenceId: `user-edv-kak`,
       allowedAction: ['deriveSecret', 'sign'],
