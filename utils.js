@@ -78,7 +78,6 @@ export async function delegateCapability(
       type: targetType,
       verificationMethod,
     };
-    let capabilityChain;
     zcap.parentCapability = parentCapability || target;
     zcap = await delegate({zcap, signer, capabilityChain});
 
