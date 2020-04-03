@@ -57,7 +57,7 @@ export default class AccessManager {
       const profileDocCapability = agent.zcaps['profile-edv-document'];
       const profileDocZcap = await profileManager._delegateProfileUserDocZcap({
         profileAgentId,
-        invocationTarget: profileDocCapability.invocationTarget
+        invocationTarget: profileDocCapability.invocationTarget,
         edvParentCapability,
         invocationSigner
       });
