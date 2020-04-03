@@ -1028,24 +1028,12 @@ function _getKeystoreId({zcap}) {
     throw new Error('"invocationTarget" not found on zCap.');
   }
   if(typeof invocationTarget === 'string') {
-    return _deriveKeystoreId(invocationTarget);
+    return utils.deriveKeystoreId(invocationTarget);
   }
   if(invocationTarget.id && typeof invocationTarget.id === 'string') {
-    return _deriveKeystoreId(invocationTarget.id);
+    return utils.deriveKeystoreId(invocationTarget.id);
   }
   throw new Error('"invocationTarget" does not contain a proper id.');
-}
-
-function _deriveKeystoreId(id) {
-  const urlObj = new URL(id);
-  const paths = urlObj.pathname.split('/');
-  return urlObj.origin +
-    '/' +
-    paths[1] + // "kms"
-    '/' +
-    paths[2] + // "keystores"
-    '/' +
-    paths[3]; // "<keystore_id>"
 }
 
 async function _delegate({zcap, signer}) {

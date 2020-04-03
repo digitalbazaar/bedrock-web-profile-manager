@@ -171,12 +171,32 @@ export async function delegateCapability(
     zcap = await delegate({zcap, signer, capabilityChain});
 
     return zcap;
+  } else if(targetType === 'urn:edv:revocations') {
+    zcap.invocationTarget = {
+      id: target,
+      type: targetType
+    };
+
+    if(target) {
+      // TODO: handle case where an existing target is requested
+    } else {
+      //zcap.invocationTarget.id = `${edvClient.id}/revocations`;
+      throw new Error('Not implemented.');
+    }
+    if(!parentCapability) {
+      //parentCapability = `${edvClient.id}/zcaps/revocations`;
+      throw new Error('"parentCapability" must be given.');
+    }
+    zcap.parentCapability = parentCapability;
+    zcap = await delegate({zcap, signer, capabilityChain});
+
+    return zcap;
   } else if(targetType === 'urn:webkms:authorizations') {
     zcap.invocationTarget = {
       id: target,
       type: targetType
     };
-    const keystore = keystoreAgent.keystore.id;
+    const keystore = deriveKeystoreId(target);
 
     if(target) {
       // TODO: handle case where an existing target is requested
@@ -185,6 +205,25 @@ export async function delegateCapability(
     }
     if(!parentCapability) {
       parentCapability = `${keystore}/zcaps/authorizations`;
+    }
+    zcap.parentCapability = parentCapability;
+    zcap = await delegate({zcap, signer, capabilityChain});
+
+    return zcap;
+  } else if(targetType === 'urn:webkms:revocations') {
+    zcap.invocationTarget = {
+      id: target,
+      type: targetType
+    };
+    const keystore = deriveKeystoreId(target);
+
+    if(target) {
+      // TODO: handle case where an existing target is requested
+    } else {
+      zcap.invocationTarget.id = `${keystore}/revocations`;
+    }
+    if(!parentCapability) {
+      parentCapability = `${keystore}/zcaps/revocations`;
     }
     zcap.parentCapability = parentCapability;
     zcap = await delegate({zcap, signer, capabilityChain});
@@ -216,4 +255,16 @@ export async function delegate({zcap, signer, capabilityChain}) {
   });
 }
 
-export default {delegateCapability, id, delegate};
+export function deriveKeystoreId(id) {
+  const urlObj = new URL(id);
+  const paths = urlObj.pathname.split('/');
+  return urlObj.origin +
+    '/' +
+    paths[1] + // "kms"
+    '/' +
+    paths[2] + // "keystores"
+    '/' +
+    paths[3]; // "<keystore_id>"
+}
+
+export default {delegateCapability, id, delegate, deriveKeystoreId};
