@@ -829,7 +829,7 @@ export default class ProfileManager {
       parentCapability: edvParentCapability
     };
     if(invocationTarget) {
-      delegateUserDocEdvRequest.invocationTarget = invocationTarget;
+      delegateUserDocEdvRequest.invocationTarget = {...invocationTarget};
     } else {
       const documentsUrl = edvId ?
         `${edvId}/documents` : edvParentCapability.invocationTarget.id;
