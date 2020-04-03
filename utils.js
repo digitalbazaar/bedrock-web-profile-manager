@@ -16,7 +16,7 @@ const SUPPORTED_KEY_TYPES = [
 ];
 
 export async function delegateCapability(
-  {signer, keystoreAgent, request} = {}) {
+  {signer, keystoreId, request} = {}) {
   const {
     invocationTarget, invoker, delegator, controller, referenceId,
     allowedAction, caveat
@@ -196,15 +196,14 @@ export async function delegateCapability(
       id: target,
       type: targetType
     };
-    const keystore = deriveKeystoreId(target);
 
     if(target) {
       // TODO: handle case where an existing target is requested
     } else {
-      zcap.invocationTarget.id = `${keystore}/authorizations`;
+      zcap.invocationTarget.id = `${keystoreId}/authorizations`;
     }
     if(!parentCapability) {
-      parentCapability = `${keystore}/zcaps/authorizations`;
+      parentCapability = `${keystoreId}/zcaps/authorizations`;
     }
     zcap.parentCapability = parentCapability;
     zcap = await delegate({zcap, signer, capabilityChain});
@@ -215,15 +214,14 @@ export async function delegateCapability(
       id: target,
       type: targetType
     };
-    const keystore = deriveKeystoreId(target);
 
     if(target) {
       // TODO: handle case where an existing target is requested
     } else {
-      zcap.invocationTarget.id = `${keystore}/revocations`;
+      zcap.invocationTarget.id = `${keystoreId}/revocations`;
     }
     if(!parentCapability) {
-      parentCapability = `${keystore}/zcaps/revocations`;
+      parentCapability = `${keystoreId}/zcaps/revocations`;
     }
     zcap.parentCapability = parentCapability;
     zcap = await delegate({zcap, signer, capabilityChain});
