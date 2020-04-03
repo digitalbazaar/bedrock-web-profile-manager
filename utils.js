@@ -255,6 +255,7 @@ export async function delegate({zcap, signer, capabilityChain}) {
   });
 }
 
+// FIXME: Do not introsepect url to get the Keystore ID
 export function deriveKeystoreId(id) {
   const urlObj = new URL(id);
   const paths = urlObj.pathname.split('/');
