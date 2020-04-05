@@ -50,7 +50,6 @@ export default class ProfileManager {
     this.accountId = null;
     this.capabilityAgent = null;
     this.edvClientCache = new EdvClientCache();
-    this.keystoreAgent = null;
     this.kmsModule = kmsModule;
     this.edvBaseUrl = edvBaseUrl;
     this.kmsBaseUrl = kmsBaseUrl;
@@ -92,12 +91,23 @@ export default class ProfileManager {
       throw new TypeError('"profileId" must be a string.');
     }
 
+    if(!this._cache.agents) {
+      this._cache.agents = new Map();
+    }
+
+    let agent = this._cache.agents.get(profileId);
+    if(agent) {
+      return agent;
+    }
+
     const profileAgentRecord = await this._getAgentRecord({profileId});
     const {profileAgent} = profileAgentRecord;
 
     // determine if `profileAgent` has a userDocument yet
     const {userDocument: capability} = profileAgent.zcaps;
-    if(!capability) {
+    if(capability) {
+      agent = await this._getAgentContent({profileAgentRecord});
+    } else {
       // generate content from profile agent record as access management has
       // not been initialized for the profile yet
       const content = {
@@ -107,10 +117,11 @@ export default class ProfileManager {
       for(const zcap of Object.values(profileAgent.zcaps)) {
         content.zcaps[zcap.referenceId] = zcap;
       }
-      return content;
+      agent = content;
     }
 
-    return await this._getAgentContent({profileAgentRecord});
+    this._cache.agents.set(profileId, agent);
+    return agent;
   }
 
   /**
@@ -325,6 +336,8 @@ export default class ProfileManager {
         content: profileAgent
       }
     });
+    // cache new profile agent
+    this._cache.agents.set(profileId, profileAgent);
 
     // create zcaps for accessing profile agent user doc for storage in
     // the agent record
@@ -361,7 +374,6 @@ export default class ProfileManager {
    * @returns {Object} The signer API for the profile as `invocationSigner`.
    */
   async getProfileSigner({profileId} = {}) {
-    // TODO: cache profile signer by profile ID?
     const agent = await this.getAgent({profileId});
     const {id: profileAgentId, zcaps} = agent;
     const zcap = await _getProfileInvocationKeyZcap({profileId, zcaps});
@@ -444,6 +456,15 @@ export default class ProfileManager {
   }
 
   async getProfileKeystoreAgent({profileId} = {}) {
+    if(!this._cache.profileKeystoreAgents) {
+      this._cache.profileKeystoreAgents = new Map();
+    }
+
+    let keystoreAgent = this._cache.profileKeystoreAgents.get(profileId);
+    if(keystoreAgent) {
+      return keystoreAgent;
+    }
+
     // FIXME: getting the keystore for the profile should involve reading the
     // profile to get its ID instead of parsing the ID from its zcap key
     const {invocationSigner} = await this.getProfileSigner({profileId});
@@ -453,7 +474,10 @@ export default class ProfileManager {
     const keystore = await KmsClient.getKeystore({id: keystoreId});
     const capabilityAgent = new CapabilityAgent(
       {handle: 'primary', signer: invocationSigner});
-    return new KeystoreAgent({keystore, capabilityAgent});
+    keystoreAgent = new KeystoreAgent({keystore, capabilityAgent});
+
+    this._cache.profileKeystoreAgents.set(profileId, keystoreAgent);
+    return keystoreAgent;
   }
 
   // FIXME: expose this or not?
@@ -476,10 +500,8 @@ export default class ProfileManager {
     if(typeof profileId !== 'string') {
       throw new TypeError('"profileId" must be a string.');
     }
-    const [profile, agent] = await Promise.all([
-      this.getProfile({id: profileId}),
-      this.getAgent({profileId})
-    ]);
+    const agent = await this.getAgent({profileId});
+    const profile = await this.getProfile({id: profileId});
     const invocationSigner = await this._getAgentSigner({id: agent.id});
     // TODO: consider consolidation with `getProfileEdv`
     const capability = agent.zcaps['user-edv-documents'];
@@ -512,14 +534,13 @@ export default class ProfileManager {
     }
     const users = new Collection(
       {type: 'User', edvClient, capability, invocationSigner});
-    return new AccessManager({profile, profileManager: this, users});
+    return new AccessManager({profile, profileManager: this, users, agent});
   }
 
   async createProfileEdv({profileId, referenceId} = {}) {
-    const [{invocationSigner}, {hmac, keyAgreementKey}] = await Promise.all([
-      this.getProfileSigner({profileId}),
-      this.createEdvRecipientKeys({profileId})
-    ]);
+    const {invocationSigner} = await this.getProfileSigner({profileId});
+    const {hmac, keyAgreementKey} = await this.createEdvRecipientKeys(
+      {profileId});
 
     // create edv
     let config = {
@@ -706,6 +727,19 @@ export default class ProfileManager {
     await this._sessionChanged({newData: session.data});
   }
 
+  async invalidateCache({profileId, profileAgentId} = {}) {
+    const {agents, agentSigners, profileKeystoreAgents} = this._cache;
+    if(agents) {
+      agents.delete(profileId);
+    }
+    if(agentSigners) {
+      agentSigners.delete(profileAgentId);
+    }
+    if(profileKeystoreAgents) {
+      profileKeystoreAgents.delete(profileId);
+    }
+  }
+
   async _resetCache() {
     this._cache = {};
   }
@@ -723,7 +757,6 @@ export default class ProfileManager {
     // update state
     const accountId = this.accountId = newAccountId;
     this.capabilityAgent = null;
-    this.keystoreAgent = null;
     this._resetCache();
 
     if(!(authentication || newData.account)) {
@@ -745,8 +778,6 @@ export default class ProfileManager {
   }
 
   async _getAgentRecord({profileId}) {
-    // TODO: add cache (ensure cache gets cleared when session changes or
-    // when initializing access management)
     return this._profileService.getAgentByProfile({
       profile: profileId,
       account: this.accountId

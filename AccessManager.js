@@ -11,12 +11,14 @@ export default class AccessManager {
    * @param {Object} options - The options to use.
    * @param {Object} options.profile - The profile to manage access for.
    * @param {Object} options.profileManager - The parent `profileManager`
-   *  instance.
+   *   instance.
    * @param {Object} options.users - A `users` Collection instance.
+   * @param {Object} options.agent - The profile agent used to manage
+   *   user access.
    *
    * @returns {AccessManager} - The new instance.
    */
-  constructor({profile, profileManager, users} = {}) {
+  constructor({profile, profileManager, users, agent} = {}) {
     if(!(profile && typeof profile === 'object')) {
       throw new TypeError('"profile" must be an object.');
     }
@@ -26,6 +28,7 @@ export default class AccessManager {
     this.profile = profile;
     this.profileManager = profileManager;
     this.users = users;
+    this.agent = agent;
   }
 
   async createUser({content = {}, token}) {
@@ -114,6 +117,15 @@ export default class AccessManager {
     const userDoc = await this.users.update({
       item: user
     });
+    // if updated user was the profile agent itself, invalidate cache
+    const {
+      profileManager,
+      profile: {id: profileId},
+      agent: {id: profileAgentId}
+    } = this;
+    if(user.id === profileAgentId) {
+      await profileManager.invalidateCache({profileId, profileAgentId});
+    }
     return userDoc.content;
   }
 
@@ -130,7 +142,15 @@ export default class AccessManager {
   async removeUser({id} = {}) {
     // TODO: handle removal of self
     await this.users.remove({id});
-
+    // if removed user was the profile agent itself, invalidate cache
+    const {
+      profileManager,
+      profile: {id: profileId},
+      agent: {id: profileAgentId}
+    } = this;
+    if(id === profileAgentId) {
+      await profileManager.invalidateCache({profileId, profileAgentId});
+    }
     // remove profile agent record
     // TODO: check authority model on this
     const profileService = new ProfileService();
