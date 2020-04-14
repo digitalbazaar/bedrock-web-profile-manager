@@ -9,7 +9,7 @@
   * @returns {undefined} - It just throws or you are ok.
 */
 export function nonEmptyString({value, key}) {
-  if(typeof value !== 'string') {
+  if(!(value && typeof value === 'string')) {
     throw new TypeError(`"${key}" must be a non-empty string.`);
   }
   if(value.length === 0) {
