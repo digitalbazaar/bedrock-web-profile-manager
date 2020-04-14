@@ -16,6 +16,7 @@ import {EdvClient, EdvDocument} from 'edv-client';
 import EdvClientCache from './EdvClientCache.js';
 import keyResolver from './keyResolver.js';
 import utils from './utils.js';
+import assert from './assert.js';
 
 const JWE_ALG = 'ECDH-ES+A256KW';
 
@@ -88,9 +89,7 @@ export default class ProfileManager {
    * @returns {Object} The profile agent.
    */
   async getAgent({profileId} = {}) {
-    if(typeof profileId !== 'string') {
-      throw new TypeError('"profileId" must be a string.');
-    }
+    assert.notEmptyString({value: profileId, key: 'profileId'});
 
     const profileAgentRecord = await this._getAgentRecord({profileId});
     const {profileAgent} = profileAgentRecord;
@@ -156,6 +155,7 @@ export default class ProfileManager {
     revocationCapability,
     indexes = []
   }) {
+    assert.notEmptyString({value: profileId, key: 'profileId'});
     if(!!hmac ^ !!keyAgreementKey) {
       throw new TypeError(
         'Both "hmac" and "keyAgreementKey" must be given or neither must ' +
@@ -361,6 +361,7 @@ export default class ProfileManager {
    * @returns {Object} The signer API for the profile as `invocationSigner`.
    */
   async getProfileSigner({profileId} = {}) {
+    assert.notEmptyString({value: profileId, key: 'profileId'});
     // TODO: cache profile signer by profile ID?
     const agent = await this.getAgent({profileId});
     const {id: profileAgentId, zcaps} = agent;
@@ -389,9 +390,7 @@ export default class ProfileManager {
    * @returns {Object} The signer API for the profile as `invocationSigner`.
    */
   async getProfile({id} = {}) {
-    if(typeof id !== 'string') {
-      throw new TypeError('"id" must be a string.');
-    }
+    assert.notEmptyString({value: id, key: 'id'});
 
     // check for a zcap for getting the profile in this order:
     // 1. zcap for reading just the profile
@@ -444,6 +443,7 @@ export default class ProfileManager {
   }
 
   async getProfileKeystoreAgent({profileId} = {}) {
+    assert.notEmptyString({value: profileId, key: 'profileId'});
     // FIXME: getting the keystore for the profile should involve reading the
     // profile to get its ID instead of parsing the ID from its zcap key
     const {invocationSigner} = await this.getProfileSigner({profileId});
@@ -473,9 +473,7 @@ export default class ProfileManager {
   }
 
   async getAccessManager({profileId} = {}) {
-    if(typeof profileId !== 'string') {
-      throw new TypeError('"profileId" must be a string.');
-    }
+    assert.notEmptyString({value: profileId, key: 'profileId'});
     const [profile, agent] = await Promise.all([
       this.getProfile({id: profileId}),
       this.getAgent({profileId})
@@ -516,6 +514,7 @@ export default class ProfileManager {
   }
 
   async createProfileEdv({profileId, referenceId} = {}) {
+    assert.notEmptyString({value: profileId, key: 'profileId'});
     const [{invocationSigner}, {hmac, keyAgreementKey}] = await Promise.all([
       this.getProfileSigner({profileId}),
       this.createEdvRecipientKeys({profileId})
@@ -627,6 +626,7 @@ export default class ProfileManager {
   }
 
   async delegateCapability({profileId, request}) {
+    assert.notEmptyString({value: profileId, key: 'profileId'});
     const {invocationSigner: signer} = await this.getProfileSigner({profileId});
     const keystoreAgent = await this.getProfileKeystoreAgent({profileId});
     const {id: keystoreId} = keystoreAgent.keystore;
@@ -634,6 +634,7 @@ export default class ProfileManager {
   }
 
   async getCollection({profileId, referenceIdPrefix, type} = {}) {
+    assert.notEmptyString({value: profileId, key: 'profileId'});
     const {edvClient, capability, invocationSigner} =
       await this.getProfileEdvAccess({profileId, referenceIdPrefix});
     edvClient.ensureIndex({attribute: 'content.id', unique: true});
@@ -643,6 +644,7 @@ export default class ProfileManager {
 
   // FIXME: remove exposure of this?
   async getProfileEdvAccess({profileId, referenceIdPrefix} = {}) {
+    assert.notEmptyString({value: profileId, key: 'profileId'});
     const agent = await this.getAgent({profileId});
     const invocationSigner = await this._getAgentSigner({id: agent.id});
 
@@ -745,6 +747,8 @@ export default class ProfileManager {
   }
 
   async _getAgentRecord({profileId}) {
+    // FIXME is this check needed on private methods?
+    assert.notEmptyString({value: profileId, key: 'profileId'});
     // TODO: add cache (ensure cache gets cleared when session changes or
     // when initializing access management)
     return this._profileService.getAgentByProfile({
@@ -891,6 +895,8 @@ export default class ProfileManager {
 }
 
 function _getProfileInvocationKeyZcap({profileId, zcaps}) {
+  // FIXME is this check required on private methods?
+  assert.notEmptyString({value: profileId, key: 'profileId'});
   // FIXME: simplify reference ID for this; force only one reference ID
   // for using the agent's profile's capability invocation key using the
   // literal reference ID: 'profile-capability-invocation-key'
