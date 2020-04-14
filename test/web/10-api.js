@@ -75,7 +75,7 @@ describe('Profile Manager API', () => {
       }
       should.not.exist(result);
       should.exist(error);
-      error.name.should.equal('DataError');
+      error.name.should.equal('TypeError');
     });
   });
   describe('getAgent api', () => {
@@ -108,7 +108,7 @@ describe('Profile Manager API', () => {
       }
       should.not.exist(result);
       should.exist(error);
-      error.name.should.equal('DataError');
+      error.name.should.equal('TypeError');
     });
   });
   describe('initializeAccessManagement api', () => {
@@ -143,7 +143,7 @@ describe('Profile Manager API', () => {
       }
       should.not.exist(result);
       should.exist(error);
-      error.name.should.equal('DataError');
+      error.name.should.equal('TypeError');
     });
   });
   describe('getProfile api', () => {
@@ -176,7 +176,7 @@ describe('Profile Manager API', () => {
       }
       should.not.exist(result);
       should.exist(error);
-      error.name.should.equal('DataError');
+      error.name.should.equal('TypeError');
     });
   });
   describe('getProfileKeystoreAgent api', () => {
@@ -210,7 +210,7 @@ describe('Profile Manager API', () => {
       }
       should.not.exist(result);
       should.exist(error);
-      error.name.should.equal('DataError');
+      error.name.should.equal('TypeError');
     });
   });
   describe('getAccessManager api', () => {
@@ -243,7 +243,7 @@ describe('Profile Manager API', () => {
       }
       should.not.exist(result);
       should.exist(error);
-      error.name.should.equal('DataError');
+      error.name.should.equal('TypeError');
     });
   });
   describe('createProfileEdv api', () => {
@@ -276,7 +276,7 @@ describe('Profile Manager API', () => {
       }
       should.not.exist(result);
       should.exist(error);
-      error.name.should.equal('DataError');
+      error.name.should.equal('TypeError');
     });
   });
   describe('delegateCapability api', () => {
@@ -310,7 +310,7 @@ describe('Profile Manager API', () => {
       }
       should.not.exist(result);
       should.exist(error);
-      error.name.should.equal('DataError');
+      error.name.should.equal('TypeError');
     });
   });
   describe('getCollection api', () => {
@@ -343,7 +343,7 @@ describe('Profile Manager API', () => {
       }
       should.not.exist(result);
       should.exist(error);
-      error.name.should.equal('DataError');
+      error.name.should.equal('TypeError');
     });
   });
   describe('getProfileEdvAccess api', () => {
@@ -377,7 +377,7 @@ describe('Profile Manager API', () => {
       }
       should.not.exist(result);
       should.exist(error);
-      error.name.should.equal('DataError');
+      error.name.should.equal('TypeError');
     });
   });
 

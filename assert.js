@@ -13,4 +13,4 @@ export function nonEmptyString({value, key}) {
     throw new TypeError(`"${key}" must be a non-empty string.`);
   }
 }
-export default {notEmptyString};
+export default {nonEmptyString};
