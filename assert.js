@@ -10,7 +10,7 @@
 */
 export function notEmptyString({value, key}) {
   if(typeof value !== 'string') {
-    throw new TypeError(`"${key}" must be a string.`);
+    throw new TypeError(`"${key}" must be a non-empty string.`);
   }
   if(value.length === 0) {
     const DataError = new Error(`"${key}" can not be an empty string`);
