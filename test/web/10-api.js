@@ -65,6 +65,7 @@ describe('Profile Manager API', () => {
       should.not.exist(result);
       should.exist(error);
       error.name.should.equal('TypeError');
+      error.message.should.contain('profileId');
     });
     it('should fail if profileId is an empty string', async () => {
       let error, result = null;
@@ -76,6 +77,7 @@ describe('Profile Manager API', () => {
       should.not.exist(result);
       should.exist(error);
       error.name.should.equal('TypeError');
+      error.message.should.contain('profileId');
     });
   });
   describe('getAgent api', () => {
@@ -98,6 +100,7 @@ describe('Profile Manager API', () => {
       should.not.exist(result);
       should.exist(error);
       error.name.should.equal('TypeError');
+      error.message.should.contain('profileId');
     });
     it('should fail if profileId is an empty string', async () => {
       let error, result = null;
@@ -109,6 +112,7 @@ describe('Profile Manager API', () => {
       should.not.exist(result);
       should.exist(error);
       error.name.should.equal('TypeError');
+      error.message.should.contain('profileId');
     });
   });
   describe('initializeAccessManagement api', () => {
@@ -124,26 +128,36 @@ describe('Profile Manager API', () => {
     it('should fail if profileId is undefined', async () => {
       let error, result = null;
       try {
-        result = await profileManager.initializeAccessManagement(
-          {profileId: undefined});
+        result = await profileManager.initializeAccessManagement({
+          profileId: undefined,
+          profileContent: {foo: true},
+          profileAgentContent: {bar: false},
+          edvId: 'testEdvId'
+        });
       } catch(e) {
         error = e;
       }
       should.not.exist(result);
       should.exist(error);
       error.name.should.equal('TypeError');
+      error.message.should.contain('profileId');
     });
     it('should fail if profileId is an empty string', async () => {
       let error, result = null;
       try {
-        result = await profileManager.initializeAccessManagement(
-          {profileId: ''});
+        result = await profileManager.initializeAccessManagement({
+          profileId: '',
+          profileContent: {foo: true},
+          profileAgentContent: {bar: false},
+          edvId: 'testEdvId'
+        });
       } catch(e) {
         error = e;
       }
       should.not.exist(result);
       should.exist(error);
       error.name.should.equal('TypeError');
+      error.message.should.contain('profileId');
     });
   });
   describe('getProfile api', () => {
@@ -166,6 +180,7 @@ describe('Profile Manager API', () => {
       should.not.exist(result);
       should.exist(error);
       error.name.should.equal('TypeError');
+      error.message.should.contain('id');
     });
     it('should fail if profileId is an empty string', async () => {
       let error, result = null;
@@ -177,6 +192,7 @@ describe('Profile Manager API', () => {
       should.not.exist(result);
       should.exist(error);
       error.name.should.equal('TypeError');
+      error.message.should.contain('id');
     });
   });
   describe('getProfileKeystoreAgent api', () => {
@@ -200,6 +216,7 @@ describe('Profile Manager API', () => {
       should.not.exist(result);
       should.exist(error);
       error.name.should.equal('TypeError');
+      error.message.should.contain('profileId');
     });
     it('should fail if profileId is an empty string', async () => {
       let error, result = null;
@@ -211,6 +228,7 @@ describe('Profile Manager API', () => {
       should.not.exist(result);
       should.exist(error);
       error.name.should.equal('TypeError');
+      error.message.should.contain('profileId');
     });
   });
   describe('getAccessManager api', () => {
@@ -233,6 +251,7 @@ describe('Profile Manager API', () => {
       should.not.exist(result);
       should.exist(error);
       error.name.should.equal('TypeError');
+      error.message.should.contain('profileId');
     });
     it('should fail if profileId is an empty string', async () => {
       let error, result = null;
@@ -244,6 +263,7 @@ describe('Profile Manager API', () => {
       should.not.exist(result);
       should.exist(error);
       error.name.should.equal('TypeError');
+      error.message.should.contain('profileId');
     });
   });
   describe('createProfileEdv api', () => {
@@ -259,24 +279,32 @@ describe('Profile Manager API', () => {
     it('should fail if profileId is undefined', async () => {
       let error, result = null;
       try {
-        result = await profileManager.createProfileEdv({profileId: undefined});
+        result = await profileManager.createProfileEdv({
+          profileId: undefined,
+          referenceId: 'test.org:test-edv'
+        });
       } catch(e) {
         error = e;
       }
       should.not.exist(result);
       should.exist(error);
       error.name.should.equal('TypeError');
+      error.message.should.contain('profileId');
     });
     it('should fail if profileId is an empty string', async () => {
       let error, result = null;
       try {
-        result = await profileManager.createProfileEdv({profileId: ''});
+        result = await profileManager.createProfileEdv({
+          profileId: '',
+          referenceId: 'test.org:test-edv'
+        });
       } catch(e) {
         error = e;
       }
       should.not.exist(result);
       should.exist(error);
       error.name.should.equal('TypeError');
+      error.message.should.contain('profileId');
     });
   });
   describe('delegateCapability api', () => {
@@ -291,26 +319,43 @@ describe('Profile Manager API', () => {
     });
     it('should fail if profileId is undefined', async () => {
       let error, result = null;
+      const delegateRequest = {
+        referenceId: 'test.org:test-edv',
+        allowedAction: ['read', 'write'],
+        controller: 'did:key:sadsdasdasd'
+      };
       try {
-        result = await profileManager.delegateCapability(
-          {profileId: undefined});
+        result = await profileManager.delegateCapability({
+          profileId: undefined,
+          request: delegateRequest
+        });
       } catch(e) {
         error = e;
       }
       should.not.exist(result);
       should.exist(error);
       error.name.should.equal('TypeError');
+      error.message.should.contain('profileId');
     });
     it('should fail if profileId is an empty string', async () => {
       let error, result = null;
+      const delegateRequest = {
+        referenceId: 'test.org:test-edv',
+        allowedAction: ['read', 'write'],
+        controller: 'did:key:sadsdasdasd'
+      };
       try {
-        result = await profileManager.delegateCapability({profileId: ''});
+        result = await profileManager.delegateCapability({
+          profileId: '',
+          request: delegateRequest
+        });
       } catch(e) {
         error = e;
       }
       should.not.exist(result);
       should.exist(error);
       error.name.should.equal('TypeError');
+      error.message.should.contain('profileId');
     });
   });
   describe('getCollection api', () => {
@@ -326,24 +371,34 @@ describe('Profile Manager API', () => {
     it('should fail if profileId is undefined', async () => {
       let error, result = null;
       try {
-        result = await profileManager.getCollection({profileId: undefined});
+        result = await profileManager.getCollection({
+          profileId: undefined,
+          referenceIdPrefix: 'test.org:test-edv',
+          type: 'test'
+        });
       } catch(e) {
         error = e;
       }
       should.not.exist(result);
       should.exist(error);
       error.name.should.equal('TypeError');
+      error.message.should.contain('profileId');
     });
     it('should fail if profileId is an empty string', async () => {
       let error, result = null;
       try {
-        result = await profileManager.getCollection({profileId: ''});
+        result = await profileManager.getCollection({
+          profileId: '',
+          referenceIdPrefix: 'test.org:test-edv',
+          type: 'test'
+        });
       } catch(e) {
         error = e;
       }
       should.not.exist(result);
       should.exist(error);
       error.name.should.equal('TypeError');
+      error.message.should.contain('profileId');
     });
   });
   describe('getProfileEdvAccess api', () => {
@@ -359,26 +414,32 @@ describe('Profile Manager API', () => {
     it('should fail if profileId is undefined', async () => {
       let error, result = null;
       try {
-        result = await profileManager.getProfileEdvAccess(
-          {profileId: undefined});
+        result = await profileManager.getProfileEdvAccess({
+          profileId: undefined,
+          referenceIdPrefix: 'test.org:test-edv'
+        });
       } catch(e) {
         error = e;
       }
       should.not.exist(result);
       should.exist(error);
       error.name.should.equal('TypeError');
+      error.message.should.contain('profileId');
     });
     it('should fail if profileId is an empty string', async () => {
       let error, result = null;
       try {
-        result = await profileManager.getProfileEdvAccess({profileId: ''});
+        result = await profileManager.getProfileEdvAccess({
+          profileId: '',
+          referenceIdPrefix: 'test.org:test-edv'
+        });
       } catch(e) {
         error = e;
       }
       should.not.exist(result);
       should.exist(error);
       error.name.should.equal('TypeError');
+      error.message.should.contain('profileId');
     });
   });
-
 });
