@@ -78,4 +78,307 @@ describe('Profile Manager API', () => {
       error.name.should.equal('DataError');
     });
   });
+  describe('getAgent api', () => {
+    let profileManager = null;
+    beforeEach(() => {
+      profileManager = new ProfileManager({
+        kmsModule: KMS_MODULE,
+        kmsBaseUrl: KMS_BASE_URL,
+        edvBaseUrl: `https://bedrock.localhost:18443/edvs`,
+        recoveryHost: window.location.host
+      });
+    });
+    it('should fail if profileId is undefined', async () => {
+      let error, result = null;
+      try {
+        result = await profileManager.getAgent({profileId: undefined});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('TypeError');
+    });
+    it('should fail if profileId is an empty string', async () => {
+      let error, result = null;
+      try {
+        result = await profileManager.getAgent({profileId: ''});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('DataError');
+    });
+  });
+  describe('initializeAccessManagement api', () => {
+    let profileManager = null;
+    beforeEach(() => {
+      profileManager = new ProfileManager({
+        kmsModule: KMS_MODULE,
+        kmsBaseUrl: KMS_BASE_URL,
+        edvBaseUrl: `https://bedrock.localhost:18443/edvs`,
+        recoveryHost: window.location.host
+      });
+    });
+    it('should fail if profileId is undefined', async () => {
+      let error, result = null;
+      try {
+        result = await profileManager.initializeAccessManagement(
+          {profileId: undefined});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('TypeError');
+    });
+    it('should fail if profileId is an empty string', async () => {
+      let error, result = null;
+      try {
+        result = await profileManager.initializeAccessManagement(
+          {profileId: ''});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('DataError');
+    });
+  });
+  describe('getProfile api', () => {
+    let profileManager = null;
+    beforeEach(() => {
+      profileManager = new ProfileManager({
+        kmsModule: KMS_MODULE,
+        kmsBaseUrl: KMS_BASE_URL,
+        edvBaseUrl: `https://bedrock.localhost:18443/edvs`,
+        recoveryHost: window.location.host
+      });
+    });
+    it('should fail if profileId is undefined', async () => {
+      let error, result = null;
+      try {
+        result = await profileManager.getProfile({id: undefined});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('TypeError');
+    });
+    it('should fail if profileId is an empty string', async () => {
+      let error, result = null;
+      try {
+        result = await profileManager.getProfile({id: ''});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('DataError');
+    });
+  });
+  describe('getProfileKeystoreAgent api', () => {
+    let profileManager = null;
+    beforeEach(() => {
+      profileManager = new ProfileManager({
+        kmsModule: KMS_MODULE,
+        kmsBaseUrl: KMS_BASE_URL,
+        edvBaseUrl: `https://bedrock.localhost:18443/edvs`,
+        recoveryHost: window.location.host
+      });
+    });
+    it('should fail if profileId is undefined', async () => {
+      let error, result = null;
+      try {
+        result = await profileManager.getProfileKeystoreAgent(
+          {profileId: undefined});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('TypeError');
+    });
+    it('should fail if profileId is an empty string', async () => {
+      let error, result = null;
+      try {
+        result = await profileManager.getProfileKeystoreAgent({profileId: ''});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('DataError');
+    });
+  });
+  describe('getAccessManager api', () => {
+    let profileManager = null;
+    beforeEach(() => {
+      profileManager = new ProfileManager({
+        kmsModule: KMS_MODULE,
+        kmsBaseUrl: KMS_BASE_URL,
+        edvBaseUrl: `https://bedrock.localhost:18443/edvs`,
+        recoveryHost: window.location.host
+      });
+    });
+    it('should fail if profileId is undefined', async () => {
+      let error, result = null;
+      try {
+        result = await profileManager.getAccessManager({profileId: undefined});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('TypeError');
+    });
+    it('should fail if profileId is an empty string', async () => {
+      let error, result = null;
+      try {
+        result = await profileManager.getAccessManager({profileId: ''});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('DataError');
+    });
+  });
+  describe('createProfileEdv api', () => {
+    let profileManager = null;
+    beforeEach(() => {
+      profileManager = new ProfileManager({
+        kmsModule: KMS_MODULE,
+        kmsBaseUrl: KMS_BASE_URL,
+        edvBaseUrl: `https://bedrock.localhost:18443/edvs`,
+        recoveryHost: window.location.host
+      });
+    });
+    it('should fail if profileId is undefined', async () => {
+      let error, result = null;
+      try {
+        result = await profileManager.createProfileEdv({profileId: undefined});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('TypeError');
+    });
+    it('should fail if profileId is an empty string', async () => {
+      let error, result = null;
+      try {
+        result = await profileManager.createProfileEdv({profileId: ''});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('DataError');
+    });
+  });
+  describe('delegateCapability api', () => {
+    let profileManager = null;
+    beforeEach(() => {
+      profileManager = new ProfileManager({
+        kmsModule: KMS_MODULE,
+        kmsBaseUrl: KMS_BASE_URL,
+        edvBaseUrl: `https://bedrock.localhost:18443/edvs`,
+        recoveryHost: window.location.host
+      });
+    });
+    it('should fail if profileId is undefined', async () => {
+      let error, result = null;
+      try {
+        result = await profileManager.delegateCapability(
+          {profileId: undefined});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('TypeError');
+    });
+    it('should fail if profileId is an empty string', async () => {
+      let error, result = null;
+      try {
+        result = await profileManager.delegateCapability({profileId: ''});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('DataError');
+    });
+  });
+  describe('getCollection api', () => {
+    let profileManager = null;
+    beforeEach(() => {
+      profileManager = new ProfileManager({
+        kmsModule: KMS_MODULE,
+        kmsBaseUrl: KMS_BASE_URL,
+        edvBaseUrl: `https://bedrock.localhost:18443/edvs`,
+        recoveryHost: window.location.host
+      });
+    });
+    it('should fail if profileId is undefined', async () => {
+      let error, result = null;
+      try {
+        result = await profileManager.getCollection({profileId: undefined});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('TypeError');
+    });
+    it('should fail if profileId is an empty string', async () => {
+      let error, result = null;
+      try {
+        result = await profileManager.getCollection({profileId: ''});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('DataError');
+    });
+  });
+  describe('getProfileEdvAccess api', () => {
+    let profileManager = null;
+    beforeEach(() => {
+      profileManager = new ProfileManager({
+        kmsModule: KMS_MODULE,
+        kmsBaseUrl: KMS_BASE_URL,
+        edvBaseUrl: `https://bedrock.localhost:18443/edvs`,
+        recoveryHost: window.location.host
+      });
+    });
+    it('should fail if profileId is undefined', async () => {
+      let error, result = null;
+      try {
+        result = await profileManager.getProfileEdvAccess(
+          {profileId: undefined});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('TypeError');
+    });
+    it('should fail if profileId is an empty string', async () => {
+      let error, result = null;
+      try {
+        result = await profileManager.getProfileEdvAccess({profileId: ''});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('DataError');
+    });
+  });
+
 });
