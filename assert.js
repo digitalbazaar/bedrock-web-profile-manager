@@ -12,10 +12,5 @@ export function nonEmptyString({value, key}) {
   if(!(value && typeof value === 'string')) {
     throw new TypeError(`"${key}" must be a non-empty string.`);
   }
-  if(value.length === 0) {
-    const DataError = new Error(`"${key}" can not be an empty string`);
-    DataError.name = 'DataError';
-    throw DataError;
-  }
 }
 export default {notEmptyString};
