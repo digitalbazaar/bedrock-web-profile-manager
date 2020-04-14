@@ -89,7 +89,7 @@ export default class ProfileManager {
    * @returns {Object} The profile agent.
    */
   async getAgent({profileId} = {}) {
-    assert.nonEmptyString({value: profileId, key: 'profileId'});
+    assert.nonEmptyString(profileId, 'profileId');
 
     const profileAgentRecord = await this._getAgentRecord({profileId});
     const {profileAgent} = profileAgentRecord;
@@ -155,7 +155,7 @@ export default class ProfileManager {
     revocationCapability,
     indexes = []
   }) {
-    assert.nonEmptyString({value: profileId, key: 'profileId'});
+    assert.nonEmptyString(profileId, 'profileId');
     if(!!hmac ^ !!keyAgreementKey) {
       throw new TypeError(
         'Both "hmac" and "keyAgreementKey" must be given or neither must ' +
@@ -361,7 +361,7 @@ export default class ProfileManager {
    * @returns {Object} The signer API for the profile as `invocationSigner`.
    */
   async getProfileSigner({profileId} = {}) {
-    assert.nonEmptyString({value: profileId, key: 'profileId'});
+    assert.nonEmptyString(profileId, 'profileId');
     // TODO: cache profile signer by profile ID?
     const agent = await this.getAgent({profileId});
     const {id: profileAgentId, zcaps} = agent;
@@ -390,7 +390,7 @@ export default class ProfileManager {
    * @returns {Object} The signer API for the profile as `invocationSigner`.
    */
   async getProfile({id} = {}) {
-    assert.nonEmptyString({value: id, key: 'id'});
+    assert.nonEmptyString(id, 'id');
 
     // check for a zcap for getting the profile in this order:
     // 1. zcap for reading just the profile
@@ -443,7 +443,7 @@ export default class ProfileManager {
   }
 
   async getProfileKeystoreAgent({profileId} = {}) {
-    assert.nonEmptyString({value: profileId, key: 'profileId'});
+    assert.nonEmptyString(profileId, 'profileId');
     // FIXME: getting the keystore for the profile should involve reading the
     // profile to get its ID instead of parsing the ID from its zcap key
     const {invocationSigner} = await this.getProfileSigner({profileId});
@@ -473,7 +473,7 @@ export default class ProfileManager {
   }
 
   async getAccessManager({profileId} = {}) {
-    assert.nonEmptyString({value: profileId, key: 'profileId'});
+    assert.nonEmptyString(profileId, 'profileId');
     const [profile, agent] = await Promise.all([
       this.getProfile({id: profileId}),
       this.getAgent({profileId})
@@ -514,7 +514,7 @@ export default class ProfileManager {
   }
 
   async createProfileEdv({profileId, referenceId} = {}) {
-    assert.nonEmptyString({value: profileId, key: 'profileId'});
+    assert.nonEmptyString(profileId, 'profileId');
     const [{invocationSigner}, {hmac, keyAgreementKey}] = await Promise.all([
       this.getProfileSigner({profileId}),
       this.createEdvRecipientKeys({profileId})
@@ -626,7 +626,7 @@ export default class ProfileManager {
   }
 
   async delegateCapability({profileId, request}) {
-    assert.nonEmptyString({value: profileId, key: 'profileId'});
+    assert.nonEmptyString(profileId, 'profileId');
     const {invocationSigner: signer} = await this.getProfileSigner({profileId});
     const keystoreAgent = await this.getProfileKeystoreAgent({profileId});
     const {id: keystoreId} = keystoreAgent.keystore;
@@ -634,7 +634,7 @@ export default class ProfileManager {
   }
 
   async getCollection({profileId, referenceIdPrefix, type} = {}) {
-    assert.nonEmptyString({value: profileId, key: 'profileId'});
+    assert.nonEmptyString(profileId, 'profileId');
     const {edvClient, capability, invocationSigner} =
       await this.getProfileEdvAccess({profileId, referenceIdPrefix});
     edvClient.ensureIndex({attribute: 'content.id', unique: true});
@@ -644,7 +644,7 @@ export default class ProfileManager {
 
   // FIXME: remove exposure of this?
   async getProfileEdvAccess({profileId, referenceIdPrefix} = {}) {
-    assert.nonEmptyString({value: profileId, key: 'profileId'});
+    assert.nonEmptyString(profileId, 'profileId');
     const agent = await this.getAgent({profileId});
     const invocationSigner = await this._getAgentSigner({id: agent.id});
 
