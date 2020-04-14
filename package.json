@@ -4,8 +4,7 @@
   "description": "Profile management for Bedrock Web Apps",
   "main": "index.js",
   "scripts": {
-    "generate-readme": "jsdoc2md -t template.hbs *.js > README.md",
-    "test": "cd test && npm test"
+    "generate-readme": "jsdoc2md -t template.hbs *.js > README.md"
   },
   "repository": {
     "type": "git",
