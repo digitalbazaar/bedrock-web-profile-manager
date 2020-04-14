@@ -45,4 +45,37 @@ describe('Profile Manager API', () => {
       result.id.should.be.a('string');
     });
   });
+  describe('getProfileSigner api', () => {
+    let profileManager = null;
+    beforeEach(() => {
+      profileManager = new ProfileManager({
+        kmsModule: KMS_MODULE,
+        kmsBaseUrl: KMS_BASE_URL,
+        edvBaseUrl: `https://bedrock.localhost:18443/edvs`,
+        recoveryHost: window.location.host
+      });
+    });
+    it('should fail if profileId is undefined', async () => {
+      let error, result = null;
+      try {
+        result = await profileManager.getProfileSigner({profileId: undefined});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('TypeError');
+    });
+    it('should fail if profileId is an empty string', async () => {
+      let error, result = null;
+      try {
+        result = await profileManager.getProfileSigner({profileId: ''});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('DataError');
+    });
+  });
 });
