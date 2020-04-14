@@ -747,8 +747,6 @@ export default class ProfileManager {
   }
 
   async _getAgentRecord({profileId}) {
-    // FIXME is this check needed on private methods?
-    assert.nonEmptyString({value: profileId, key: 'profileId'});
     // TODO: add cache (ensure cache gets cleared when session changes or
     // when initializing access management)
     return this._profileService.getAgentByProfile({
@@ -895,8 +893,6 @@ export default class ProfileManager {
 }
 
 function _getProfileInvocationKeyZcap({profileId, zcaps}) {
-  // FIXME is this check required on private methods?
-  assert.nonEmptyString({value: profileId, key: 'profileId'});
   // FIXME: simplify reference ID for this; force only one reference ID
   // for using the agent's profile's capability invocation key using the
   // literal reference ID: 'profile-capability-invocation-key'
