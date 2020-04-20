@@ -34,7 +34,9 @@ describe('Profile Manager API', () => {
       try {
         result = await profileManager.createProfile({
           type: 'Person',
-          content: {name: 'Mike Smith', color: '#000000'}
+          content: {name: 'Mike Smith', color: '#000000'},
+          didMethod: 'v1',
+          didOptions: {mode: 'test'}
         });
       } catch(e) {
         error = e;
@@ -43,8 +45,10 @@ describe('Profile Manager API', () => {
       should.exist(result);
       result.should.have.property('id');
       result.id.should.be.a('string');
+      result.id.should.match(/^did\:v1\:test\:/);
     });
   });
+
   describe('getProfileSigner api', () => {
     let profileManager = null;
     beforeEach(() => {

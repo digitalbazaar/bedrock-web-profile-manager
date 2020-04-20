@@ -15,7 +15,7 @@
     "axios": "^0.19.2",
     "base64url-universal": "^1.1.0",
     "bedrock-web-account": "^1.0.0",
-    "bedrock-web-profile": "^2.1.0",
+    "bedrock-web-profile": "digitalbazaar/bedrock-web-profile#support-veres-did",
     "bedrock-web-session": "^1.3.0",
     "bedrock-web-store": "^1.2.0",
     "crypto-ld": "^3.7.0",

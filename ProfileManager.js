@@ -64,17 +64,20 @@ export default class ProfileManager {
    * session.
    *
    * @param {object} options - The options to use.
-   * @param {string} options.didMethod - The DID method to use to create
-   *   the profile's identifier.
+   * @param {string} [options.didMethod] - The DID method to use to create
+   *   the profile's identifier. (Supported: 'key' and 'v1'.)
+   * @param {string} [options.didOptions] - Hashmap of optional DID method
+   *   options.
    *
    * @returns {object} The profile with an "id" attribute.
    */
-  async createProfile({didMethod = 'key'} = {}) {
-    // TODO: add support for `v1`
-    if(didMethod !== 'key') {
+  async createProfile({didMethod = 'key', didOptions = {}} = {}) {
+    if(!['key', 'v1'].includes(didMethod)) {
       throw new Error(`Unsupported DID method "${didMethod}".`);
     }
-    const {id} = await this._profileService.create({account: this.accountId});
+    const {id} = await this._profileService.create({
+      account: this.accountId, didMethod, didOptions
+    });
     return {id};
   }
 
