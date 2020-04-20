@@ -33,8 +33,6 @@ describe('Profile Manager API', () => {
       let result;
       try {
         result = await profileManager.createProfile({
-          type: 'Person',
-          content: {name: 'Mike Smith', color: '#000000'},
           didMethod: 'v1',
           didOptions: {mode: 'test'}
         });
