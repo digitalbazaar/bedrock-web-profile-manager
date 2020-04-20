@@ -26,8 +26,8 @@ export default class ProfileManager {
    * session instance. This ProfileManager will track changes to the given
    * session, creating and/or caching account and profile edvs as needed.
    *
-   * @param {Object} options - The options to use.
-   * @param {Object} options.session - A `bedrock-web-session` session instance.
+   * @param {object} options - The options to use.
+   * @param {object} options.session - A `bedrock-web-session` session instance.
    * @param {string} options.kmsModule - The KMS module to use to generate keys.
    * @param {string} options.kmsBaseUrl - The base URL for the KMS service,
    *   used to generate keys.
@@ -63,11 +63,11 @@ export default class ProfileManager {
    * agent is assigned to the account associated with the authenticated
    * session.
    *
-   * @param {Object} options - The options to use.
+   * @param {object} options - The options to use.
    * @param {string} options.didMethod - The DID method to use to create
    *   the profile's identifier.
    *
-   * @returns {Object} The profile with an "id" attribute.
+   * @returns {object} The profile with an "id" attribute.
    */
   async createProfile({didMethod = 'key'} = {}) {
     // TODO: add support for `v1`
@@ -82,11 +82,11 @@ export default class ProfileManager {
    * Gets the profile agent assigned to the account associated with the
    * authenticated session for the profile identified by the given profile ID.
    *
-   * @param {Object} options - The options to use.
+   * @param {object} options - The options to use.
    * @param {string} options.profileId - The ID of the profile to get the
    *   profile agent for.
    *
-   * @returns {Object} The profile agent.
+   * @returns {Promise<object>} The profile agent.
    */
   async getAgent({profileId} = {}) {
     assert.nonEmptyString(profileId, 'profileId');
@@ -124,25 +124,25 @@ export default class ProfileManager {
    * an EDV or to create that EDV directly after creating profile but before
    * it can be fully initialized.
    *
-   * @param {Object} options - The options to use.
+   * @param {object} options - The options to use.
    * @param {string} options.profileId - The ID of the profile.
-   * @param {Object} options.profileContent - Any content for the profile.
-   * @param {Object} options.profileAgentContent - Any content for the initial
+   * @param {object} options.profileContent - Any content for the profile.
+   * @param {object} options.profileAgentContent - Any content for the initial
    *   profile agent.
-   * @param {Object} [options.hmac] - An HMAC API for using the EDV; if not
+   * @param {object} [options.hmac] - An HMAC API for using the EDV; if not
    *   provided, one will be generated for the profile as an EDV recipient.
-   * @param {Object} [options.keyAgreementKey] - A KAK API for using the EDV;
+   * @param {object} [options.keyAgreementKey] - A KAK API for using the EDV;
    *   if not provided, one will be generated for the profile as an EDV
    *   recipient.
-   * @param {Object} [options.edvId] - The ID of the EDV; either this or a
+   * @param {object} [options.edvId] - The ID of the EDV; either this or a
    *   capability to access the EDV must be given.
-   * @param {Object} [options.capability] - The capability to use to access
+   * @param {object} [options.capability] - The capability to use to access
    *   the EDV; either this or an EDV ID must be given.
-   * @param {Object} [options.revocationCapability] - The capability to use to
+   * @param {object} [options.revocationCapability] - The capability to use to
    *   revoke delegated EDV zcaps.
    *
-   * @returns {Object} An object with the content of the profile and profile
-   *   agent documents.
+   * @returns {Promise<object>} An object with the content of the profile and
+   *   profile agent documents.
    */
   async initializeAccessManagement({
     profileId,
@@ -354,11 +354,11 @@ export default class ProfileManager {
    * session must have a profile agent that has this capability or an error
    * will be thrown.
    *
-   * @param {Object} options - The options to use.
+   * @param {object} options - The options to use.
    * @param {string} options.profileId - The ID of the profile to get a signer
    *   for.
    *
-   * @returns {Object} The signer API for the profile as `invocationSigner`.
+   * @returns {Promise<object>} Signer API for the profile as `invocationSigner`
    */
   async getProfileSigner({profileId} = {}) {
     assert.nonEmptyString(profileId, 'profileId');
@@ -384,10 +384,10 @@ export default class ProfileManager {
    * has had its access management initialized (i.e., it is not still in
    * the process of being provisioned).
    *
-   * @param {Object} options - The options to use.
+   * @param {object} options - The options to use.
    * @param {string} options.id - The ID of the profile to get.
    *
-   * @returns {Object} The signer API for the profile as `invocationSigner`.
+   * @returns {Promise<object>} Signer API for the profile as `invocationSigner`
    */
   async getProfile({id} = {}) {
     assert.nonEmptyString(id, 'id');
@@ -692,8 +692,8 @@ export default class ProfileManager {
    * track changes to the given session, creating and/or caching account and
    * profile edvs as needed.
    *
-   * @param {Object} options - The options to use.
-   * @param {Object} options.session - A `bedrock-web-session` session instance.
+   * @param {object} options - The options to use.
+   * @param {object} options.session - A `bedrock-web-session` session instance.
    *
    * @returns {Promise} - Resolves once the operation completes.
    */
