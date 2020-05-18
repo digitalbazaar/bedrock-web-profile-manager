@@ -8,11 +8,11 @@ export default class AccessManager {
    * Creates a new instance of an AccessManager. Should only be called
    * by ProfileManager.
    *
-   * @param {Object} options - The options to use.
-   * @param {Object} options.profile - The profile to manage access for.
-   * @param {Object} options.profileManager - The parent `profileManager`
+   * @param {object} options - The options to use.
+   * @param {object} options.profile - The profile to manage access for.
+   * @param {object} options.profileManager - The parent `profileManager`
    *  instance.
-   * @param {Object} options.users - A `users` Collection instance.
+   * @param {object} options.users - A `users` Collection instance.
    *
    * @returns {AccessManager} - The new instance.
    */

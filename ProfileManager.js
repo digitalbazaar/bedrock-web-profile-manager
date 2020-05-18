@@ -65,7 +65,7 @@ export default class ProfileManager {
    *
    * @param {object} options - The options to use.
    * @param {string} [options.didMethod] - The DID method to use to create
-   *   the profile's identifier. (Supported: 'key' and 'v1'.)
+   *   the profile's identifier. (Supported: 'key' and 'v1'.).
    * @param {string} [options.didOptions] - Hashmap of optional DID method
    *   options.
    *
@@ -361,7 +361,8 @@ export default class ProfileManager {
    * @param {string} options.profileId - The ID of the profile to get a signer
    *   for.
    *
-   * @returns {Promise<object>} Signer API for the profile as `invocationSigner`
+   * @returns {Promise<object>} Signer API for the profile as
+   * `invocationSigner`.
    */
   async getProfileSigner({profileId} = {}) {
     assert.nonEmptyString(profileId, 'profileId');
@@ -390,7 +391,8 @@ export default class ProfileManager {
    * @param {object} options - The options to use.
    * @param {string} options.id - The ID of the profile to get.
    *
-   * @returns {Promise<object>} Signer API for the profile as `invocationSigner`
+   * @returns {Promise<object>} Signer API for the profile as
+   * `invocationSigner`.
    */
   async getProfile({id} = {}) {
     assert.nonEmptyString(id, 'id');
@@ -663,8 +665,8 @@ export default class ProfileManager {
     const kakZcap = zcaps[refs.kak];
     if(!(documentsZcap && hmacZcap && kakZcap)) {
       throw new Error(
-        `'Profile agent "${agent.id}" is not authorized to profile ' +
-        '"${profileId}".'`);
+        `Profile agent "${agent.id}" is not authorized to access profile ` +
+        `"${profileId}".`);
     }
 
     const edvClient = new EdvClient({
