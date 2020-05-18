@@ -663,8 +663,8 @@ export default class ProfileManager {
     const kakZcap = zcaps[refs.kak];
     if(!(documentsZcap && hmacZcap && kakZcap)) {
       throw new Error(
-        `Profile agent "${agent.id}" is not authorized to manage access ` +
-        `for profile "${profileId}".`);
+        `'Profile agent "${agent.id}" is not authorized to profile ' +
+        '"${profileId}".'`);
     }
 
     const edvClient = new EdvClient({
