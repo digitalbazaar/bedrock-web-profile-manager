@@ -14,6 +14,7 @@ import {
 import Collection from './Collection.js';
 import {EdvClient, EdvDocument} from 'edv-client';
 import EdvClientCache from './EdvClientCache.js';
+import cache from './Cache';
 import keyResolver from './keyResolver.js';
 import utils from './utils.js';
 import assert from './assert.js';
@@ -55,7 +56,7 @@ export default class ProfileManager {
     this.kmsModule = kmsModule;
     this.edvBaseUrl = edvBaseUrl;
     this.kmsBaseUrl = kmsBaseUrl;
-    this._cache = {};
+    this._cache = cache.set('internal-profile-manager-cache', new Map());
   }
 
   /**
@@ -714,7 +715,7 @@ export default class ProfileManager {
   }
 
   async _resetCache() {
-    this._cache = {};
+    this._cache.clear();
   }
 
   async _sessionChanged({authentication, newData}) {
@@ -795,11 +796,11 @@ export default class ProfileManager {
   }
 
   async _getAgentSigner({id} = {}) {
-    if(!this._cache.agentSigners) {
-      this._cache.agentSigners = new Map();
+    if(!this._cache.has('agent-signers')) {
+      this._cache.set('agent-signers', new Map());
     }
-
-    let signer = this._cache.agentSigners.get(id);
+    const agentSignersCache = this._cache.get('agent-signers');
+    let signer = agentSignersCache.get(id);
     if(!signer) {
       const {zcap} = await this._profileService.delegateAgentCapabilities({
         account: this.accountId,
@@ -812,7 +813,7 @@ export default class ProfileManager {
         capability: zcap,
         invocationSigner: this.capabilityAgent.getSigner(),
       });
-      this._cache.agentSigners.set(id, signer);
+      agentSignersCache.set(id, signer);
     }
     return signer;
   }

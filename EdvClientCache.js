@@ -3,9 +3,11 @@
  */
 'use strict';
 
+import cache from './Cache';
+
 export default class EdvClientCache {
   constructor() {
-    this.cache = new Map();
+    this.cache = cache.set('edv-client-cache', new Map());
   }
 
   async set(id, client) {
