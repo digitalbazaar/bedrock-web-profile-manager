@@ -132,6 +132,8 @@ export default class ProfileManager {
    * @param {object} options - The options to use.
    * @param {string} options.profileId - The ID of the profile to get the
    *   profile agent for.
+   * @param {string} options.capabilityInvoker - The type of invoker to sign
+   * capability invocations.
    *
    * @returns {Promise<object>} The profile agent.
    */
@@ -227,6 +229,8 @@ export default class ProfileManager {
    *   the EDV; either this or an EDV ID must be given.
    * @param {object} [options.revocationCapability] - The capability to use to
    *   revoke delegated EDV zcaps.
+   * @param {string} options.capabilityInvoker - The type of invoker to sign
+   * capability invocations.
    *
    * @returns {Promise<object>} An object with the content of the profile and
    *   profile agent documents.
@@ -442,6 +446,8 @@ export default class ProfileManager {
    * @param {object} options - The options to use.
    * @param {string} options.profileId - The ID of the profile to get a signer
    *   for.
+   * @param {string} options.capabilityInvoker - The type of invoker to sign
+   * capability invocations.
    *
    * @returns {Promise<object>} Signer API for the profile as
    * `invocationSigner`.
@@ -476,6 +482,8 @@ export default class ProfileManager {
    *
    * @param {object} options - The options to use.
    * @param {string} options.id - The ID of the profile to get.
+   * @param {string} options.capabilityInvoker - The type of invoker to sign
+   * capability invocations.
    *
    * @returns {Promise<object>} Signer API for the profile as
    * `invocationSigner`.
