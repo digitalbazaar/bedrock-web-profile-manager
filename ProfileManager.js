@@ -929,33 +929,29 @@ export default class ProfileManager {
     if(promise) {
       return promise;
     }
-    promise = new Promise(async (res, rej) => {
-      try {
-        const edvDocument = new EdvDocument({
-          capability,
-          keyAgreementKey: new KeyAgreementKey({
-            id: userKak.invocationTarget.id,
-            type: userKak.invocationTarget.type,
-            capability: userKak,
-            invocationSigner
-          }),
+    promise = (async () => {
+      const edvDocument = new EdvDocument({
+        capability,
+        keyAgreementKey: new KeyAgreementKey({
+          id: userKak.invocationTarget.id,
+          type: userKak.invocationTarget.type,
+          capability: userKak,
           invocationSigner
-        });
+        }),
+        invocationSigner
+      });
 
-        const {content} = await edvDocument.read();
+      const {content} = await edvDocument.read();
 
-        // update zcaps to include zcaps from agent record
-        for(const zcap of Object.values(profileAgent.zcaps)) {
-          const {referenceId} = zcap;
-          if(!content.zcaps[referenceId]) {
-            content.zcaps[referenceId] = zcap;
-          }
+      // update zcaps to include zcaps from agent record
+      for(const zcap of Object.values(profileAgent.zcaps)) {
+        const {referenceId} = zcap;
+        if(!content.zcaps[referenceId]) {
+          content.zcaps[referenceId] = zcap;
         }
-        res(content);
-      } catch(e) {
-        rej(e);
       }
-    });
+      return content;
+    })();
     this._requests.set(contentKey, promise);
     try {
       return await promise;
