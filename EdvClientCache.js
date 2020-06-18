@@ -3,7 +3,7 @@
  */
 'use strict';
 
-import cache from './Cache';
+import cache from './cache';
 
 export default class EdvClientCache {
   constructor() {
