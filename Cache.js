@@ -3,9 +3,11 @@
  */
 'use strict';
 
-export class Cache {
-  constructor() {
-    this.cache = new Map();
+import LRU from 'lru-cache';
+
+class Cache {
+  constructor(options) {
+    this.cache = new LRU(options);
   }
 
   set(id, data) {
@@ -17,15 +19,20 @@ export class Cache {
     return this.cache.get(id) || null;
   }
 
+  has(id) {
+    return this.cache.has(id);
+  }
+
   delete(id) {
-    return this.cache.delete(id);
+    return this.cache.del(id);
   }
 
   clear() {
-    this.cache.clear();
+    this.cache.reset();
   }
 }
 
 const cache = new Cache();
 
+export {Cache};
 export default cache;

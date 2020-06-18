@@ -23,6 +23,7 @@
     "edv-client": "^2.6.0",
     "fast-json-patch": "^2.2.1",
     "jsonld-signatures": "^5.0.1",
+    "lru-cache": "^5.1.1",
     "ocapld": "^2.0.0",
     "uuid-random": "^1.3.0",
     "webkms-client": "^2.0.1"
