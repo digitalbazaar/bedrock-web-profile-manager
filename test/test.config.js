@@ -15,6 +15,20 @@ config.karma.config.proxies = {
   }
 };
 config.karma.config.proxyValidateSSL = false;
+// // Enable for rapid unit test development
+// config.karma.config.singleRun = false;
+// config.karma.config.browsers = ['Chrome_special'];
+// config.karma.config.customLaunchers = {
+//   Chrome_special: {
+//     base: 'Chrome',
+//     flags: [
+//       '--disable-web-security',
+//       '--ignore-ssl-errors',
+//       '--ignore-certificate-errors',
+//       '--remote-debugging-port=9223'
+//     ]
+//   }
+// };
 
 // mongodb config
 config.mongodb.name = 'bedrock_web_profile_manager_test';
