@@ -447,7 +447,7 @@ export default class ProfileManager {
    * @param {string} options.profileId - The ID of the profile to get a signer
    *   for.
    * @param {string} options.capabilityInvoker - The type of invoker to sign
-   * capability invocations.
+   *   capability invocations.
    *
    * @returns {Promise<object>} Signer API for the profile as
    * `invocationSigner`.
