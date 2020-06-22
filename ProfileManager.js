@@ -32,7 +32,7 @@ export default class ProfileManager {
    * Creates a new instance of a ProfileManager and attaches it to the given
    * session instance. This ProfileManager will track changes to the given
    * session, creating and/or caching account and profile edvs as needed. Some
-   * of the methods contain the optional `useEphemeralSigner` option that
+   * of the methods contain an optional `useEphemeralSigner` parameter that
    * enables invoking the profile's zcap invocation key with an ephemeral
    * capability agent instead of using the profile agent's zcap invocation key
    * directly. This significantly reduces the number of hits to a WebKMS. The
