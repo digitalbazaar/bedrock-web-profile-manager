@@ -31,7 +31,13 @@ export default class ProfileManager {
   /**
    * Creates a new instance of a ProfileManager and attaches it to the given
    * session instance. This ProfileManager will track changes to the given
-   * session, creating and/or caching account and profile edvs as needed.
+   * session, creating and/or caching account and profile edvs as needed. Some
+   * of the methods contain the optional `useEphemeralSigner` option that
+   * enables invoking the profile's zcap invocation key with an ephemeral
+   * capability agent instead of using the profile agent's zcap invocation key
+   * directly. This significanyly reduces the number of hits to a WebKMS. The
+   * ephemeral capability agent is not long lived and can only be used locally.
+   * This helps to keep a decent security profile.
    *
    * @param {object} options - The options to use.
    * @param {object} options.session - A `bedrock-web-session` session instance.
@@ -131,7 +137,8 @@ export default class ProfileManager {
    * @param {string} options.profileAgent - The profile agent requesting a zcap.
    * @param {boolean} options.useEphemeralSigner - Flag to enable invoking
    *   capabilities with the ephemeral invocation signer associated with the
-   *   currently authenticated session, default `true`.
+   *   currently authenticated session, default `true`. See more in class
+   *   description.
    *
    * @returns {Promise<object>} The capability for the profile agent.
    */
@@ -215,7 +222,8 @@ export default class ProfileManager {
    *   revoke delegated EDV zcaps.
    * @param {boolean} options.useEphemeralSigner - Flag to enable invoking
    *   capabilities with the ephemeral invocation signer associated with the
-   *   currently authenticated session, default `true`.
+   *   currently authenticated session, default `true`. See more in class
+   *   description.
    *
    * @returns {Promise<object>} An object with the content of the profile and
    *   profile agent documents.
@@ -433,7 +441,8 @@ export default class ProfileManager {
    *   for.
    * @param {boolean} options.useEphemeralSigner - Flag to enable invoking
    *   capabilities with the ephemeral invocation signer associated with the
-   *   currently authenticated session, default `true`.
+   *   currently authenticated session, default `true`. See more in class
+   *   description.
    *
    * @returns {Promise<object>} Signer API for the profile as
    * `invocationSigner`.
@@ -474,7 +483,8 @@ export default class ProfileManager {
    * @param {string} options.id - The ID of the profile to get.
    * @param {boolean} options.useEphemeralSigner - Flag to enable invoking
    *   capabilities with the ephemeral invocation signer associated with the
-   *   currently authenticated session, default `true`.
+   *   currently authenticated session, default `true`. See more in class
+   *   description.
    *
    * @returns {Promise<object>} Signer API for the profile as
    * `invocationSigner`.
