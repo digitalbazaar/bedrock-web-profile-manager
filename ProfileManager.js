@@ -53,7 +53,6 @@ export default class ProfileManager {
     if(typeof edvBaseUrl !== 'string') {
       throw new TypeError('"edvBaseUrl" must be a string.');
     }
-    this._requests = new Cache();
     this._profileService = new ProfileService();
     this.session = null;
     this.accountId = null;
@@ -143,49 +142,46 @@ export default class ProfileManager {
       this._cacheContainer.set(capabilityCacheKey, new Cache());
     }
 
-    let promise = this._requests.get(capabilityKey);
-
-    if(promise) {
-      return promise;
+    const capabilityCache = this._cacheContainer.get(capabilityCacheKey);
+    const agentZcap = capabilityCache.get(capabilityKey);
+    if(agentZcap) {
+      return agentZcap;
     }
 
-    promise = (async () => {
-      const capabilityCache = this._cacheContainer.get(capabilityCacheKey);
-      let zcap = capabilityCache.get(capabilityKey);
-      if(!zcap) {
-        const agentSigner = await this.getAgentSigner(
-          {profileAgentId: profileAgent.id, useEphemeralSigner: false});
-        const originalZcap = profileAgent.zcaps[id];
-        if(!originalZcap) {
-          const {id: profileAgentId} = profileAgent;
-          throw new Error(
-            `The agent "${profileAgentId}" does not have the zcap: "${id}"`);
-        }
-        if(useEphemeralSigner) {
-          const localSigner = await this.getAgentSigner(
-            {profileAgentId: profileAgent.id, useEphemeralSigner: true});
-          zcap = await utils.delegateCapability({
-            signer: agentSigner,
-            request: {
-              ...originalZcap,
-              parentCapability: originalZcap,
-              controller: localSigner.id
-            }
-          });
-        } else {
-          zcap = originalZcap;
-        }
-        capabilityCache.set(capabilityKey, zcap);
+    const promise = (async () => {
+      let zcap;
+      const agentSigner = await this.getAgentSigner(
+        {profileAgentId: profileAgent.id, useEphemeralSigner: false});
+      const originalZcap = profileAgent.zcaps[id];
+      if(!originalZcap) {
+        const {id: profileAgentId} = profileAgent;
+        throw new Error(
+          `The agent "${profileAgentId}" does not have the zcap: "${id}"`);
+      }
+      if(useEphemeralSigner) {
+        const localSigner = await this.getAgentSigner(
+          {profileAgentId: profileAgent.id, useEphemeralSigner: true});
+        zcap = await utils.delegateCapability({
+          signer: agentSigner,
+          request: {
+            ...originalZcap,
+            parentCapability: originalZcap,
+            controller: localSigner.id
+          }
+        });
+      } else {
+        zcap = originalZcap;
       }
       return zcap;
     })();
 
-    this._requests.set(capabilityKey, promise);
+    capabilityCache.set(capabilityKey, promise);
 
     try {
       return await promise;
-    } finally {
-      this._requests.delete(capabilityKey);
+    } catch(e) {
+      capabilityCache.delete(capabilityKey);
+      throw e;
     }
   }
 
@@ -857,24 +853,24 @@ export default class ProfileManager {
     const recordKey = `agent-records-${profileId}`;
     const agentRecordCache = this._cacheContainer.get('agent-records');
     const agentRecord = agentRecordCache.get(recordKey);
+
     if(agentRecord) {
       return agentRecord;
     }
-    let promise = this._requests.get(recordKey);
-    if(promise) {
-      return promise;
-    }
-    promise = this._profileService.getAgentByProfile({
+
+    const promise = this._profileService.getAgentByProfile({
       profile: profileId,
       account: this.accountId
     });
-    this._requests.set(recordKey, promise);
+
+    agentRecordCache.set(recordKey, promise);
+
     try {
       const record = await promise;
-      agentRecordCache.set(recordKey, record);
       return record;
-    } finally {
-      this._requests.delete(recordKey);
+    } catch(e) {
+      agentRecordCache.delete(recordKey);
+      throw e;
     }
   }
 
@@ -914,11 +910,7 @@ export default class ProfileManager {
       throw new Error('Profile access management not initialized.');
     }
 
-    let promise = this._requests.get(contentKey);
-    if(promise) {
-      return promise;
-    }
-    promise = (async () => {
+    const promise = (async () => {
       const edvDocument = new EdvDocument({
         capability,
         keyAgreementKey: new KeyAgreementKey({
@@ -941,11 +933,14 @@ export default class ProfileManager {
       }
       return content;
     })();
-    this._requests.set(contentKey, promise);
+
+    agentContentCache.set(contentKey, promise);
+
     try {
       return await promise;
-    } finally {
-      this._requests.delete(contentKey);
+    } catch(e) {
+      agentContentCache.delete(contentKey);
+      throw e;
     }
   }
 
