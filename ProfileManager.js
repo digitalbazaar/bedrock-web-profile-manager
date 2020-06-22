@@ -35,7 +35,7 @@ export default class ProfileManager {
    * of the methods contain the optional `useEphemeralSigner` option that
    * enables invoking the profile's zcap invocation key with an ephemeral
    * capability agent instead of using the profile agent's zcap invocation key
-   * directly. This significanyly reduces the number of hits to a WebKMS. The
+   * directly. This significantly reduces the number of hits to a WebKMS. The
    * ephemeral capability agent is not long lived and can only be used locally.
    * This helps to keep a decent security profile.
    *
