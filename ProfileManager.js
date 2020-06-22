@@ -14,7 +14,7 @@ import {
 import Collection from './Collection.js';
 import {EdvClient, EdvDocument} from 'edv-client';
 import EdvClientCache from './EdvClientCache.js';
-import cache, {Cache} from './cache';
+import {Cache} from './cache';
 import keyResolver from './keyResolver.js';
 import utils from './utils.js';
 import assert from './assert.js';
@@ -65,7 +65,7 @@ export default class ProfileManager {
     this.kmsModule = kmsModule;
     this.edvBaseUrl = edvBaseUrl;
     this.kmsBaseUrl = kmsBaseUrl;
-    this._cache = cache.set('internal-profile-manager-cache', new Cache());
+    this._cacheContainer = new Map();
   }
 
   /**
@@ -142,8 +142,8 @@ export default class ProfileManager {
     const capabilityCacheKey = `profileAgent-${profileAgent.id}-zcaps`;
     const capabilityKey = `${capabilityCacheKey}-${id}-${useEphemeralSigner}`;
 
-    if(!this._cache.has(capabilityCacheKey)) {
-      this._cache.set(capabilityCacheKey, new Cache());
+    if(!this._cacheContainer.has(capabilityCacheKey)) {
+      this._cacheContainer.set(capabilityCacheKey, new Cache());
     }
 
     let promise = this._requests.get(capabilityKey);
@@ -153,7 +153,7 @@ export default class ProfileManager {
     }
 
     promise = (async () => {
-      const capabilityCache = this._cache.get(capabilityCacheKey);
+      const capabilityCache = this._cacheContainer.get(capabilityCacheKey);
       let zcap = capabilityCache.get(capabilityKey);
       if(!zcap) {
         const agentSigner = await this.getAgentSigner(
@@ -829,7 +829,7 @@ export default class ProfileManager {
   }
 
   async _resetCache() {
-    this._cache.clear();
+    this._cacheContainer.clear();
   }
 
   async _sessionChanged({authentication, newData}) {
@@ -867,12 +867,12 @@ export default class ProfileManager {
   }
 
   async _getAgentRecord({profileId}) {
-    if(!this._cache.has('agent-records')) {
-      this._cache.set('agent-records', new Cache({maxAge: 250}));
+    if(!this._cacheContainer.has('agent-records')) {
+      this._cacheContainer.set('agent-records', new Cache({maxAge: 250}));
     }
 
     const recordKey = `agent-records-${profileId}`;
-    const agentRecordCache = this._cache.get('agent-records');
+    const agentRecordCache = this._cacheContainer.get('agent-records');
     const agentRecord = agentRecordCache.get(recordKey);
     if(agentRecord) {
       return agentRecord;
@@ -896,14 +896,14 @@ export default class ProfileManager {
   }
 
   async _getAgentContent({profileAgentRecord, useEphemeralSigner = true}) {
-    if(!this._cache.has('agent-content')) {
-      this._cache.set('agent-content', new Cache());
+    if(!this._cacheContainer.has('agent-content')) {
+      this._cacheContainer.set('agent-content', new Cache());
     }
     const {profileAgent} = profileAgentRecord;
 
     const {id, account, profile: profileId, sequence} = profileAgent;
     const contentKey = `${id}${account}${profileId}${sequence}`;
-    const agentContentCache = this._cache.get('agent-content');
+    const agentContentCache = this._cacheContainer.get('agent-content');
     const agentContent = agentContentCache.get(contentKey);
     if(agentContent) {
       return agentContent;
@@ -967,10 +967,10 @@ export default class ProfileManager {
   }
 
   async getAgentSigner({profileAgentId, useEphemeralSigner}) {
-    if(!this._cache.has('agent-signers')) {
-      this._cache.set('agent-signers', new Cache());
+    if(!this._cacheContainer.has('agent-signers')) {
+      this._cacheContainer.set('agent-signers', new Cache());
     }
-    const agentSignersCache = this._cache.get('agent-signers');
+    const agentSignersCache = this._cacheContainer.get('agent-signers');
     const cacheKey = `${profileAgentId}-${useEphemeralSigner}`;
 
     let agentSigner = agentSignersCache.get(cacheKey);
