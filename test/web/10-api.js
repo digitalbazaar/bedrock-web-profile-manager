@@ -190,7 +190,7 @@ describe('Profile Manager API', () => {
         }
       });
     });
-    it('should successfully initialize w/ default invoker', async () => {
+    it('should successfully initialize w/ default signer', async () => {
       let error, result;
       try {
         const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
@@ -225,7 +225,7 @@ describe('Profile Manager API', () => {
       result.profileAgent.type.should.include.members(['User', 'Agent']);
       result.profileAgent.should.have.property('zcaps');
     });
-    it('should successfully initialize w/ "local" invoker', async () => {
+    it('should successfully initialize w/ ephemeral signer', async () => {
       let error, result;
       try {
         const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
