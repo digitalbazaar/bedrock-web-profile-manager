@@ -149,33 +149,8 @@ export default class ProfileManager {
       return agentZcap;
     }
 
-    const promise = (async () => {
-      let zcap;
-      const agentSigner = await this.getAgentSigner(
-        {profileAgentId: profileAgent.id, useEphemeralSigner: false});
-      const originalZcap = profileAgent.zcaps[id];
-      if(!originalZcap) {
-        const {id: profileAgentId} = profileAgent;
-        throw new Error(
-          `The agent "${profileAgentId}" does not have the zcap: "${id}"`);
-      }
-      if(useEphemeralSigner) {
-        const ephemeralSigner = await this.getAgentSigner(
-          {profileAgentId: profileAgent.id, useEphemeralSigner: true});
-        zcap = await utils.delegateCapability({
-          signer: agentSigner,
-          request: {
-            ...originalZcap,
-            parentCapability: originalZcap,
-            controller: ephemeralSigner.id
-          }
-        });
-      } else {
-        zcap = originalZcap;
-      }
-      return zcap;
-    })();
-
+    const promise = this._getAgentCapability(
+      {id, profileAgent, useEphemeralSigner});
     capabilityCache.set(capabilityKey, promise);
 
     try {
@@ -184,6 +159,30 @@ export default class ProfileManager {
       capabilityCache.delete(capabilityKey);
       throw e;
     }
+  }
+
+  async _getAgentCapability({id, profileAgent, useEphemeralSigner}) {
+    const agentSigner = await this.getAgentSigner(
+      {profileAgentId: profileAgent.id, useEphemeralSigner: false});
+    const originalZcap = profileAgent.zcaps[id];
+    if(!originalZcap) {
+      const {id: profileAgentId} = profileAgent;
+      throw new Error(
+        `The agent "${profileAgentId}" does not have the zcap: "${id}"`);
+    }
+    if(!useEphemeralSigner) {
+      return originalZcap;
+    }
+    const ephemeralSigner = await this.getAgentSigner(
+      {profileAgentId: profileAgent.id, useEphemeralSigner: true});
+    return utils.delegateCapability({
+      signer: agentSigner,
+      request: {
+        ...originalZcap,
+        parentCapability: originalZcap,
+        controller: ephemeralSigner.id
+      }
+    });
   }
 
   /**
@@ -914,30 +913,19 @@ export default class ProfileManager {
       throw new Error('Profile access management not initialized.');
     }
 
-    const promise = (async () => {
-      const edvDocument = new EdvDocument({
-        capability,
-        keyAgreementKey: new KeyAgreementKey({
-          id: userKak.invocationTarget.id,
-          type: userKak.invocationTarget.type,
-          capability: userKak,
-          invocationSigner
-        }),
+    const edvDocument = new EdvDocument({
+      capability,
+      keyAgreementKey: new KeyAgreementKey({
+        id: userKak.invocationTarget.id,
+        type: userKak.invocationTarget.type,
+        capability: userKak,
         invocationSigner
-      });
+      }),
+      invocationSigner
+    });
 
-      const {content} = await edvDocument.read();
-
-      // update zcaps to include zcaps from agent record
-      for(const zcap of Object.values(profileAgent.zcaps)) {
-        const {referenceId} = zcap;
-        if(!content.zcaps[referenceId]) {
-          content.zcaps[referenceId] = zcap;
-        }
-      }
-      return content;
-    })();
-
+    const promise = this._readAgentContent(
+      {edvDocument, zcaps: profileAgent.zcaps});
     agentContentCache.set(contentKey, promise);
 
     try {
@@ -946,6 +934,19 @@ export default class ProfileManager {
       agentContentCache.delete(contentKey);
       throw e;
     }
+  }
+
+  async _readAgentContent({edvDocument, zcaps}) {
+    const {content} = await edvDocument.read();
+
+    // update zcaps to include zcaps from agent record
+    for(const zcap of Object.values(zcaps)) {
+      const {referenceId} = zcap;
+      if(!content.zcaps[referenceId]) {
+        content.zcaps[referenceId] = zcap;
+      }
+    }
+    return content;
   }
 
   async getAgentSigner({profileAgentId, useEphemeralSigner}) {
