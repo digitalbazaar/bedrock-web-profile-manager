@@ -20,8 +20,6 @@ import utils from './utils.js';
 import assert from './assert.js';
 
 const JWE_ALG = 'ECDH-ES+A256KW';
-const PROFILE_INVOCATION_ZCAP_REFERENCE_ID =
-  'profile-capability-invocation-key';
 const EDVS = {
   profileDoc: 'profile-edv-document',
   userDocs: 'user-edv-documents',
@@ -126,19 +124,18 @@ export default class ProfileManager {
   }
 
   /**
-   * Gets the profile agent assigned to the account associated with the
-   * authenticated session for the profile identified by the given profile ID.
+   * Gets a capability specified by its reference ID for profile agent from
+   * a cache or delegates one on the fly if it does not exist.
    *
    * @param {object} options - The options to use.
-   * @param {string} options.profileId - The ID of the profile to get the
-   *   profile agent for.
+   * @param {string} options.id - The reference ID of the zcap.
+   * @param {string} options.profileAgent - The profile agent requesting a zcap.
    * @param {boolean} options.useEphemeralSigner - Flag to enable invoking
    *  capabilities with the ephemeral invocation signer, default `true`.
    *
-   * @returns {Promise<object>} The profile agent.
+   * @returns {Promise<object>} The capability for the profile agent.
    */
-  async getAgentCapability(
-    {id, profileAgent, profileId, useEphemeralSigner = true} = {}) {
+  async getAgentCapability({id, profileAgent, useEphemeralSigner = true}) {
     const capabilityCacheKey = `profileAgent-${profileAgent.id}-zcaps`;
     const capabilityKey = `${capabilityCacheKey}-${id}-${useEphemeralSigner}`;
 
@@ -158,13 +155,6 @@ export default class ProfileManager {
       if(!zcap) {
         const agentSigner = await this.getAgentSigner(
           {profileAgentId: profileAgent.id, useEphemeralSigner: false});
-        if(id === PROFILE_INVOCATION_ZCAP_REFERENCE_ID) {
-          assert.nonEmptyString(profileId, 'profileId');
-          id = _getProfileInvocationZcapKeyReferenceId({
-            zcaps: profileAgent.zcaps,
-            profileId
-          });
-        }
         const originalZcap = profileAgent.zcaps[id];
         if(!originalZcap) {
           const {id: profileAgentId} = profileAgent;
@@ -227,8 +217,8 @@ export default class ProfileManager {
    *   the EDV; either this or an EDV ID must be given.
    * @param {object} [options.revocationCapability] - The capability to use to
    *   revoke delegated EDV zcaps.
-   * @param {string} options.useEphemeralSigner - The type of invoker to sign
-   * capability invocations.
+   * @param {boolean} options.useEphemeralSigner - Flag to enable invoking
+   *  capabilities with the ephemeral invocation signer, default `true`.
    *
    * @returns {Promise<object>} An object with the content of the profile and
    *   profile agent documents.
@@ -454,8 +444,12 @@ export default class ProfileManager {
     assert.nonEmptyString(profileId, 'profileId');
     // TODO: cache profile signer by profile ID?
     const profileAgent = await this.getAgent({profileId});
+    const zcapReferenceId = _getProfileInvocationZcapKeyReferenceId({
+      zcaps: profileAgent.zcaps,
+      profileId
+    });
     const zcap = await this.getAgentCapability({
-      id: PROFILE_INVOCATION_ZCAP_REFERENCE_ID,
+      id: zcapReferenceId,
       useEphemeralSigner,
       profileId,
       profileAgent
@@ -480,8 +474,8 @@ export default class ProfileManager {
    *
    * @param {object} options - The options to use.
    * @param {string} options.id - The ID of the profile to get.
-   * @param {string} options.useEphemeralSigner - The type of invoker to sign
-   * capability invocations.
+   *  capabilities with the ephemeral invocation signer, default `true`.
+   *  capabilities with the ephemeral invocation signer, default `true`.
    *
    * @returns {Promise<object>} Signer API for the profile as
    * `invocationSigner`.
