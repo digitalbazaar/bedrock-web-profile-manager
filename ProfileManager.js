@@ -130,7 +130,8 @@ export default class ProfileManager {
    * @param {string} options.id - The reference ID of the zcap.
    * @param {string} options.profileAgent - The profile agent requesting a zcap.
    * @param {boolean} options.useEphemeralSigner - Flag to enable invoking
-   *  capabilities with the ephemeral invocation signer, default `true`.
+   *   capabilities with the ephemeral invocation signer associated with the
+   *   currently authenticated session, default `true`.
    *
    * @returns {Promise<object>} The capability for the profile agent.
    */
@@ -214,7 +215,8 @@ export default class ProfileManager {
    * @param {object} [options.revocationCapability] - The capability to use to
    *   revoke delegated EDV zcaps.
    * @param {boolean} options.useEphemeralSigner - Flag to enable invoking
-   *  capabilities with the ephemeral invocation signer, default `true`.
+   *   capabilities with the ephemeral invocation signer associated with the
+   *   currently authenticated session, default `true`.
    *
    * @returns {Promise<object>} An object with the content of the profile and
    *   profile agent documents.
@@ -431,7 +433,8 @@ export default class ProfileManager {
    * @param {string} options.profileId - The ID of the profile to get a signer
    *   for.
    * @param {boolean} options.useEphemeralSigner - Flag to enable invoking
-   *  capabilities with the ephemeral invocation signer, default `true`.
+   *   capabilities with the ephemeral invocation signer associated with the
+   *   currently authenticated session, default `true`.
    *
    * @returns {Promise<object>} Signer API for the profile as
    * `invocationSigner`.
@@ -471,7 +474,8 @@ export default class ProfileManager {
    * @param {object} options - The options to use.
    * @param {string} options.id - The ID of the profile to get.
    * @param {boolean} options.useEphemeralSigner - Flag to enable invoking
-   *  capabilities with the ephemeral invocation signer, default `true`.
+   *   capabilities with the ephemeral invocation signer associated with the
+   *   currently authenticated session, default `true`.
    *
    * @returns {Promise<object>} Signer API for the profile as
    * `invocationSigner`.
