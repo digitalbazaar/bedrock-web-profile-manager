@@ -57,7 +57,7 @@ export default class ProfileManager {
     this._profileService = new ProfileService();
     this.session = null;
     this.accountId = null;
-    this.capabilityAgent = null;
+    this.capabilityAgents = new Map();
     this.edvClientCache = new EdvClientCache();
     this.keystoreAgent = null;
     this.kmsModule = kmsModule;
@@ -163,7 +163,7 @@ export default class ProfileManager {
         }
         if(useEphemeralSigner) {
           const localSigner = await this.getAgentSigner(
-            {useEphemeralSigner: true});
+            {profileAgentId: profileAgent.id, useEphemeralSigner: true});
           zcap = await utils.delegateCapability({
             signer: agentSigner,
             request: {
@@ -834,29 +834,18 @@ export default class ProfileManager {
     if(this.accountId && this.accountId !== newAccountId) {
       await CapabilityAgent.clearCache({handle: this.accountId});
       await this.edvClientCache.clear();
+      this.capabilityAgents.clear();
     }
 
     // update state
-    const accountId = this.accountId = newAccountId;
-    this.capabilityAgent = null;
+    this.accountId = newAccountId;
+    this.capabilityAgents = new Map();
     this.keystoreAgent = null;
     this._resetCache();
 
     if(!(authentication || newData.account)) {
       // no account in session, return
       return;
-    }
-
-    this.capabilityAgent = await CapabilityAgent.fromCache({handle: accountId});
-    if(this.capabilityAgent === null) {
-      // generate a secret and load a new capability agent
-      const crypto = (self.crypto || self.msCrypto);
-      const secret = new Uint8Array(32);
-      crypto.getRandomValues(secret);
-
-      // TODO: support N capability agents, one per profile/profile-agent
-      this.capabilityAgent = await CapabilityAgent.fromSecret(
-        {secret, handle: accountId});
     }
   }
 
@@ -972,26 +961,42 @@ export default class ProfileManager {
       return agentSigner;
     }
 
+    const capabilityAgent = await this._getCapabilityAgent({profileAgentId});
+
     if(useEphemeralSigner) {
-      agentSigner = this.capabilityAgent.getSigner();
+      agentSigner = capabilityAgent.getSigner();
     } else {
       if(!profileAgentId) {
         throw new Error('"profileAgentId" is required for an agent signer.');
       }
       const {zcap} = await this._profileService.delegateAgentCapabilities({
         account: this.accountId,
-        invoker: this.capabilityAgent.id,
+        invoker: capabilityAgent.id,
         profileAgentId
       });
 
       // signer for signing with the profileAgent's capability invocation key
       agentSigner = new AsymmetricKey({
         capability: zcap,
-        invocationSigner: this.capabilityAgent.getSigner()
+        invocationSigner: capabilityAgent.getSigner()
       });
+      agentSignersCache.set(cacheKey, agentSigner);
     }
-    agentSignersCache.set(cacheKey, agentSigner);
     return agentSigner;
+  }
+
+  async _getCapabilityAgent({profileAgentId}) {
+    assert.nonEmptyString(profileAgentId, 'profileAgentId');
+
+    const handle = `${this.accountId}-${profileAgentId}`;
+    let capabilityAgent = this.capabilityAgents.get(handle);
+
+    if(!capabilityAgent) {
+      capabilityAgent = _createCapabilityAgent({handle});
+      this.capabilityAgents.set(handle, capabilityAgent);
+    }
+
+    return capabilityAgent;
   }
 
   // TODO: delegate this on demand instead, being careful not to create
@@ -1098,4 +1103,13 @@ function _getProfileInvocationZcapKeyReferenceId(
     return referenceId.startsWith(profileId) &&
       referenceId.endsWith(capabilityInvokeKeyReference);
   });
+}
+
+async function _createCapabilityAgent({handle}) {
+  // generate a secret and load a new capability agent
+  const crypto = (self.crypto || self.msCrypto);
+  const secret = new Uint8Array(32);
+  crypto.getRandomValues(secret);
+
+  return CapabilityAgent.fromSecret({secret, handle});
 }
