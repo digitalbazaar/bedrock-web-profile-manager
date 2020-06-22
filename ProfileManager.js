@@ -439,7 +439,7 @@ export default class ProfileManager {
     });
     const invocationSigner = new AsymmetricKey({
       capability: zcap,
-      invocationSigner: await this.getAgentSigner({
+      invocationSigner: await this._getAgentSigner({
         useEphemeralSigner,
         profileAgentId: profileAgent.id
       })
@@ -486,7 +486,7 @@ export default class ProfileManager {
       useEphemeralSigner,
       profileAgent
     });
-    const invocationSigner = await this.getAgentSigner({
+    const invocationSigner = await this._getAgentSigner({
       profileAgentId: profileAgent.id,
       useEphemeralSigner
     });
@@ -572,7 +572,7 @@ export default class ProfileManager {
     const promises = referenceIds.map(async id =>
       this.getAgentCapability({id, useEphemeralSigner, profileAgent}));
     const [capability, userKak, userHmac] = await Promise.all(promises);
-    const invocationSigner = await this.getAgentSigner({
+    const invocationSigner = await this._getAgentSigner({
       profileAgentId: profileAgent.id,
       useEphemeralSigner
     });
@@ -752,7 +752,7 @@ export default class ProfileManager {
     const promises = referenceIds.map(async id =>
       this.getAgentCapability({id, useEphemeralSigner, profileAgent}));
     const [documentsZcap, kakZcap, hmacZcap] = await Promise.all(promises);
-    const invocationSigner = await this.getAgentSigner({
+    const invocationSigner = await this._getAgentSigner({
       profileAgentId: profileAgent.id,
       useEphemeralSigner
     });
@@ -835,7 +835,7 @@ export default class ProfileManager {
   }
 
   async _getAgentCapability({id, profileAgent, useEphemeralSigner}) {
-    const agentSigner = await this.getAgentSigner(
+    const agentSigner = await this._getAgentSigner(
       {profileAgentId: profileAgent.id, useEphemeralSigner: false});
     const originalZcap = profileAgent.zcaps[id];
     if(!originalZcap) {
@@ -846,7 +846,7 @@ export default class ProfileManager {
     if(!useEphemeralSigner) {
       return originalZcap;
     }
-    const ephemeralSigner = await this.getAgentSigner(
+    const ephemeralSigner = await this._getAgentSigner(
       {profileAgentId: profileAgent.id, useEphemeralSigner: true});
     return utils.delegateCapability({
       signer: agentSigner,
@@ -915,7 +915,7 @@ export default class ProfileManager {
       useEphemeralSigner,
       profileAgent
     });
-    const invocationSigner = await this.getAgentSigner({
+    const invocationSigner = await this._getAgentSigner({
       profileAgentId: profileAgent.id,
       useEphemeralSigner
     });
@@ -959,7 +959,7 @@ export default class ProfileManager {
     return content;
   }
 
-  async getAgentSigner({profileAgentId, useEphemeralSigner}) {
+  async _getAgentSigner({profileAgentId, useEphemeralSigner}) {
     if(!this._cacheContainer.has('agent-signers')) {
       this._cacheContainer.set('agent-signers', new Cache());
     }
