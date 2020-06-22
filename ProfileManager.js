@@ -13,7 +13,6 @@ import {
 } from 'webkms-client';
 import Collection from './Collection.js';
 import {EdvClient, EdvDocument} from 'edv-client';
-import EdvClientCache from './EdvClientCache.js';
 import LRU from 'lru-cache';
 import keyResolver from './keyResolver.js';
 import utils from './utils.js';
@@ -40,21 +39,15 @@ export default class ProfileManager {
    * This helps to keep a decent security profile.
    *
    * @param {object} options - The options to use.
-   * @param {object} options.session - A `bedrock-web-session` session instance.
    * @param {string} options.kmsModule - The KMS module to use to generate keys.
-   * @param {string} options.kmsBaseUrl - The base URL for the KMS service,
-   *   used to generate keys.
    * @param {string} options.edvBaseUrl - The base URL for the EDV service,
    *   used to store documents.
    *
    * @returns {ProfileManager} - The new instance.
    */
-  constructor({edvBaseUrl, kmsModule, kmsBaseUrl} = {}) {
+  constructor({edvBaseUrl, kmsModule} = {}) {
     if(typeof kmsModule !== 'string') {
       throw new TypeError('"kmsModule" must be a string.');
-    }
-    if(typeof kmsBaseUrl !== 'string') {
-      throw new TypeError('"kmsBaseUrl" must be a string.');
     }
     if(typeof edvBaseUrl !== 'string') {
       throw new TypeError('"edvBaseUrl" must be a string.');
@@ -63,11 +56,9 @@ export default class ProfileManager {
     this.session = null;
     this.accountId = null;
     this.capabilityAgents = new Map();
-    this.edvClientCache = new EdvClientCache();
     this.keystoreAgent = null;
     this.kmsModule = kmsModule;
     this.edvBaseUrl = edvBaseUrl;
-    this.kmsBaseUrl = kmsBaseUrl;
     this._cacheContainer = new Map();
   }
 
@@ -818,7 +809,6 @@ export default class ProfileManager {
     // clear cache
     if(this.accountId && this.accountId !== newAccountId) {
       await CapabilityAgent.clearCache({handle: this.accountId});
-      await this.edvClientCache.clear();
       this.capabilityAgents.clear();
     }
 
