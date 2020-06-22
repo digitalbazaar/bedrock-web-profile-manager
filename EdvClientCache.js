@@ -3,11 +3,11 @@
  */
 'use strict';
 
-import {Cache} from './cache.js';
+import LRU from 'lru-cache';
 
 export default class EdvClientCache {
   constructor() {
-    this.cache = new Cache();
+    this.cache = new LRU();
   }
 
   async set(id, client) {
@@ -22,7 +22,7 @@ export default class EdvClientCache {
   }
 
   async delete(id) {
-    return this.cache.delete(id);
+    return this.cache.del(id);
   }
 
   async clear() {
