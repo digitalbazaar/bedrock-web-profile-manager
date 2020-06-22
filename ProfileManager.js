@@ -434,8 +434,8 @@ export default class ProfileManager {
    * @param {object} options - The options to use.
    * @param {string} options.profileId - The ID of the profile to get a signer
    *   for.
-   * @param {string} options.useEphemeralSigner - The type of invoker to sign
-   *   capability invocations.
+   * @param {boolean} options.useEphemeralSigner - Flag to enable invoking
+   *  capabilities with the ephemeral invocation signer, default `true`.
    *
    * @returns {Promise<object>} Signer API for the profile as
    * `invocationSigner`.
@@ -474,7 +474,7 @@ export default class ProfileManager {
    *
    * @param {object} options - The options to use.
    * @param {string} options.id - The ID of the profile to get.
-   *  capabilities with the ephemeral invocation signer, default `true`.
+   * @param {boolean} options.useEphemeralSigner - Flag to enable invoking
    *  capabilities with the ephemeral invocation signer, default `true`.
    *
    * @returns {Promise<object>} Signer API for the profile as
