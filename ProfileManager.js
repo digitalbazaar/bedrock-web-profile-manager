@@ -159,14 +159,14 @@ export default class ProfileManager {
           `The agent "${profileAgentId}" does not have the zcap: "${id}"`);
       }
       if(useEphemeralSigner) {
-        const localSigner = await this.getAgentSigner(
+        const ephemeralSigner = await this.getAgentSigner(
           {profileAgentId: profileAgent.id, useEphemeralSigner: true});
         zcap = await utils.delegateCapability({
           signer: agentSigner,
           request: {
             ...originalZcap,
             parentCapability: originalZcap,
-            controller: localSigner.id
+            controller: ephemeralSigner.id
           }
         });
       } else {
