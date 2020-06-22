@@ -19,7 +19,7 @@ import utils from './utils.js';
 import assert from './assert.js';
 
 const JWE_ALG = 'ECDH-ES+A256KW';
-const EDVS = {
+const ZCAP_REFERENCE_IDS = {
   profileDoc: 'profile-edv-document',
   userDocs: 'user-edv-documents',
   userKak: 'user-edv-kak',
@@ -464,16 +464,16 @@ export default class ProfileManager {
     // 2. zcap for reading entire users EDV
     const profileAgent = await this.getAgent({profileId: id});
     const capability = await this.getAgentCapability({
-      id: EDVS.profileDoc,
+      id: ZCAP_REFERENCE_IDS.profileDoc,
       useEphemeralSigner,
       profileAgent
     }) || await this.getAgentCapability({
-      id: EDVS.userDocs,
+      id: ZCAP_REFERENCE_IDS.userDocs,
       useEphemeralSigner,
       profileAgent
     });
     const userKakZcap = await this.getAgentCapability({
-      id: EDVS.userKak,
+      id: ZCAP_REFERENCE_IDS.userKak,
       useEphemeralSigner,
       profileAgent
     });
@@ -559,7 +559,11 @@ export default class ProfileManager {
       this.getAgent({profileId})
     ]);
     // TODO: consider consolidation with `getProfileEdv`
-    const referenceIds = [EDVS.userDocs, EDVS.userKak, EDVS.userHmac];
+    const referenceIds = [
+      ZCAP_REFERENCE_IDS.userDocs,
+      ZCAP_REFERENCE_IDS.userKak,
+      ZCAP_REFERENCE_IDS.userHmac
+    ];
     const promises = referenceIds.map(async id =>
       this.getAgentCapability({id, useEphemeralSigner, profileAgent}));
     const [capability, userKak, userHmac] = await Promise.all(promises);
@@ -1006,7 +1010,7 @@ export default class ProfileManager {
     invocationSigner
   }) {
     const delegateUserDocEdvRequest = {
-      referenceId: EDVS.profileDoc,
+      referenceId: ZCAP_REFERENCE_IDS.profileDoc,
       allowedAction: ['read'],
       controller: profileAgentId,
       parentCapability: edvParentCapability
@@ -1051,7 +1055,7 @@ export default class ProfileManager {
       };
     }
     const delegateEdvKakRequest = {
-      referenceId: EDVS.userKak,
+      referenceId: ZCAP_REFERENCE_IDS.userKak,
       allowedAction: ['deriveSecret', 'sign'],
       controller: profileAgentId,
       invocationTarget: {
