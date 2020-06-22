@@ -168,30 +168,6 @@ export default class ProfileManager {
     }
   }
 
-  async _getAgentCapability({id, profileAgent, useEphemeralSigner}) {
-    const agentSigner = await this.getAgentSigner(
-      {profileAgentId: profileAgent.id, useEphemeralSigner: false});
-    const originalZcap = profileAgent.zcaps[id];
-    if(!originalZcap) {
-      const {id: profileAgentId} = profileAgent;
-      throw new Error(
-        `The agent "${profileAgentId}" does not have the zcap: "${id}"`);
-    }
-    if(!useEphemeralSigner) {
-      return originalZcap;
-    }
-    const ephemeralSigner = await this.getAgentSigner(
-      {profileAgentId: profileAgent.id, useEphemeralSigner: true});
-    return utils.delegateCapability({
-      signer: agentSigner,
-      request: {
-        ...originalZcap,
-        parentCapability: originalZcap,
-        controller: ephemeralSigner.id
-      }
-    });
-  }
-
   /**
    * Initializes access management for a profile. This method will link the
    * storage location for access management data to the profile and enable
@@ -856,6 +832,30 @@ export default class ProfileManager {
       // no account in session, return
       return;
     }
+  }
+
+  async _getAgentCapability({id, profileAgent, useEphemeralSigner}) {
+    const agentSigner = await this.getAgentSigner(
+      {profileAgentId: profileAgent.id, useEphemeralSigner: false});
+    const originalZcap = profileAgent.zcaps[id];
+    if(!originalZcap) {
+      const {id: profileAgentId} = profileAgent;
+      throw new Error(
+        `The agent "${profileAgentId}" does not have the zcap: "${id}"`);
+    }
+    if(!useEphemeralSigner) {
+      return originalZcap;
+    }
+    const ephemeralSigner = await this.getAgentSigner(
+      {profileAgentId: profileAgent.id, useEphemeralSigner: true});
+    return utils.delegateCapability({
+      signer: agentSigner,
+      request: {
+        ...originalZcap,
+        parentCapability: originalZcap,
+        controller: ephemeralSigner.id
+      }
+    });
   }
 
   async _getAgentRecord({profileId}) {
