@@ -112,8 +112,8 @@ export default class Collection {
       }
     }
     const {capability, edvClient, invocationSigner} = this;
-    const results = await edvClient.find(
+    const {documents} = await edvClient.find(
       {equals, has, capability, invocationSigner});
-    return results;
+    return documents;
   }
 }
