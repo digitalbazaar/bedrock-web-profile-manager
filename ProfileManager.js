@@ -854,7 +854,7 @@ export default class ProfileManager {
 
   async _getAgentRecord({profileId}) {
     if(!this._cacheContainer.has('agent-records')) {
-      this._cacheContainer.set('agent-records', new LRU({maxAge: 250}));
+      this._cacheContainer.set('agent-records', new LRU());
     }
 
     const recordKey = `agent-records-${profileId}`;
@@ -873,11 +873,10 @@ export default class ProfileManager {
     agentRecordCache.set(recordKey, promise);
 
     try {
-      const record = await promise;
-      return record;
-    } catch(e) {
+      return await promise;
+    } finally {
+      // the cache is for concurrent requests only
       agentRecordCache.del(recordKey);
-      throw e;
     }
   }
 
@@ -934,9 +933,9 @@ export default class ProfileManager {
 
     try {
       return await promise;
-    } catch(e) {
+    } finally {
+      // the cache is for concurrent requests only
       agentContentCache.del(contentKey);
-      throw e;
     }
   }
 
@@ -960,33 +959,45 @@ export default class ProfileManager {
     const agentSignersCache = this._cacheContainer.get('agent-signers');
     const cacheKey = `${profileAgentId}-${useEphemeralSigner}`;
 
-    let agentSigner = agentSignersCache.get(cacheKey);
+    const agentSigner = agentSignersCache.get(cacheKey);
     if(agentSigner) {
       return agentSigner;
     }
 
+    const promise = this._createAgentSigner(
+      {profileAgentId, useEphemeralSigner});
+
+    agentSignersCache.set(cacheKey, promise);
+
+    try {
+      return await promise;
+    } catch(e) {
+      agentSignersCache.del(cacheKey);
+      throw e;
+    }
+  }
+
+  async _createAgentSigner({profileAgentId, useEphemeralSigner}) {
     const capabilityAgent = await this._getCapabilityAgent({profileAgentId});
 
     if(useEphemeralSigner) {
-      agentSigner = capabilityAgent.getSigner();
-    } else {
-      if(!profileAgentId) {
-        throw new Error('"profileAgentId" is required for an agent signer.');
-      }
-      const {zcap} = await this._profileService.delegateAgentCapabilities({
-        account: this.accountId,
-        invoker: capabilityAgent.id,
-        profileAgentId
-      });
-
-      // signer for signing with the profileAgent's capability invocation key
-      agentSigner = new AsymmetricKey({
-        capability: zcap,
-        invocationSigner: capabilityAgent.getSigner()
-      });
-      agentSignersCache.set(cacheKey, agentSigner);
+      return capabilityAgent.getSigner();
     }
-    return agentSigner;
+
+    if(!profileAgentId) {
+      throw new Error('"profileAgentId" is required for an agent signer.');
+    }
+    const {zcap} = await this._profileService.delegateAgentCapabilities({
+      account: this.accountId,
+      invoker: capabilityAgent.id,
+      profileAgentId
+    });
+
+    // signer for signing with the profileAgent's capability invocation key
+    return new AsymmetricKey({
+      capability: zcap,
+      invocationSigner: capabilityAgent.getSigner()
+    });
   }
 
   async _getCapabilityAgent({profileAgentId}) {
