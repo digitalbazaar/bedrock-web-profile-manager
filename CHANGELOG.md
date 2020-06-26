@@ -1,5 +1,10 @@
 # bedrock-web-profile-manager ChangeLog
 
+## 4.3.2 - 2020-06-26
+
+### Fixed
+- Move `capabilityAgents` into `_cacheContainer`.
+
 ## 4.3.1 - 2020-06-26
 
 ### Fixed
