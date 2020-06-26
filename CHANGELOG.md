@@ -1,6 +1,11 @@
 # bedrock-web-profile-manager ChangeLog
 
-## 4.3.0
+## 4.3.1 - 2020-06-26
+
+### Fixed
+- Adjust and correct cache implementation.
+
+## 4.3.0 - 2020-06-24
 
 ### Added
 - Add LRU cache to improve performance of some operations.
