@@ -55,8 +55,6 @@ export default class ProfileManager {
     this._profileService = new ProfileService();
     this.session = null;
     this.accountId = null;
-    this.capabilityAgents = new Map();
-    this.keystoreAgent = null;
     this.kmsModule = kmsModule;
     this.edvBaseUrl = edvBaseUrl;
     this._cacheContainer = new Map();
@@ -813,13 +811,10 @@ export default class ProfileManager {
     // clear cache
     if(this.accountId && this.accountId !== newAccountId) {
       await CapabilityAgent.clearCache({handle: this.accountId});
-      this.capabilityAgents.clear();
     }
 
     // update state
     this.accountId = newAccountId;
-    this.capabilityAgents = new Map();
-    this.keystoreAgent = null;
     this._resetCache();
 
     if(!(authentication || newData.account)) {
@@ -1003,12 +998,17 @@ export default class ProfileManager {
   async _getCapabilityAgent({profileAgentId}) {
     assert.nonEmptyString(profileAgentId, 'profileAgentId');
 
+    if(!this._cacheContainer.has('capability-agents')) {
+      this._cacheContainer.set('capability-agents', new LRU());
+    }
+
+    const capabilityAgentCache = this._cacheContainer.get('capability-agents');
     const handle = `${this.accountId}-${profileAgentId}`;
-    let capabilityAgent = this.capabilityAgents.get(handle);
+    let capabilityAgent = capabilityAgentCache.get(profileAgentId);
 
     if(!capabilityAgent) {
       capabilityAgent = _createCapabilityAgent({handle});
-      this.capabilityAgents.set(handle, capabilityAgent);
+      capabilityAgentCache.set(profileAgentId, capabilityAgent);
     }
 
     return capabilityAgent;
