@@ -135,11 +135,7 @@ export default class ProfileManager {
     const capabilityCacheKey = `profileAgent-${profileAgent.id}-zcaps`;
     const capabilityKey = `${capabilityCacheKey}-${id}-${useEphemeralSigner}`;
 
-    if(!this._cacheContainer.has(capabilityCacheKey)) {
-      this._cacheContainer.set(capabilityCacheKey, new LRU());
-    }
-
-    const capabilityCache = this._cacheContainer.get(capabilityCacheKey);
+    const capabilityCache = this._getCache(capabilityCacheKey);
     const agentZcap = capabilityCache.get(capabilityKey);
     if(agentZcap) {
       return agentZcap;
@@ -848,12 +844,8 @@ export default class ProfileManager {
   }
 
   async _getAgentRecord({profileId}) {
-    if(!this._cacheContainer.has('agent-records')) {
-      this._cacheContainer.set('agent-records', new LRU());
-    }
-
     const recordKey = `agent-records-${profileId}`;
-    const agentRecordCache = this._cacheContainer.get('agent-records');
+    const agentRecordCache = this._getCache('agent-records');
     const agentRecord = agentRecordCache.get(recordKey);
 
     if(agentRecord) {
@@ -876,14 +868,11 @@ export default class ProfileManager {
   }
 
   async _getAgentContent({profileAgentRecord, useEphemeralSigner = true}) {
-    if(!this._cacheContainer.has('agent-content')) {
-      this._cacheContainer.set('agent-content', new LRU());
-    }
     const {profileAgent} = profileAgentRecord;
 
     const {id, account, profile: profileId, sequence} = profileAgent;
     const contentKey = `${id}${account}${profileId}${sequence}`;
-    const agentContentCache = this._cacheContainer.get('agent-content');
+    const agentContentCache = this._getCache('agent-content');
     const agentContent = agentContentCache.get(contentKey);
     if(agentContent) {
       return agentContent;
@@ -948,12 +937,8 @@ export default class ProfileManager {
   }
 
   async _getAgentSigner({profileAgentId, useEphemeralSigner}) {
-    if(!this._cacheContainer.has('agent-signers')) {
-      this._cacheContainer.set('agent-signers', new LRU());
-    }
-    const agentSignersCache = this._cacheContainer.get('agent-signers');
     const cacheKey = `${profileAgentId}-${useEphemeralSigner}`;
-
+    const agentSignersCache = this._getCache('agent-signers');
     const agentSigner = agentSignersCache.get(cacheKey);
     if(agentSigner) {
       return agentSigner;
@@ -995,14 +980,21 @@ export default class ProfileManager {
     });
   }
 
+  _getCache(key) {
+    const cache = this._cacheContainer.get(key);
+    if(cache) {
+      return cache;
+    }
+
+    const newCache = new LRU();
+    this._cacheContainer.set(key, newCache);
+    return newCache;
+  }
+
   async _getCapabilityAgent({profileAgentId}) {
     assert.nonEmptyString(profileAgentId, 'profileAgentId');
 
-    if(!this._cacheContainer.has('capability-agents')) {
-      this._cacheContainer.set('capability-agents', new LRU());
-    }
-
-    const capabilityAgentCache = this._cacheContainer.get('capability-agents');
+    const capabilityAgentCache = this._getCache('capability-agents');
     const handle = `${this.accountId}-${profileAgentId}`;
     let capabilityAgent = capabilityAgentCache.get(profileAgentId);
 
