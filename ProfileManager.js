@@ -181,6 +181,7 @@ export default class ProfileManager {
    *   recipient.
    * @param {object} [options.edvId] - The ID of the EDV; either this or a
    *   capability to access the EDV must be given.
+   * @param {Array} [options.indexes] - The indexes to be used.
    * @param {object} [options.capability] - The capability to use to access
    *   the EDV; either this or an EDV ID must be given.
    * @param {object} [options.revocationCapability] - The capability to use to
