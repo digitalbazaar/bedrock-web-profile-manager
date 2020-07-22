@@ -698,6 +698,91 @@ describe('Profile Manager API', () => {
       error.name.should.equal('TypeError');
       error.message.should.contain('profileId');
     });
+    it('should fail if no edvId', async () => {
+      const hmac = {
+        id: 'z19pHg1APVprWk1ALrcZUnXWL',
+        type: 'Sha256HmacKey2019'
+      };
+      const keyAgreementKey = {
+        id: 'z19xp4DANMn8k9Yy8m6ZCE6PV',
+        type: 'X25519KeyAgreementKey2019',
+      };
+      const parentCapabilities = {
+        hmac: {
+          id: 'z19pHg1APVprWk1ALrcZUnXWL',
+          type: 'Sha256HmacKey2019'
+        },
+        keyAgreementKey: {
+          id: 'z19xp4DANMn8k9Yy8m6ZCE6PV',
+          type: 'X25519KeyAgreementKey2019',
+        }
+      };
+      let error, result = null;
+      try {
+        result = await profileManager.delegateEdvCapabilities({
+          parentCapabilities, hmac, keyAgreementKey
+        });
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('TypeError');
+      error.message.should.contain('edvId');
+    });
+    it('should fail if no hmac', async () => {
+      const edvId = 'z19uMCiPNET4YbcPpBcab5mEE';
+      const keyAgreementKey = {
+        id: 'z19xp4DANMn8k9Yy8m6ZCE6PV',
+        type: 'X25519KeyAgreementKey2019',
+      };
+      const parentCapabilities = {
+        edvId: 'z19uMCiPNET4YbcPpBcab5mEE',
+        keyAgreementKey: {
+          id: 'z19xp4DANMn8k9Yy8m6ZCE6PV',
+          type: 'X25519KeyAgreementKey2019',
+        }
+      };
+      let error, result = null;
+      try {
+        result = await profileManager.delegateEdvCapabilities({
+          parentCapabilities, edvId, keyAgreementKey
+        });
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('TypeError');
+      error.message.should.contain('hmac');
+    });
+    it('should fail if no keyAgreementKey', async () => {
+      const edvId = 'z19uMCiPNET4YbcPpBcab5mEE';
+      const hmac = {
+        id: 'z19pHg1APVprWk1ALrcZUnXWL',
+        type: 'Sha256HmacKey2019'
+      };
+      const parentCapabilities = {
+        edvId: 'z19uMCiPNET4YbcPpBcab5mEE',
+        hmac: {
+          id: 'z19pHg1APVprWk1ALrcZUnXWL',
+          type: 'Sha256HmacKey2019'
+        },
+      };
+      let error, result = null;
+      try {
+        result = await profileManager.delegateEdvCapabilities({
+          parentCapabilities, edvId, hmac
+        });
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('TypeError');
+      error.message.should.contain('keyAgreementKey');
+    });
+
   });
   describe('getCollection api', () => {
     let profileManager;

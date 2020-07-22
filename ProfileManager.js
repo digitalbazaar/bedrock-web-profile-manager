@@ -632,11 +632,9 @@ export default class ProfileManager {
     profileAgentId,
     referenceIdPrefix
   }) {
-    // TODO: validate `parentCapabilities`
-    // if no `edvId` then `parentCapabilities.edv` required
-    // if no `hmac` then `parentCapabilities.hmac` required
-    // if no `keyAgreement` then `parentCapabilities.keyAgreementKey` required
-
+    assert.parentCapabilitiesValidator(
+      parentCapabilities, edvId, hmac, keyAgreementKey
+    );
     const delegateEdvDocumentsRequest = {
       referenceId: `${referenceIdPrefix}-edv-documents`,
       allowedAction: ['read', 'write'],
