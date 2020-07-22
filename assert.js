@@ -5,7 +5,7 @@
   * @param {string} key - The identifier for the parameter.
   *
   * @throws - If the value is not a string or is empty.
-  * @returns {undefined} - It just throws or you are ok.
+  * @returns {undefined} - No value is returned upon successful execution.
 */
 export function nonEmptyString(value, key) {
   if(!(value && typeof value === 'string')) {
@@ -24,19 +24,19 @@ export function nonEmptyString(value, key) {
   * @param {object} keyAgreementKey - A default KeyAgreementKey API for
   *   deriving shared KEKs for wrapping content encryption keys.
   *
-  * @throws - If the value is undefined.
-  * @returns {undefined} - It just throws or you are ok.
+  * @throws - If both of the required properties are undefined.
+  * @returns {undefined} - No value is returned upon successful execution.
   */
 export function parentCapabilitiesValidator(
   parentCapabilities, edvId, hmac, keyAgreementKey
 ) {
-  if(!edvId && !parentCapabilities.edv) {
+  if(!(edvId || parentCapabilities.edv)) {
     throw new TypeError('"edvId" is required.');
   }
-  if(!hmac && !parentCapabilities.hmac) {
+  if(!(hmac || parentCapabilities.hmac)) {
     throw new TypeError('"hmac" is required.');
   }
-  if(!keyAgreementKey && !parentCapabilities.keyAgreementKey) {
+  if(!(keyAgreementKey || parentCapabilities.keyAgreementKey)) {
     throw new TypeError('"keyAgreementKey" is required.');
   }
 }

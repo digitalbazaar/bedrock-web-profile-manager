@@ -4,6 +4,7 @@
 'use strict';
 
 import {ProfileManager} from 'bedrock-web-profile-manager';
+import {mockData} from './mock.data.js';
 
 const ACCOUNT_ID = 'urn:uuid:ffaf5d84-7dc2-4f7b-9825-cc8d2e5a5d06';
 const KMS_MODULE = 'ssm-v1';
@@ -699,24 +700,8 @@ describe('Profile Manager API', () => {
       error.message.should.contain('profileId');
     });
     it('should fail if no edvId', async () => {
-      const hmac = {
-        id: 'z19pHg1APVprWk1ALrcZUnXWL',
-        type: 'Sha256HmacKey2019'
-      };
-      const keyAgreementKey = {
-        id: 'z19xp4DANMn8k9Yy8m6ZCE6PV',
-        type: 'X25519KeyAgreementKey2019',
-      };
-      const parentCapabilities = {
-        hmac: {
-          id: 'z19pHg1APVprWk1ALrcZUnXWL',
-          type: 'Sha256HmacKey2019'
-        },
-        keyAgreementKey: {
-          id: 'z19xp4DANMn8k9Yy8m6ZCE6PV',
-          type: 'X25519KeyAgreementKey2019',
-        }
-      };
+      const {parentCapabilities, hmac, keyAgreementKey} = mockData;
+      delete parentCapabilities.edv;
       let error, result = null;
       try {
         result = await profileManager.delegateEdvCapabilities({
@@ -731,18 +716,8 @@ describe('Profile Manager API', () => {
       error.message.should.contain('edvId');
     });
     it('should fail if no hmac', async () => {
-      const edvId = 'z19uMCiPNET4YbcPpBcab5mEE';
-      const keyAgreementKey = {
-        id: 'z19xp4DANMn8k9Yy8m6ZCE6PV',
-        type: 'X25519KeyAgreementKey2019',
-      };
-      const parentCapabilities = {
-        edvId: 'z19uMCiPNET4YbcPpBcab5mEE',
-        keyAgreementKey: {
-          id: 'z19xp4DANMn8k9Yy8m6ZCE6PV',
-          type: 'X25519KeyAgreementKey2019',
-        }
-      };
+      const {parentCapabilities, edvId, keyAgreementKey} = mockData;
+      delete parentCapabilities.hmac;
       let error, result = null;
       try {
         result = await profileManager.delegateEdvCapabilities({
@@ -757,18 +732,8 @@ describe('Profile Manager API', () => {
       error.message.should.contain('hmac');
     });
     it('should fail if no keyAgreementKey', async () => {
-      const edvId = 'z19uMCiPNET4YbcPpBcab5mEE';
-      const hmac = {
-        id: 'z19pHg1APVprWk1ALrcZUnXWL',
-        type: 'Sha256HmacKey2019'
-      };
-      const parentCapabilities = {
-        edvId: 'z19uMCiPNET4YbcPpBcab5mEE',
-        hmac: {
-          id: 'z19pHg1APVprWk1ALrcZUnXWL',
-          type: 'Sha256HmacKey2019'
-        },
-      };
+      const {parentCapabilities, edvId, hmac} = mockData;
+      delete parentCapabilities.keyAgreementKey;
       let error, result = null;
       try {
         result = await profileManager.delegateEdvCapabilities({
