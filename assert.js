@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) 2020 Digital Bazaar, Inc. All rights reserved.
+ */
+
 /**
   * Ensures an expected string is not empty.
   *
@@ -12,24 +16,32 @@ export function nonEmptyString(value, key) {
     throw new TypeError(`"${key}" must be a non-empty string.`);
   }
 }
+
 /**
-  * Ensures `parentCapabilities` has all required properties.
-  *
-  * @param {object} parentCapabilities - Contains the properties edvId and
-  *   edvRevocations.
-  * @param {string} edvId - The ID of the EDV that must be a URL
-  *   that refers to the EDV's root storage location.
-  * @param {object} hmac - A default HMAC API for blinding indexable
-  *   attributes.
-  * @param {object} keyAgreementKey - A default KeyAgreementKey API for
-  *   deriving shared KEKs for wrapping content encryption keys.
-  *
-  * @throws - If both of the required properties are undefined.
-  * @returns {undefined} - No value is returned upon successful execution.
-  */
-export function parentCapabilitiesValidator(
+ * Ensures `parentCapabilities` has all required properties.
+ *
+ * @param {object} parentCapabilities - Contains the properties edvId and
+ *    edvRevocations.
+ * @param {string} edvId - The ID of the EDV that must be a URL
+ *    that refers to the EDV's root storage location.
+ * @param {object} hmac - A default HMAC API for blinding indexable
+ *    attributes.
+ * @param {object} keyAgreementKey - A default KeyAgreementKey API for
+ *    deriving shared KEKs for wrapping content encryption keys.
+ * @param {string} parentCapabilities.edvId -  - The ID of the EDV that must be
+ *    a URL that refers to the EDV's root storage location.
+ * @param {object} parentCapabilities.hmac - A default HMAC API for blinding
+ *    indexable attributes.
+ * @param {object} parentCapabilities.keyAgreementKey - A default
+ *    KeyAgreementKey API for deriving shared KEKs for wrapping content
+ *    encryption keys.
+ *
+ * @throws - If both of the required properties are undefined.
+ * @returns {undefined} - No value is returned upon successful execution.
+ */
+export function parentCapabilitiesValidator({
   parentCapabilities, edvId, hmac, keyAgreementKey
-) {
+}) {
   if(!(edvId || parentCapabilities.edv)) {
     throw new TypeError('"edvId" is required.');
   }
@@ -40,4 +52,5 @@ export function parentCapabilitiesValidator(
     throw new TypeError('"keyAgreementKey" is required.');
   }
 }
+
 export default {nonEmptyString, parentCapabilitiesValidator};

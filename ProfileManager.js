@@ -632,9 +632,9 @@ export default class ProfileManager {
     profileAgentId,
     referenceIdPrefix
   }) {
-    assert.parentCapabilitiesValidator(
+    assert.parentCapabilitiesValidator({
       parentCapabilities, edvId, hmac, keyAgreementKey
-    );
+    });
     const delegateEdvDocumentsRequest = {
       referenceId: `${referenceIdPrefix}-edv-documents`,
       allowedAction: ['read', 'write'],

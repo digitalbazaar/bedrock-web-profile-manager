@@ -1,7 +1,6 @@
 /*!
  * Copyright (c) 2019-2020 Digital Bazaar, Inc. All rights reserved.
  */
-'use strict';
 
 import {ProfileManager} from 'bedrock-web-profile-manager';
 import {mockData} from './mock.data.js';
@@ -699,8 +698,32 @@ describe('Profile Manager API', () => {
       error.name.should.equal('TypeError');
       error.message.should.contain('profileId');
     });
+    it('should fail after parentCapabilities assertation', async () => {
+      const {
+        parentCapabilities,
+        edvId,
+        hmac,
+        keyAgreementKey
+      } = mockData;
+      let error, result = null;
+      try {
+        result = await profileManager.delegateEdvCapabilities({
+          parentCapabilities, edvId, hmac, keyAgreementKey
+        });
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('TypeError');
+      error.message.should.contain('Cannot read property \'id\' of undefined');
+    });
     it('should fail if no edvId', async () => {
-      const {parentCapabilities, hmac, keyAgreementKey} = mockData;
+      const {
+        parentCapabilities,
+        hmac,
+        keyAgreementKey
+      } = mockData;
       delete parentCapabilities.edv;
       let error, result = null;
       try {
@@ -716,7 +739,11 @@ describe('Profile Manager API', () => {
       error.message.should.contain('edvId');
     });
     it('should fail if no hmac', async () => {
-      const {parentCapabilities, edvId, keyAgreementKey} = mockData;
+      const {
+        parentCapabilities,
+        edvId,
+        keyAgreementKey
+      } = mockData;
       delete parentCapabilities.hmac;
       let error, result = null;
       try {
@@ -732,7 +759,11 @@ describe('Profile Manager API', () => {
       error.message.should.contain('hmac');
     });
     it('should fail if no keyAgreementKey', async () => {
-      const {parentCapabilities, edvId, hmac} = mockData;
+      const {
+        parentCapabilities,
+        edvId,
+        hmac
+      } = mockData;
       delete parentCapabilities.keyAgreementKey;
       let error, result = null;
       try {
