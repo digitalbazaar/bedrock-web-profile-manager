@@ -68,7 +68,8 @@ describe('Profile Manager API', () => {
       });
     });
     it('should succeed if profile exists', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
         const {id: profileId} = await profileManager.createProfile(content);
@@ -84,7 +85,8 @@ describe('Profile Manager API', () => {
       result.invocationSigner.should.have.property('sign');
     });
     it('should fail if profileId is undefined', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         result = await profileManager.getProfileSigner({profileId: undefined});
       } catch(e) {
@@ -96,7 +98,8 @@ describe('Profile Manager API', () => {
       error.message.should.contain('profileId');
     });
     it('should fail if profileId is an empty string', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         result = await profileManager.getProfileSigner({profileId: ''});
       } catch(e) {
@@ -130,7 +133,8 @@ describe('Profile Manager API', () => {
       });
     });
     it('should succeed if profile exists', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
         const {id: profileId} = await profileManager.createProfile(content);
@@ -145,7 +149,8 @@ describe('Profile Manager API', () => {
       result.should.have.property('zcaps');
     });
     it('should fail if profileId is undefined', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         result = await profileManager.getAgent({profileId: undefined});
       } catch(e) {
@@ -157,7 +162,8 @@ describe('Profile Manager API', () => {
       error.message.should.contain('profileId');
     });
     it('should fail if profileId is an empty string', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         result = await profileManager.getAgent({profileId: ''});
       } catch(e) {
@@ -191,7 +197,8 @@ describe('Profile Manager API', () => {
       });
     });
     it('should successfully initialize w/ default signer', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
         const {id: profileId} = await profileManager.createProfile(content);
@@ -226,7 +233,8 @@ describe('Profile Manager API', () => {
       result.profileAgent.should.have.property('zcaps');
     });
     it('should successfully initialize w/ ephemeral signer', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
         const {id: profileId} = await profileManager.createProfile(content);
@@ -261,7 +269,8 @@ describe('Profile Manager API', () => {
       result.profileAgent.should.have.property('zcaps');
     });
     it('should successfully initialize w/o ephemeral signer', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
         const {id: profileId} = await profileManager.createProfile(content);
@@ -297,7 +306,8 @@ describe('Profile Manager API', () => {
       result.profileAgent.should.have.property('zcaps');
     });
     it('should fail if profileId is undefined', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         result = await profileManager.initializeAccessManagement({
           profileId: undefined,
@@ -314,7 +324,8 @@ describe('Profile Manager API', () => {
       error.message.should.contain('profileId');
     });
     it('should fail if profileId is an empty string', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         result = await profileManager.initializeAccessManagement({
           profileId: '',
@@ -353,7 +364,8 @@ describe('Profile Manager API', () => {
       });
     });
     it('should succeed w/ initialized profile', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
         const {id: profileId} = await profileManager.createProfile(content);
@@ -376,7 +388,8 @@ describe('Profile Manager API', () => {
       should.exist(result);
     });
     it(`should fail w/ uninitialized profile access management`, async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
         const {id} = await profileManager.createProfile(content);
@@ -388,7 +401,8 @@ describe('Profile Manager API', () => {
       should.exist(error);
     });
     it(`should fail w/ unintialized profile access management`, async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
         const {id} = await profileManager.createProfile(content);
@@ -400,7 +414,8 @@ describe('Profile Manager API', () => {
       should.exist(error);
     });
     it('should fail if profileId is undefined', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         result = await profileManager.getProfile({id: undefined});
       } catch(e) {
@@ -412,7 +427,8 @@ describe('Profile Manager API', () => {
       error.message.should.contain('id');
     });
     it('should fail if profileId is an empty string', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         result = await profileManager.getProfile({id: ''});
       } catch(e) {
@@ -446,7 +462,8 @@ describe('Profile Manager API', () => {
       });
     });
     it('should succeed if profile exists', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
         const {id: profileId} = await profileManager.createProfile(content);
@@ -464,7 +481,8 @@ describe('Profile Manager API', () => {
       result.should.have.property('kmsClient');
     });
     it('should fail if profileId is undefined', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         result = await profileManager.getProfileKeystoreAgent(
           {profileId: undefined});
@@ -477,7 +495,8 @@ describe('Profile Manager API', () => {
       error.message.should.contain('profileId');
     });
     it('should fail if profileId is an empty string', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         result = await profileManager.getProfileKeystoreAgent({profileId: ''});
       } catch(e) {
@@ -511,7 +530,8 @@ describe('Profile Manager API', () => {
       });
     });
     it('should succeed w/ initialized profile access management', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
         const {id: profileId} = await profileManager.createProfile(content);
@@ -541,7 +561,8 @@ describe('Profile Manager API', () => {
       should.exist(result);
     });
     it('should fail w/ uninitialized profile access management', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
         const {id: profileId} = await profileManager.createProfile(content);
@@ -554,7 +575,8 @@ describe('Profile Manager API', () => {
       should.exist(error);
     });
     it('should fail if profileId is undefined', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         result = await profileManager.getAccessManager({profileId: undefined});
       } catch(e) {
@@ -566,7 +588,8 @@ describe('Profile Manager API', () => {
       error.message.should.contain('profileId');
     });
     it('should fail if profileId is an empty string', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         result = await profileManager.getAccessManager({profileId: ''});
       } catch(e) {
@@ -600,7 +623,8 @@ describe('Profile Manager API', () => {
       });
     });
     it('should succeed if profile exists', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
         const {id: profileId} = await profileManager.createProfile(content);
@@ -618,7 +642,8 @@ describe('Profile Manager API', () => {
       result.edvClient.should.have.property('hmac');
     });
     it('should fail if profileId is undefined', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         result = await profileManager.createProfileEdv({
           profileId: undefined,
@@ -633,7 +658,8 @@ describe('Profile Manager API', () => {
       error.message.should.contain('profileId');
     });
     it('should fail if profileId is an empty string', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         result = await profileManager.createProfileEdv({
           profileId: '',
@@ -659,7 +685,8 @@ describe('Profile Manager API', () => {
       });
     });
     it('should fail if profileId is undefined', async () => {
-      let error, result;
+      let error;
+      let result;
       const delegateRequest = {
         referenceId: 'test.org:test-edv',
         allowedAction: ['read', 'write'],
@@ -679,7 +706,8 @@ describe('Profile Manager API', () => {
       error.message.should.contain('profileId');
     });
     it('should fail if profileId is an empty string', async () => {
-      let error, result;
+      let error;
+      let result;
       const delegateRequest = {
         referenceId: 'test.org:test-edv',
         allowedAction: ['read', 'write'],
@@ -705,7 +733,8 @@ describe('Profile Manager API', () => {
         hmac,
         keyAgreementKey
       } = mockData;
-      let error, result = null;
+      let error = null;
+      let result = null;
       try {
         result = await profileManager.delegateEdvCapabilities({
           parentCapabilities, edvId, hmac, keyAgreementKey
@@ -725,7 +754,8 @@ describe('Profile Manager API', () => {
         keyAgreementKey
       } = mockData;
       delete parentCapabilities.edv;
-      let error, result = null;
+      let error = null;
+      let result = null;
       try {
         result = await profileManager.delegateEdvCapabilities({
           parentCapabilities, hmac, keyAgreementKey
@@ -745,7 +775,8 @@ describe('Profile Manager API', () => {
         keyAgreementKey
       } = mockData;
       delete parentCapabilities.hmac;
-      let error, result = null;
+      let error = null;
+      let result = null;
       try {
         result = await profileManager.delegateEdvCapabilities({
           parentCapabilities, edvId, keyAgreementKey
@@ -765,7 +796,8 @@ describe('Profile Manager API', () => {
         hmac
       } = mockData;
       delete parentCapabilities.keyAgreementKey;
-      let error, result = null;
+      let error;
+      let result;
       try {
         result = await profileManager.delegateEdvCapabilities({
           parentCapabilities, edvId, hmac
@@ -791,7 +823,8 @@ describe('Profile Manager API', () => {
       });
     });
     it('should fail if profileId is undefined', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         result = await profileManager.getCollection({
           profileId: undefined,
@@ -807,7 +840,8 @@ describe('Profile Manager API', () => {
       error.message.should.contain('profileId');
     });
     it('should fail if profileId is an empty string', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         result = await profileManager.getCollection({
           profileId: '',
@@ -834,7 +868,8 @@ describe('Profile Manager API', () => {
       });
     });
     it('should fail if profileId is undefined', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         result = await profileManager.getProfileEdvAccess({
           profileId: undefined,
@@ -849,7 +884,8 @@ describe('Profile Manager API', () => {
       error.message.should.contain('profileId');
     });
     it('should fail if profileId is an empty string', async () => {
-      let error, result;
+      let error;
+      let result;
       try {
         result = await profileManager.getProfileEdvAccess({
           profileId: '',
