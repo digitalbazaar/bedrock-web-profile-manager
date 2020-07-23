@@ -20,21 +20,16 @@ export function nonEmptyString(value, key) {
 /**
  * Ensures `parentCapabilities` has all required properties.
  *
- * @param {object} parentCapabilities - Contains the properties edvId and
- *    edvRevocations.
- * @param {string} edvId - The ID of the EDV that must be a URL
- *    that refers to the EDV's root storage location.
- * @param {object} hmac - A default HMAC API for blinding indexable
- *    attributes.
- * @param {object} keyAgreementKey - A default KeyAgreementKey API for
- *    deriving shared KEKs for wrapping content encryption keys.
- * @param {string} parentCapabilities.edvId -  - The ID of the EDV that must be
- *    a URL that refers to the EDV's root storage location.
- * @param {object} parentCapabilities.hmac - A default HMAC API for blinding
- *    indexable attributes.
- * @param {object} parentCapabilities.keyAgreementKey - A default
- *    KeyAgreementKey API for deriving shared KEKs for wrapping content
- *    encryption keys.
+ * @param {object} options - The options to use.
+ * @param {object} options.parentCapabilities - Contains the properties edvId
+ *   and edvRevocations.
+ * @param {string} options.edvId - The ID of the EDV that must be
+ *   a URL that refers to the EDV's root storage location.
+ * @param {object} options.hmac - A default HMAC API for blinding
+ *   indexable attributes.
+ * @param {object} options.keyAgreementKey - A default
+ *   KeyAgreementKey API for deriving shared KEKs for wrapping content
+ *   encryption keys.
  *
  * @throws - If both of the required properties are undefined.
  * @returns {undefined} - No value is returned upon successful execution.
