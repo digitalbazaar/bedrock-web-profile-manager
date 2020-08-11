@@ -47,12 +47,14 @@ export default class ProfileManager {
    * @param {number} [options.zcapGracePeriod] - Zcap is considered expired if
    *   the zcapTtl is less than or equal to this value.
    * @param {number} [options.zcapTtl] - The time to live for a Zcap.
+   * @param {ProfileService} [options.profileService] - A ProfileService.
    *
    * @returns {ProfileManager} - The new instance.
    */
   constructor({
     edvBaseUrl, kmsModule, zcapGracePeriod = DEFAULT_ZCAP_GRACE_PERIOD,
-    zcapTtl = DEFAULT_ZCAP_TTL
+    zcapTtl = DEFAULT_ZCAP_TTL,
+    profileService = new ProfileService()
   } = {}) {
     if(typeof kmsModule !== 'string') {
       throw new TypeError('"kmsModule" must be a string.');
@@ -60,7 +62,7 @@ export default class ProfileManager {
     if(typeof edvBaseUrl !== 'string') {
       throw new TypeError('"edvBaseUrl" must be a string.');
     }
-    this._profileService = new ProfileService();
+    this._profileService = profileService;
     this.session = null;
     this.accountId = null;
     this.kmsModule = kmsModule;
