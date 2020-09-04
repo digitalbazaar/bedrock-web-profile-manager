@@ -12,7 +12,7 @@
     "url": "https://github.com/digitalbazaar/bedrock-web-profile-manager"
   },
   "dependencies": {
-    "axios": "^0.19.2",
+    "@digitalbazaar/http-client": "^1.0.0",
     "base64url-universal": "^1.1.0",
     "bedrock-web-account": "^1.2.0",
     "bedrock-web-profile": "^2.4.0",
