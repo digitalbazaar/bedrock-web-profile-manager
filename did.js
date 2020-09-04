@@ -1,8 +1,6 @@
 /*!
  * Copyright (c) 2019-2020 Digital Bazaar, Inc. All rights reserved.
  */
-'use strict';
-
 import v1 from 'did-veres-one';
 
 const veresDriver = v1.driver({mode: 'test'});

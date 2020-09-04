@@ -1,8 +1,6 @@
 /*!
  * Copyright (c) 2020 Digital Bazaar, Inc. All rights reserved.
  */
-'use strict';
-
 import {CapabilityDelegation} from 'ocapld';
 import {EdvClient} from 'edv-client';
 import jsigs from 'jsonld-signatures';

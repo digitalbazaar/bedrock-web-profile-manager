@@ -1,10 +1,8 @@
 /*!
  * Copyright (c) 2020 Digital Bazaar, Inc. All rights reserved.
  */
-'use strict';
-
-const {httpClient} = require('@digitalbazaar/http-client');
-const assert = require('assert-plus');
+import {httpClient} from '@digitalbazaar/http-client';
+import assert from 'assert-plus';
 
 async function keyResolver({id, didMethod = 'key'} = {}) {
   assert.string(id, 'id');
