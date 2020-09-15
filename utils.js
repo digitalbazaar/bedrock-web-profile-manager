@@ -19,7 +19,7 @@ export async function delegateCapability(
   {signer, keystoreId, request} = {}) {
   const {
     invocationTarget, invoker, delegator, controller, referenceId,
-    allowedAction, caveat
+    allowedAction, caveat, expires
   } = request;
   if(!(invocationTarget && typeof invocationTarget === 'object' &&
     invocationTarget.type)) {
@@ -49,6 +49,14 @@ export async function delegateCapability(
   }
   if(caveat) {
     zcap.caveat = caveat;
+  }
+  if(expires) {
+    zcap.expires = expires;
+  } else {
+    const now = Date.now();
+    const ttl = 24 * 60 * 60 * 1000;
+    const expiryDate = new Date(now + ttl);
+    zcap.expires = expiryDate.toISOString();
   }
   let {parentCapability} = request;
   let capabilityChain;
