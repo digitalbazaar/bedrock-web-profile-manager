@@ -101,11 +101,10 @@ export default class ProfileManager {
 
     // determine if `profileAgent` has a userDocument yet
     const {userDocument: capability} = profileAgent.zcaps;
-    let content;
     if(!capability) {
       // generate content from profile agent record as access management has
       // not been initialized for the profile yet
-      content = {
+      const content = {
         id: profileAgent.id,
         zcaps: {}
       };
@@ -114,8 +113,7 @@ export default class ProfileManager {
       }
       return content;
     }
-    content = await this._getAgentContent({profileAgentRecord});
-    return content;
+    return this._getAgentContent({profileAgentRecord});
   }
 
   /**
