@@ -50,12 +50,17 @@ export async function delegateCapability(
   if(caveat) {
     zcap.caveat = caveat;
   }
+  let expiryDate;
   if(expires) {
+    expiryDate = new Date(expires);
+    if(expiryDate.getTime() < new Date().getTime()) {
+      throw Error('The date has expired.');
+    }
     zcap.expires = expires;
   } else {
     const now = Date.now();
     const ttl = 24 * 60 * 60 * 1000;
-    const expiryDate = new Date(now + ttl);
+    expiryDate = new Date(now + ttl);
     zcap.expires = expiryDate.toISOString();
   }
   let {parentCapability} = request;
