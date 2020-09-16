@@ -135,9 +135,13 @@ export default class ProfileManager {
     const capabilityKey = `${capabilityCacheKey}-${id}-${useEphemeralSigner}`;
 
     const capabilityCache = this._getCache(capabilityCacheKey);
-    const agentZcap = capabilityCache.get(capabilityKey);
+    const agentZcap = await capabilityCache.get(capabilityKey);
+    const now = Date.now();
     if(agentZcap) {
-      return agentZcap;
+      const expiryDate = new Date(agentZcap.expires);
+      if(expiryDate.getTime() > now) {
+        return agentZcap;
+      }
     }
 
     const promise = this._getAgentCapability(
