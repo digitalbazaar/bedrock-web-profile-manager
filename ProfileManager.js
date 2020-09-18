@@ -138,13 +138,16 @@ export default class ProfileManager {
     const agentZcap = await capabilityCache.get(capabilityKey);
     const now = Date.now();
     if(agentZcap) {
-      if(agentZcap.expires) {
-        const expiryDate = new Date(agentZcap.expires);
-        if(expiryDate.getTime() > now) {
-          return agentZcap;
-        }
+      if(!agentZcap.expires) {
+        return agentZcap;
       }
-      return agentZcap;
+      const gracePeriod = 15 * 60 * 1000;
+      const expiryDate = new Date(agentZcap.expires);
+      const timeDiff = expiryDate.getTime() - now;
+      if(timeDiff > gracePeriod) {
+        return agentZcap;
+      }
+      capabilityCache.del(capabilityKey);
     }
 
     const promise = this._getAgentCapability(
@@ -841,6 +844,11 @@ export default class ProfileManager {
     let expires;
     if(agentSigner && agentSigner.capability) {
       expires = agentSigner.capability.expires;
+    } else {
+      const now = Date.now();
+      const ttl = 24 * 60 * 60 * 1000;
+      const expiryDate = new Date(now + ttl);
+      expires = expiryDate.toISOString();
     }
     return utils.delegateCapability({
       signer: agentSigner,
@@ -952,15 +960,17 @@ export default class ProfileManager {
     const agentSigner = await agentSignersCache.get(cacheKey);
     if(agentSigner) {
       const capability = agentSigner.capability;
-      if(capability && capability.expires) {
-        const now = Date.now();
-        const expiryDate = new Date(capability.expires);
-        if(expiryDate.getTime() > now) {
-          return agentSigner;
-        }
-      } else {
+      if(!(capability && capability.expires)) {
         return agentSigner;
       }
+      const now = Date.now();
+      const gracePeriod = 15 * 60 * 1000;
+      const expiryDate = new Date(capability.expires);
+      const timeDiff = expiryDate.getTime() - now;
+      if(timeDiff > gracePeriod) {
+        return agentSigner;
+      }
+      agentSignersCache.del(cacheKey);
     }
 
     const promise = this._createAgentSigner(
