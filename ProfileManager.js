@@ -138,10 +138,13 @@ export default class ProfileManager {
     const agentZcap = await capabilityCache.get(capabilityKey);
     const now = Date.now();
     if(agentZcap) {
-      const expiryDate = new Date(agentZcap.expires);
-      if(expiryDate.getTime() > now) {
-        return agentZcap;
+      if(agentZcap.expires) {
+        const expiryDate = new Date(agentZcap.expires);
+        if(expiryDate.getTime() > now) {
+          return agentZcap;
+        }
       }
+      return agentZcap;
     }
 
     const promise = this._getAgentCapability(
@@ -835,12 +838,17 @@ export default class ProfileManager {
     }
     const ephemeralSigner = await this._getAgentSigner(
       {profileAgentId: profileAgent.id, useEphemeralSigner: true});
+    let expires;
+    if(agentSigner && agentSigner.capability) {
+      expires = agentSigner.capability.expires;
+    }
     return utils.delegateCapability({
       signer: agentSigner,
       request: {
         ...originalZcap,
         parentCapability: originalZcap,
-        controller: ephemeralSigner.id
+        controller: ephemeralSigner.id,
+        expires
       }
     });
   }
@@ -941,9 +949,18 @@ export default class ProfileManager {
   async _getAgentSigner({profileAgentId, useEphemeralSigner}) {
     const cacheKey = `${profileAgentId}-${useEphemeralSigner}`;
     const agentSignersCache = this._getCache('agent-signers');
-    const agentSigner = agentSignersCache.get(cacheKey);
+    const agentSigner = await agentSignersCache.get(cacheKey);
     if(agentSigner) {
-      return agentSigner;
+      const capability = agentSigner.capability;
+      if(capability && capability.expires) {
+        const now = Date.now();
+        const expiryDate = new Date(capability.expires);
+        if(expiryDate.getTime() > now) {
+          return agentSigner;
+        }
+      } else {
+        return agentSigner;
+      }
     }
 
     const promise = this._createAgentSigner(
