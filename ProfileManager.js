@@ -25,6 +25,8 @@ const ZCAP_REFERENCE_IDS = {
   userKak: 'user-edv-kak',
   userHmac: 'user-edv-hmac',
 };
+const DEFAULT_ZCAP_GRACE_PERIOD = 15 * 60 * 1000;
+const DEFAULT_ZCAP_TTL = 24 * 60 * 60 * 1000;
 
 export default class ProfileManager {
   /**
@@ -42,10 +44,15 @@ export default class ProfileManager {
    * @param {string} options.kmsModule - The KMS module to use to generate keys.
    * @param {string} options.edvBaseUrl - The base URL for the EDV service,
    *   used to store documents.
+   * @param {number} options.gracePeriod - Zcap is considered expired if the ttl
+   *  is less than or equal to this value.
+   * @param {number} options.ttl - The time to live for a Zcap.
    *
    * @returns {ProfileManager} - The new instance.
    */
-  constructor({edvBaseUrl, kmsModule} = {}) {
+  constructor({edvBaseUrl, kmsModule, gracePeriod = DEFAULT_ZCAP_GRACE_PERIOD,
+    ttl = DEFAULT_ZCAP_TTL
+  } = {}) {
     if(typeof kmsModule !== 'string') {
       throw new TypeError('"kmsModule" must be a string.');
     }
@@ -58,6 +65,9 @@ export default class ProfileManager {
     this.kmsModule = kmsModule;
     this.edvBaseUrl = edvBaseUrl;
     this._cacheContainer = new Map();
+    this.gracePeriod = gracePeriod;
+    this.ttl = ttl;
+
   }
 
   /**
@@ -141,7 +151,7 @@ export default class ProfileManager {
       if(!agentZcap.expires) {
         return agentZcap;
       }
-      const gracePeriod = 15 * 60 * 1000;
+      const gracePeriod = this.gracePeriod;
       const expiryDate = new Date(agentZcap.expires);
       const timeDiff = expiryDate.getTime() - now;
       if(timeDiff > gracePeriod) {
@@ -846,7 +856,7 @@ export default class ProfileManager {
       expires = agentSigner.capability.expires;
     } else {
       const now = Date.now();
-      const ttl = 24 * 60 * 60 * 1000;
+      const ttl = this.ttl;
       const expiryDate = new Date(now + ttl);
       expires = expiryDate.toISOString();
     }
@@ -964,7 +974,7 @@ export default class ProfileManager {
         return agentSigner;
       }
       const now = Date.now();
-      const gracePeriod = 15 * 60 * 1000;
+      const gracePeriod = this.gracePeriod;
       const expiryDate = new Date(capability.expires);
       const timeDiff = expiryDate.getTime() - now;
       if(timeDiff > gracePeriod) {

@@ -269,4 +269,9 @@ export function deriveKeystoreId(id) {
     paths[3]; // "<keystore_id>"
 }
 
-export default {delegateCapability, id, delegate, deriveKeystoreId};
+export default {
+  delegateCapability,
+  id,
+  delegate,
+  deriveKeystoreId,
+};
