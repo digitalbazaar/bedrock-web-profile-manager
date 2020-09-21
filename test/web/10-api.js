@@ -900,4 +900,55 @@ describe('Profile Manager API', () => {
       error.message.should.contain('profileId');
     });
   });
+  describe('zcap expiration', () => {
+    it('should delegate a new zcap with new expiration date when a zcap' +
+      'delegated to ephemeral DID has expired', async () => {
+      let error;
+      let result;
+      const profileManager = new ProfileManager({
+        kmsModule: KMS_MODULE,
+        kmsBaseUrl: KMS_BASE_URL,
+        edvBaseUrl: `https://localhost:18443/edvs`,
+        recoveryHost: window.location.host,
+        // intentionally make zcap expired
+        gracePeriod: 100000000000000
+      });
+      await profileManager.setSession({
+        session: {
+          data: {
+            account: {
+              id: ACCOUNT_ID
+            }
+          },
+          on: () => {},
+        }
+      });
+      const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
+      const {id: profileId} = await profileManager.createProfile(content);
+      const {edvClient} = await profileManager.createProfileEdv(
+        {profileId, referenceId: 'example'});
+      try {
+        result = await profileManager.initializeAccessManagement({
+          profileId,
+          profileContent: {foo: true},
+          edvId: edvClient.id,
+          hmac: edvClient.hmac,
+          keyAgreementKey: edvClient.keyAgreementKey
+        });
+        result = await profileManager.getAccessManager({profileId});
+      } catch(e) {
+        error = e;
+      }
+      const capability = result.users.capability;
+      should.exist(result);
+      should.not.exist(error);
+      result.should.have.property('profile');
+      result.profile.should.have.property('id');
+      result.profile.id.should.contain('did:v1:');
+      result.profile.should.have.property('accessManagement');
+      result.should.have.property('profileManager');
+      result.should.have.property('users');
+      capability.should.have.property('expires');
+    });
+  });
 });

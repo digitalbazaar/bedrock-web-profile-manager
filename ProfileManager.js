@@ -67,7 +67,6 @@ export default class ProfileManager {
     this._cacheContainer = new Map();
     this.gracePeriod = gracePeriod;
     this.ttl = ttl;
-
   }
 
   /**
@@ -151,10 +150,9 @@ export default class ProfileManager {
       if(!agentZcap.expires) {
         return agentZcap;
       }
-      const gracePeriod = this.gracePeriod;
       const expiryDate = new Date(agentZcap.expires);
       const timeDiff = expiryDate.getTime() - now;
-      if(timeDiff > gracePeriod) {
+      if(timeDiff > this.gracePeriod) {
         return agentZcap;
       }
       capabilityCache.del(capabilityKey);
@@ -857,8 +855,7 @@ export default class ProfileManager {
     } else {
       const now = Date.now();
       const ttl = this.ttl;
-      const expiryDate = new Date(now + ttl);
-      expires = expiryDate.toISOString();
+      expires = new Date(now + ttl).toISOString();
     }
     return utils.delegateCapability({
       signer: agentSigner,
@@ -974,10 +971,9 @@ export default class ProfileManager {
         return agentSigner;
       }
       const now = Date.now();
-      const gracePeriod = this.gracePeriod;
       const expiryDate = new Date(capability.expires);
       const timeDiff = expiryDate.getTime() - now;
-      if(timeDiff > gracePeriod) {
+      if(timeDiff > this.gracePeriod) {
         return agentSigner;
       }
       agentSignersCache.del(cacheKey);
