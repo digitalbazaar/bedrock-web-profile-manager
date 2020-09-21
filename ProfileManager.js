@@ -114,7 +114,7 @@ export default class ProfileManager {
       return content;
     }
 
-    return await this._getAgentContent({profileAgentRecord});
+    return this._getAgentContent({profileAgentRecord});
   }
 
   /**
