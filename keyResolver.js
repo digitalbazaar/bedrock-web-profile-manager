@@ -16,16 +16,15 @@ async function keyResolver({id} = {}) {
   if(id.startsWith('did:')) {
     return didIo.get({did: id, forceConstruct: true});
   }
-  const origin = `${location.protocol}//${location.hostname}`;
-  if(id.startsWith(origin)) {
+  if(id.startsWith(location.origin)) {
     const headers = {Accept: 'application/ld+json, application/json'};
     const response = await httpClient.get(id, {
       headers
     });
     return response.data;
   }
-  throw TypeError(
-    `"id" must start with either "did:" or ${origin}.`
+  throw new Error(
+    `"id" must start with either "did:" or "${location.origin}".`
   );
 }
 
