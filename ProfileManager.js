@@ -44,14 +44,15 @@ export default class ProfileManager {
    * @param {string} options.kmsModule - The KMS module to use to generate keys.
    * @param {string} options.edvBaseUrl - The base URL for the EDV service,
    *   used to store documents.
-   * @param {number} options.gracePeriod - Zcap is considered expired if the ttl
-   *  is less than or equal to this value.
-   * @param {number} options.ttl - The time to live for a Zcap.
+   * @param {number} options.zcapGracePeriod - Zcap is considered expired if the
+   *  zcapTtl is less than or equal to this value.
+   * @param {number} options.zcapTtl - The time to live for a Zcap.
    *
    * @returns {ProfileManager} - The new instance.
    */
-  constructor({edvBaseUrl, kmsModule, gracePeriod = DEFAULT_ZCAP_GRACE_PERIOD,
-    ttl = DEFAULT_ZCAP_TTL
+  constructor({
+    edvBaseUrl, kmsModule, zcapGracePeriod = DEFAULT_ZCAP_GRACE_PERIOD,
+    zcapTtl = DEFAULT_ZCAP_TTL
   } = {}) {
     if(typeof kmsModule !== 'string') {
       throw new TypeError('"kmsModule" must be a string.');
@@ -65,8 +66,8 @@ export default class ProfileManager {
     this.kmsModule = kmsModule;
     this.edvBaseUrl = edvBaseUrl;
     this._cacheContainer = new Map();
-    this.gracePeriod = gracePeriod;
-    this.ttl = ttl;
+    this.zcapGracePeriod = zcapGracePeriod;
+    this.zcapTtl = zcapTtl;
   }
 
   /**
@@ -144,23 +145,14 @@ export default class ProfileManager {
     const capabilityKey = `${capabilityCacheKey}-${id}-${useEphemeralSigner}`;
 
     const capabilityCache = this._getCache(capabilityCacheKey);
-    const agentZcap = await capabilityCache.get(capabilityKey);
-    const now = Date.now();
+    const agentZcap = capabilityCache.get(capabilityKey);
     if(agentZcap) {
-      if(!agentZcap.expires) {
-        return agentZcap;
-      }
-      const expiryDate = new Date(agentZcap.expires);
-      const timeDiff = expiryDate.getTime() - now;
-      if(timeDiff > this.gracePeriod) {
-        return agentZcap;
-      }
-      capabilityCache.del(capabilityKey);
+      return agentZcap;
     }
-
     const promise = this._getAgentCapability(
       {id, profileAgent, useEphemeralSigner});
-    capabilityCache.set(capabilityKey, promise);
+    const maxAge = this.zcapTtl - this.zcapGracePeriod;
+    capabilityCache.set(capabilityKey, promise, maxAge);
 
     try {
       return await promise;
@@ -854,8 +846,7 @@ export default class ProfileManager {
       expires = agentSigner.capability.expires;
     } else {
       const now = Date.now();
-      const ttl = this.ttl;
-      expires = new Date(now + ttl).toISOString();
+      expires = new Date(now + this.zcapTtl).toISOString();
     }
     return utils.delegateCapability({
       signer: agentSigner,
@@ -964,25 +955,15 @@ export default class ProfileManager {
   async _getAgentSigner({profileAgentId, useEphemeralSigner}) {
     const cacheKey = `${profileAgentId}-${useEphemeralSigner}`;
     const agentSignersCache = this._getCache('agent-signers');
-    const agentSigner = await agentSignersCache.get(cacheKey);
+    const agentSigner = agentSignersCache.get(cacheKey);
     if(agentSigner) {
-      const capability = agentSigner.capability;
-      if(!(capability && capability.expires)) {
-        return agentSigner;
-      }
-      const now = Date.now();
-      const expiryDate = new Date(capability.expires);
-      const timeDiff = expiryDate.getTime() - now;
-      if(timeDiff > this.gracePeriod) {
-        return agentSigner;
-      }
-      agentSignersCache.del(cacheKey);
+      return agentSigner;
     }
 
     const promise = this._createAgentSigner(
       {profileAgentId, useEphemeralSigner});
-
-    agentSignersCache.set(cacheKey, promise);
+    const maxAge = this.zcapTtl - this.zcapGracePeriod;
+    agentSignersCache.set(cacheKey, promise, maxAge);
 
     try {
       return await promise;

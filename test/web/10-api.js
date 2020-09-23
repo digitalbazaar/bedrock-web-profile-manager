@@ -911,7 +911,7 @@ describe('Profile Manager API', () => {
         edvBaseUrl: `https://localhost:18443/edvs`,
         recoveryHost: window.location.host,
         // intentionally make zcap expired
-        gracePeriod: 100000000000000
+        zcapGracePeriod: 100000000000000
       });
       await profileManager.setSession({
         session: {
