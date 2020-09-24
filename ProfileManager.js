@@ -45,7 +45,7 @@ export default class ProfileManager {
    * @param {string} options.edvBaseUrl - The base URL for the EDV service,
    *   used to store documents.
    * @param {number} options.zcapGracePeriod - Zcap is considered expired if the
-   *  zcapTtl is less than or equal to this value.
+   *   zcapTtl is less than or equal to this value.
    * @param {number} options.zcapTtl - The time to live for a Zcap.
    *
    * @returns {ProfileManager} - The new instance.
@@ -145,13 +145,16 @@ export default class ProfileManager {
     const capabilityKey = `${capabilityCacheKey}-${id}-${useEphemeralSigner}`;
 
     const capabilityCache = this._getCache(capabilityCacheKey);
-    const agentZcap = capabilityCache.get(capabilityKey);
+    let agentZcap = capabilityCache.get(capabilityKey);
     if(agentZcap) {
       return agentZcap;
     }
     const promise = this._getAgentCapability(
       {id, profileAgent, useEphemeralSigner});
-    const maxAge = this.zcapTtl - this.zcapGracePeriod;
+    agentZcap = await promise;
+    const now = Date.now();
+    const expiryDate = new Date(agentZcap.expires);
+    const maxAge = expiryDate.getTime() - now - this.zcapGracePeriod;
     capabilityCache.set(capabilityKey, promise, maxAge);
 
     try {
@@ -955,14 +958,17 @@ export default class ProfileManager {
   async _getAgentSigner({profileAgentId, useEphemeralSigner}) {
     const cacheKey = `${profileAgentId}-${useEphemeralSigner}`;
     const agentSignersCache = this._getCache('agent-signers');
-    const agentSigner = agentSignersCache.get(cacheKey);
+    let agentSigner = agentSignersCache.get(cacheKey);
     if(agentSigner) {
       return agentSigner;
     }
 
     const promise = this._createAgentSigner(
       {profileAgentId, useEphemeralSigner});
-    const maxAge = this.zcapTtl - this.zcapGracePeriod;
+    agentSigner = await promise;
+    const now = Date.now();
+    const expiryDate = new Date(agentSigner.expires);
+    const maxAge = expiryDate.getTime() - now - this.zcapGracePeriod;
     agentSignersCache.set(cacheKey, promise, maxAge);
 
     try {
