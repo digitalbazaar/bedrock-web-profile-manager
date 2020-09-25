@@ -11,7 +11,6 @@ config.karma.suites['bedrock-web-kms'] = path.join('web', '**', '*.js');
 config.karma.config.proxies = {
   '/': {
     target: 'https://localhost:18443',
-    changeOrigin: true
   }
 };
 config.karma.config.proxyValidateSSL = false;
@@ -42,7 +41,15 @@ config.mongodb.dropCollections.collections = [];
 // allow self-signed certs in test framework
 config['https-agent'].rejectUnauthorized = false;
 
+config['profile-http'].kms.public.host = 'localhost';
+config['profile-http'].kms.public.port = 9876;
+
 // do not require an authentication session for tests
 config['kms-http'].requireAuthentication = false;
 
-config.kms.allowedHost = config.server.host;
+config.kms.allowedHost = [
+  config.server.host,
+  `${config['profile-http'].kms.public.host}:` +
+    `${config['profile-http'].kms.public.port}`,
+];
+
