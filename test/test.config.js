@@ -53,3 +53,4 @@ config.kms.allowedHost = [
     `${config['profile-http'].kms.public.port}`,
 ];
 
+config.server.host = 'localhost:9876';
