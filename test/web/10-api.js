@@ -8,6 +8,7 @@ import {mockData} from './mock.data.js';
 const ACCOUNT_ID = 'urn:uuid:ffaf5d84-7dc2-4f7b-9825-cc8d2e5a5d06';
 const KMS_MODULE = 'ssm-v1';
 const KMS_BASE_URL = `${window.location.origin}/kms`;
+const EDV_BASE_URL = `${window.location.origin}/edvs`;
 
 describe('Profile Manager API', () => {
   describe('createProfile API', () => {
@@ -15,7 +16,7 @@ describe('Profile Manager API', () => {
       const profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: `https://localhost:18443/edvs`,
+        edvBaseUrl: EDV_BASE_URL,
         recoveryHost: window.location.host
       });
 
@@ -52,7 +53,7 @@ describe('Profile Manager API', () => {
       profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: `https://localhost:18443/edvs`,
+        edvBaseUrl: EDV_BASE_URL,
         recoveryHost: window.location.host
       });
 
@@ -117,7 +118,7 @@ describe('Profile Manager API', () => {
       profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: `https://localhost:18443/edvs`,
+        edvBaseUrl: EDV_BASE_URL,
         recoveryHost: window.location.host
       });
 
@@ -181,8 +182,7 @@ describe('Profile Manager API', () => {
       profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: `https://localhost:18443/edvs`,
-        // edvBaseUrl: `${window.location.origin}/edvs`,
+        edvBaseUrl: EDV_BASE_URL,
         recoveryHost: window.location.host
       });
 
@@ -363,7 +363,7 @@ describe('Profile Manager API', () => {
       profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: `https://localhost:18443/edvs`,
+        edvBaseUrl: EDV_BASE_URL,
         recoveryHost: window.location.host
       });
 
@@ -461,7 +461,7 @@ describe('Profile Manager API', () => {
       profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: `https://localhost:18443/edvs`,
+        edvBaseUrl: EDV_BASE_URL,
         recoveryHost: window.location.host
       });
 
@@ -529,7 +529,7 @@ describe('Profile Manager API', () => {
       profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: `https://localhost:18443/edvs`,
+        edvBaseUrl: EDV_BASE_URL,
         recoveryHost: window.location.host
       });
 
@@ -622,7 +622,7 @@ describe('Profile Manager API', () => {
       profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: `https://localhost:18443/edvs`,
+        edvBaseUrl: EDV_BASE_URL,
         recoveryHost: window.location.host
       });
 
@@ -695,7 +695,7 @@ describe('Profile Manager API', () => {
       profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: `https://localhost:18443/edvs`,
+        edvBaseUrl: EDV_BASE_URL,
         recoveryHost: window.location.host
       });
     });
@@ -833,7 +833,7 @@ describe('Profile Manager API', () => {
       profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: `https://localhost:18443/edvs`,
+        edvBaseUrl: EDV_BASE_URL,
         recoveryHost: window.location.host
       });
     });
@@ -878,7 +878,7 @@ describe('Profile Manager API', () => {
       profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: `https://localhost:18443/edvs`,
+        edvBaseUrl: EDV_BASE_URL,
         recoveryHost: window.location.host
       });
     });
