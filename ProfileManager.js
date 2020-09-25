@@ -44,9 +44,9 @@ export default class ProfileManager {
    * @param {string} options.kmsModule - The KMS module to use to generate keys.
    * @param {string} options.edvBaseUrl - The base URL for the EDV service,
    *   used to store documents.
-   * @param {number} options.zcapGracePeriod - Zcap is considered expired if the
-   *   zcapTtl is less than or equal to this value.
-   * @param {number} options.zcapTtl - The time to live for a Zcap.
+   * @param {number} [options.zcapGracePeriod] - Zcap is considered expired if
+   *   the zcapTtl is less than or equal to this value.
+   * @param {number} [options.zcapTtl] - The time to live for a Zcap.
    *
    * @returns {ProfileManager} - The new instance.
    */
