@@ -43,14 +43,13 @@ config['https-agent'].rejectUnauthorized = false;
 
 config['profile-http'].kms.public.host = 'localhost';
 config['profile-http'].kms.public.port = 9876;
+config['profile-http'].kms.private.host = 'localhost';
+config['profile-http'].kms.private.port = 9876;
 
 // do not require an authentication session for tests
 config['kms-http'].requireAuthentication = false;
 
-config.kms.allowedHost = [
-  config.server.host,
-  `${config['profile-http'].kms.public.host}:` +
-    `${config['profile-http'].kms.public.port}`,
-];
+config.kms.allowedHost = `${config['profile-http'].kms.public.host}:` +
+  `${config['profile-http'].kms.public.port}`;
 
 config.server.host = 'localhost:9876';
