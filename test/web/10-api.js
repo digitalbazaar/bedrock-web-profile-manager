@@ -182,6 +182,7 @@ describe('Profile Manager API', () => {
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
         edvBaseUrl: `https://localhost:18443/edvs`,
+        // edvBaseUrl: `${window.location.origin}/edvs`,
         recoveryHost: window.location.host
       });
 
@@ -198,14 +199,28 @@ describe('Profile Manager API', () => {
     });
     it('should successfully initialize w/ default signer', async () => {
       let error;
+      const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
+      let profileId;
+      try {
+        ({id: profileId} = await profileManager.createProfile(content));
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(error);
+
+      error = null;
+      let edvClient;
+      try {
+        ({edvClient} = await profileManager.createProfileEdv(
+          {profileId, referenceId: 'example'}));
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(error);
+
+      error = null;
       let result;
       try {
-        const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-        const {id: profileId} = await profileManager.createProfile(content);
-
-        const {edvClient} = await profileManager.createProfileEdv(
-          {profileId, referenceId: 'example'});
-
         result = await profileManager.initializeAccessManagement({
           profileId,
           profileContent: {foo: true},
