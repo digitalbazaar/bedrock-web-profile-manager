@@ -149,16 +149,16 @@ export default class ProfileManager {
     if(agentZcap) {
       return agentZcap;
     }
+
     const promise = this._getAgentCapability(
       {id, profileAgent, useEphemeralSigner});
-    agentZcap = await promise;
-    const now = Date.now();
-    const expiryDate = new Date(agentZcap.expires);
-    const maxAge = expiryDate.getTime() - now - this.zcapGracePeriod;
-    capabilityCache.set(capabilityKey, promise, maxAge);
-
     try {
-      return await promise;
+      agentZcap = await promise;
+      const now = Date.now();
+      const expiryDate = new Date(agentZcap.expires || (now + this.zcapTtl));
+      const maxAge = expiryDate.getTime() - now - this.zcapGracePeriod;
+      capabilityCache.set(capabilityKey, promise, maxAge);
+      return agentZcap;
     } catch(e) {
       capabilityCache.del(capabilityKey);
       throw e;
@@ -965,14 +965,19 @@ export default class ProfileManager {
 
     const promise = this._createAgentSigner(
       {profileAgentId, useEphemeralSigner});
-    agentSigner = await promise;
-    const now = Date.now();
-    const expiryDate = new Date(agentSigner.expires);
-    const maxAge = expiryDate.getTime() - now - this.zcapGracePeriod;
-    agentSignersCache.set(cacheKey, promise, maxAge);
-
     try {
-      return await promise;
+      agentSigner = await promise;
+      const now = Date.now();
+
+      let expiryDate;
+      if(agentSigner && agentSigner.capability) {
+        expiryDate = new Date(agentSigner.capability.expires);
+      } else {
+        expiryDate = new Date(now + this.zcapTtl);
+      }
+      const maxAge = expiryDate.getTime() - now - this.zcapGracePeriod;
+      agentSignersCache.set(cacheKey, promise, maxAge);
+      return agentSigner;
     } catch(e) {
       agentSignersCache.del(cacheKey);
       throw e;
