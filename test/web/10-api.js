@@ -923,7 +923,7 @@ describe('Profile Manager API', () => {
       const profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: `https://localhost:18443/edvs`,
+        edvBaseUrl: EDV_BASE_URL,
         recoveryHost: window.location.host,
         // intentionally make zcap expired
         zcapGracePeriod: 100000000000000
