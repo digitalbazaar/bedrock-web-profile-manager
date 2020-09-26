@@ -1,7 +1,6 @@
 /*!
  * Copyright (c) 2019-2020 Digital Bazaar, Inc. All rights reserved.
  */
-
 import {ProfileManager} from 'bedrock-web-profile-manager';
 import {mockData} from './mock.data.js';
 
