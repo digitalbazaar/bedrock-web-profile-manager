@@ -2,6 +2,8 @@
  * Copyright (c) 2019-2020 Digital Bazaar, Inc. All rights reserved.
  */
 import {ProfileManager} from 'bedrock-web-profile-manager';
+import {ProfileService} from 'bedrock-web-profile';
+import sinon from 'sinon';
 import {mockData} from './mock.data.js';
 
 const ACCOUNT_ID = 'urn:uuid:ffaf5d84-7dc2-4f7b-9825-cc8d2e5a5d06';
@@ -44,6 +46,54 @@ describe('Profile Manager API', () => {
       result.id.should.be.a('string');
       result.id.should.match(/^did\:v1\:test\:/);
     });
+    it('successfully creates a profile with a custom ProfileService',
+      async () => {
+        // using the mock we can have a deterministic profileDid
+        const profileDid = 'did:v1:test:mock';
+        const didOptions = {mode: 'test'};
+        const profileService = new ProfileService();
+        const mock = sinon.mock(profileService);
+        mock.expects('create').once().withExactArgs({
+          // the thing most likely to fail is this.accountId
+          // is not set correctly in the profileManager
+          account: ACCOUNT_ID,
+          didMethod: 'v1',
+          didOptions
+        }).returns({id: profileDid});
+        const profileManager = new ProfileManager({
+          kmsModule: KMS_MODULE,
+          kmsBaseUrl: KMS_BASE_URL,
+          edvBaseUrl: EDV_BASE_URL,
+          recoveryHost: window.location.host,
+          profileService
+        });
+
+        await profileManager.setSession({
+          session: {
+            data: {
+              account: {
+                id: ACCOUNT_ID
+              }
+            },
+            on: () => {},
+          }
+        });
+
+        let error;
+        let result;
+        try {
+          const content = {didMethod: 'v1', didOptions};
+          result = await profileManager.createProfile(content);
+        } catch(e) {
+          error = e;
+        }
+        should.not.exist(error);
+        should.exist(result);
+        result.should.have.property('id');
+        result.id.should.be.a('string');
+        result.id.should.equal(profileDid);
+        mock.verify();
+      });
   });
 
   describe('getProfileSigner api', () => {

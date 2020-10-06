@@ -47,7 +47,8 @@ export default class ProfileManager {
    * @param {number} [options.zcapGracePeriod] - Zcap is considered expired if
    *   the zcapTtl is less than or equal to this value.
    * @param {number} [options.zcapTtl] - The time to live for a Zcap.
-   * @param {ProfileService} [options.profileService] - A ProfileService.
+   * @param {ProfileService} [options.profileService] - A configurable
+   *   ProfileService.
    *
    * @returns {ProfileManager} - The new instance.
    */

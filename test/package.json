@@ -10,7 +10,7 @@
     "bedrock": "^3.1.1",
     "bedrock-account": "^4.0.0",
     "bedrock-did-context": "^1.0.0",
-    "bedrock-edv-storage": "^4.1.1",
+    "bedrock-edv-storage": "^5.1.0",
     "bedrock-express": "^3.2.0",
     "bedrock-https-agent": "^2.0.0",
     "bedrock-jsonld-document-loader": "^1.0.1",
@@ -36,6 +36,7 @@
     "bedrock-web-session": "^1.5.0",
     "bedrock-web-store": "^1.2.0",
     "bedrock-zcap-storage": "^3.0.0",
-    "bedrock-zcap-storage-http": "^1.1.0"
+    "bedrock-zcap-storage-http": "^1.1.0",
+    "sinon": "^9.1.0"
   }
 }
