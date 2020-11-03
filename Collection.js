@@ -76,7 +76,7 @@ export default class Collection {
       return false;
     }
     const edvDoc = await this._getEdvDocument({id: existing.id});
-    return edvDoc.delete({doc: edvDoc});
+    return edvDoc.delete({doc: existing});
   }
 
   async _getEdvDocument({id} = {}) {
