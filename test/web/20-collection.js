@@ -9,7 +9,7 @@ const KMS_MODULE = 'ssm-v1';
 const KMS_BASE_URL = `${window.location.origin}/kms`;
 const EDV_BASE_URL = `${window.location.origin}/edvs`;
 
-describe.only('Collection API', () => {
+describe('Collection API', () => {
   let profileManager;
   beforeEach(async () => {
     profileManager = new ProfileManager({
@@ -29,7 +29,7 @@ describe.only('Collection API', () => {
       }
     });
   });
-  it('should create a collection successfully', async () => {
+  it('should create a doc in a collection successfully', async () => {
     const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
     const {id: profileId} = await profileManager.createProfile(content);
     const {edvClient} = await profileManager.createProfileEdv(
@@ -70,7 +70,7 @@ describe.only('Collection API', () => {
     result.indexed[0].should.have.keys(['hmac', 'sequence', 'attributes']);
     result.content.should.eql(doc1);
   });
-  it('should get all docs successfully', async () => {
+  it('should get all docs from a collection successfully', async () => {
     const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
     const {id: profileId} = await profileManager.createProfile(content);
     const {edvClient} = await profileManager.createProfileEdv(
@@ -113,7 +113,7 @@ describe.only('Collection API', () => {
     contents.should.deep.include(doc1);
     contents.should.deep.include(doc2);
   });
-  it('should get a doc successfully', async () => {
+  it('should get a doc from a collection successfully', async () => {
     const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
     const {id: profileId} = await profileManager.createProfile(content);
     const {edvClient} = await profileManager.createProfileEdv(
@@ -161,7 +161,7 @@ describe.only('Collection API', () => {
     result.indexed[0].should.have.keys(['hmac', 'sequence', 'attributes']);
     result.content.should.eql(doc2);
   });
-  it('should remove a doc successfully', async () => {
+  it('should remove a doc from a collection successfully', async () => {
     const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
     const {id: profileId} = await profileManager.createProfile(content);
     const {edvClient} = await profileManager.createProfileEdv(
@@ -211,7 +211,70 @@ describe.only('Collection API', () => {
     should.not.exist(err2);
     result2.should.eql([]);
   });
-  xit('should update a doc successfully', async () => {
+  it('should update a doc in a collection successfully', async () => {
+    const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
+    const {id: profileId} = await profileManager.createProfile(content);
+    const {edvClient} = await profileManager.createProfileEdv(
+      {profileId, referenceId: 'example'});
 
+    await profileManager.initializeAccessManagement({
+      profileId,
+      profileContent: {foo: true},
+      edvId: edvClient.id,
+      hmac: edvClient.hmac,
+      keyAgreementKey: edvClient.keyAgreementKey
+    });
+    const collection = await profileManager.getCollection({
+      profileId,
+      referenceIdPrefix: 'user',
+      type: 'test'
+    });
+    const doc1Id = await EdvClient.generateId();
+    const doc1 = {id: doc1Id, type: 'test'};
+
+    let result;
+    let err;
+    try {
+      result = await collection.create({item: doc1});
+    } catch(e) {
+      err = e;
+    }
+    should.exist(result);
+    should.not.exist(err);
+    result.content.should.eql(doc1);
+
+    let result1;
+    let err1;
+    const updatedItem = {
+      id: doc1Id,
+      type: 'test',
+      someKey: '33333'
+    };
+    try {
+      // update the doc with doc1Id
+      result1 = await collection.update({
+        item: updatedItem
+      });
+    } catch(e) {
+      err1 = e;
+    }
+    should.exist(result1);
+    should.not.exist(err1);
+    result1.id.should.equal(result.id);
+    result1.content.should.eql(updatedItem);
+    result1.content.should.not.eql(result.content);
+
+    let result2;
+    let err2;
+    try {
+      // get doc with doc2Id
+      result2 = await collection.get({id: doc1Id});
+    } catch(e) {
+      err2 = e;
+    }
+    should.exist(result2);
+    should.not.exist(err2);
+    result2.should.eql(result1);
+    result2.content.should.eql(updatedItem);
   });
 });
