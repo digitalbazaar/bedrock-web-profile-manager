@@ -108,8 +108,10 @@ describe.only('Collection API', () => {
     should.not.exist(err);
     result.should.be.an('array');
     result.length.should.equal(2);
-    result[0].content.should.eql(doc1);
-    result[1].content.should.eql(doc2);
+
+    const contents = result.map(doc => doc.content);
+    contents.should.deep.include(doc1);
+    contents.should.deep.include(doc2);
   });
   it('should get a doc successfully', async () => {
     const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
@@ -141,7 +143,7 @@ describe.only('Collection API', () => {
     let result;
     let err;
     try {
-      // get doc with id doc2Id
+      // get doc with doc2Id
       result = await collection.get({id: doc2Id});
     } catch(e) {
       err = e;
@@ -159,10 +161,55 @@ describe.only('Collection API', () => {
     result.indexed[0].should.have.keys(['hmac', 'sequence', 'attributes']);
     result.content.should.eql(doc2);
   });
-  xit('should remove a doc successfully', async () => {
-    // await collection.remove({id: doc1Id});
-    // const result = await collection.get({id: doc1Id});
-    // console.log(result, '--------------------------------result');
+  it('should remove a doc successfully', async () => {
+    const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
+    const {id: profileId} = await profileManager.createProfile(content);
+    const {edvClient} = await profileManager.createProfileEdv(
+      {profileId, referenceId: 'example'});
+
+    await profileManager.initializeAccessManagement({
+      profileId,
+      profileContent: {foo: true},
+      edvId: edvClient.id,
+      hmac: edvClient.hmac,
+      keyAgreementKey: edvClient.keyAgreementKey
+    });
+    const collection = await profileManager.getCollection({
+      profileId,
+      referenceIdPrefix: 'user',
+      type: 'test'
+    });
+    const doc1Id = await EdvClient.generateId();
+    const doc1 = {id: doc1Id, type: 'test'};
+
+    await collection.create({item: doc1});
+
+    let result;
+    let err;
+    try {
+      result = await collection.getAll();
+    } catch(e) {
+      err = e;
+    }
+    should.exist(result);
+    should.not.exist(err);
+    result.should.be.an('array');
+    result.length.should.equal(1);
+    result[0].content.should.eql(doc1);
+
+    // remove doc with doc1Id
+    await collection.remove({id: doc1Id});
+    // getting all docs again should return an empty array
+    let result2;
+    let err2;
+    try {
+      result2 = await collection.getAll();
+    } catch(e) {
+      err2 = e;
+    }
+    should.exist(result2);
+    should.not.exist(err2);
+    result2.should.eql([]);
   });
   xit('should update a doc successfully', async () => {
 
