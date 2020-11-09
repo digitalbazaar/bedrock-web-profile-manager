@@ -4,6 +4,8 @@
 
 ### Fix
 - Pass `doc` parameter to `edvDoc.delete` in `remove` api.
+### Added
+- Test for `Collection.js` apis.
 
 ## 6.2.1 - 2020-10-21
 
