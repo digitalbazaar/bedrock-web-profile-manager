@@ -31,7 +31,7 @@
     "bedrock-validation": "^4.4.0",
     "bedrock-veres-one-context": "^10.0.1",
     "bedrock-web-account": "^1.2.0",
-    "bedrock-web-profile": "github:digitalbazaar/bedrock-web-profile#refactor-endpoint",
+    "bedrock-web-profile": "github:digitalbazaar/bedrock-web-profile",
     "bedrock-web-profile-manager": "file:..",
     "bedrock-web-session": "^1.5.0",
     "bedrock-web-store": "^1.2.0",

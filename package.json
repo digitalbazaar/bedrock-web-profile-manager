@@ -15,7 +15,7 @@
     "@digitalbazaar/http-client": "^1.0.0",
     "base64url-universal": "^1.1.0",
     "bedrock-web-account": "^1.2.0",
-    "bedrock-web-profile": "github:digitalbazaar/bedrock-web-profile#refactor-endpoint",
+    "bedrock-web-profile": "github:digitalbazaar/bedrock-web-profile",
     "bedrock-web-session": "^1.5.0",
     "bedrock-web-store": "^1.2.0",
     "crypto-ld": "^3.8.0",
