@@ -1,6 +1,6 @@
 # bedrock-web-profile-manager ChangeLog
 
-## 6.2.2 - 2020-11-TBD
+## 6.2.2 - 2020-12-TBD
 
 ### Fix
 - Pass `doc` parameter to `edvDoc.delete` in `remove` api.
