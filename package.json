@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@digitalbazaar/http-client": "^1.0.0",
-    "base64url-universal": "^1.1.0",
     "bedrock-web-account": "^1.2.0",
     "bedrock-web-profile": "^2.4.1",
     "bedrock-web-session": "^1.5.0",
