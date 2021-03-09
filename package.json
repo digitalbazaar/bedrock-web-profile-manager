@@ -19,7 +19,6 @@
     "did-method-key": "^0.7.0",
     "did-veres-one": "^12.1.1",
     "edv-client": "^7.0.1",
-    "fast-json-patch": "^3.0.0-1",
     "jsonld-signatures": "^7.0.0",
     "lru-cache": "^6.0.0",
     "ocapld": "^2.0.0",
