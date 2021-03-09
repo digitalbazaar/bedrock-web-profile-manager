@@ -17,7 +17,10 @@ async function keyResolver({id} = {}) {
   if(id.startsWith('did:')) {
     return didIo.get({did: id, forceConstruct: true});
   }
-  if(id.startsWith(location.origin)) {
+
+  // FIXME: remove conditional or make it startsWith('https')?
+  // if(id.startsWith(location.origin)) {
+  if(true) {
     const headers = {Accept: 'application/ld+json, application/json'};
     const response = await httpClient.get(id, {
       headers
