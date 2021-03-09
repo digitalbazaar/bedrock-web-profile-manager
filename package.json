@@ -24,7 +24,7 @@
     "did-veres-one": "^12.1.1",
     "edv-client": "^7.0.1",
     "fast-json-patch": "^3.0.0-1",
-    "jsonld-signatures": "^5.1.0",
+    "jsonld-signatures": "^7.0.0",
     "lru-cache": "^5.1.1",
     "ocapld": "^2.0.0",
     "uuid-random": "^1.3.2",
