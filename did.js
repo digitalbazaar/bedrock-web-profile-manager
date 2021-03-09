@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2019-2020 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2019-2021 Digital Bazaar, Inc. All rights reserved.
  */
 import v1 from 'did-veres-one';
 

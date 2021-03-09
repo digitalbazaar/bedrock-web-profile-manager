@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2020 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2020-2021 Digital Bazaar, Inc. All rights reserved.
  */
 import didIo from 'did-io';
 import {driver as keyDriver} from 'did-method-key';

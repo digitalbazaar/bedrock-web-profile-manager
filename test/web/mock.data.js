@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2020 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2020-2021 Digital Bazaar, Inc. All rights reserved.
  */
 export const mockData = {
   edvId: 'z19uMCiPNET4YbcPpBcab5mEE',
