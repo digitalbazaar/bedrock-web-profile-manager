@@ -18,7 +18,6 @@
     "bedrock-web-profile": "^2.4.1",
     "bedrock-web-session": "^1.5.0",
     "bedrock-web-store": "^1.2.0",
-    "crypto-ld": "^3.8.0",
     "did-io": "^0.8.3",
     "did-method-key": "^0.7.0",
     "did-veres-one": "^12.1.1",
