@@ -18,10 +18,8 @@ async function keyResolver({id} = {}) {
     return didIo.get({did: id, forceConstruct: true});
   }
 
-  const headers = {Accept: 'application/ld+json, application/json'};
-  const response = await httpClient.get(id, {
-    headers
-  });
+  const response = await httpClient.get(id);
+
   return response.data;
 }
 
