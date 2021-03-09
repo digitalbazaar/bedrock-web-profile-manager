@@ -30,7 +30,6 @@
     "bedrock-test": "^5.3.0",
     "bedrock-validation": "^4.4.0",
     "bedrock-veres-one-context": "^10.0.1",
-    "bedrock-web-account": "^1.2.0",
     "bedrock-web-profile": "^2.4.1",
     "bedrock-web-profile-manager": "file:..",
     "bedrock-web-session": "^1.5.0",
