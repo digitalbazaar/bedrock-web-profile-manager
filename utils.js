@@ -260,11 +260,15 @@ export function deriveKeystoreId(id) {
   const paths = urlObj.pathname.split('/');
   return urlObj.origin +
     '/' +
-    paths[1] + // "kms"
+    paths[1] + // "ns"
     '/' +
-    paths[2] + // "keystores"
+    paths[2] + // "<namespace_id>"
     '/' +
-    paths[3]; // "<keystore_id>"
+    paths[3] + // "kms"
+    '/' +
+    paths[4] + // "keystores"
+    '/' +
+    paths[5]; // "<keystore_id>",
 }
 
 export default {
