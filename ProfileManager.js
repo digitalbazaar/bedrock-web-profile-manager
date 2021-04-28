@@ -650,6 +650,7 @@ export default class ProfileManager {
     assert.parentCapabilitiesValidator({
       parentCapabilities, edvId, hmac, keyAgreementKey
     });
+    console.log('gets here:::::::', invocationSigner);
     const delegateEdvDocumentsRequest = {
       referenceId: `${referenceIdPrefix}-edv-documents`,
       allowedAction: ['read', 'write'],
@@ -703,7 +704,7 @@ export default class ProfileManager {
       delegateEdvKakRequest.invocationTarget = {...kak.invocationTarget};
       delegateEdvKakRequest.parentCapability = kak;
     }
-
+    console.log(invocationSigner, '<><><><>invocationSigner');
     const zcaps = await Promise.all([
       utils.delegateCapability({
         signer: invocationSigner,

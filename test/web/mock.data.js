@@ -5,7 +5,7 @@ export const mockData = {
   edvId: 'z19uMCiPNET4YbcPpBcab5mEE',
   hmac: {
     id: 'z19pHg1APVprWk1ALrcZUnXWL',
-    type: 'Sha256HmacKey2020'
+    type: 'Sha256HmacKey2019'
   },
   keyAgreementKey: {
     id: 'z19xp4DANMn8k9Yy8m6ZCE6PV',
@@ -15,7 +15,7 @@ export const mockData = {
     edv: 'z19uMCiPNET4YbcPpBcab5mEE',
     hmac: {
       id: 'z19pHg1APVprWk1ALrcZUnXWL',
-      type: 'Sha256HmacKey2020'
+      type: 'Sha256HmacKey2019'
     },
     keyAgreementKey: {
       id: 'z19xp4DANMn8k9Yy8m6ZCE6PV',

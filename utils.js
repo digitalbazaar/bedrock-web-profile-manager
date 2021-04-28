@@ -6,6 +6,17 @@ import {Ed25519Signature2018} from '@digitalbazaar/ed25519-signature-2018';
 import {Ed25519Signature2020} from '@digitalbazaar/ed25519-signature-2020';
 import {EdvClient} from 'edv-client';
 import jsigs from 'jsonld-signatures';
+import {securityLoader} from '@digitalbazaar/security-document-loader';
+import zcapCtx from 'zcap-context';
+import webkmsCtx from 'webkms-context';
+
+const loader = securityLoader();
+loader.addStatic(zcapCtx.CONTEXT_URL, zcapCtx.CONTEXT);
+loader.addStatic(webkmsCtx.CONTEXT_URL, webkmsCtx.CONTEXT);
+loader.addStatic(
+  Ed25519Signature2020.CONTEXT_URL, Ed25519Signature2020.CONTEXT);
+
+const documentLoader = loader.build();
 
 const {sign} = jsigs;
 const SUPPORTED_KEY_TYPES = [
@@ -266,7 +277,8 @@ export async function delegate({zcap, signer, capabilityChain}) {
     suite,
     purpose: new CapabilityDelegation({
       capabilityChain
-    })
+    }),
+    documentLoader
   });
 }
 
