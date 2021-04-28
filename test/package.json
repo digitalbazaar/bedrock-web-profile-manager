@@ -14,7 +14,7 @@
     "bedrock-express": "^3.2.0",
     "bedrock-https-agent": "^2.0.0",
     "bedrock-jsonld-document-loader": "^1.0.1",
-    "bedrock-karma": "^2.2.0",
+    "bedrock-karma": "digitalbazaar/bedrock-karma#disable-istanbul",
     "bedrock-kms": "^3.0.2",
     "bedrock-kms-http": "^3.0.0",
     "bedrock-ledger-context": "^15.0.0",
