@@ -1,16 +1,19 @@
 /*!
  * Copyright (c) 2020-2021 Digital Bazaar, Inc. All rights reserved.
  */
-import {CapabilityDelegation} from 'ocapld';
+import {CapabilityDelegation, constants} from '@digitalbazaar/zcapld';
+import {Ed25519Signature2018} from '@digitalbazaar/ed25519-signature-2018';
+import {Ed25519Signature2020} from '@digitalbazaar/ed25519-signature-2020';
 import {EdvClient} from 'edv-client';
 import jsigs from 'jsonld-signatures';
 
-const {SECURITY_CONTEXT_V2_URL, sign, suites} = jsigs;
-const {Ed25519Signature2018} = suites;
+const {sign} = jsigs;
 const SUPPORTED_KEY_TYPES = [
   'Ed25519VerificationKey2018',
+  'Ed25519VerificationKey2020',
   'Sha256HmacKey2019',
-  'X25519KeyAgreementKey2019'
+  'X25519KeyAgreementKey2019',
+  'X25519KeyAgreementKey2020'
 ];
 
 export async function delegateCapability(
@@ -25,8 +28,14 @@ export async function delegateCapability(
       '"invocationTarget" must be an object that includes a "type".');
   }
   // TODO: Look into requiring an invoker or controller on a zcap
+  let contextUrl;
+  if(signer.type === 'Ed25519VerificationKey2018') {
+    contextUrl = [constants.ZCAP_CONTEXT_URL, Ed25519Signature2018.CONTEXT_URL];
+  } else if(signer.type === 'Ed25519VerificationKey2020') {
+    contextUrl = [constants.ZCAP_CONTEXT_URL, Ed25519Signature2020.CONTEXT_URL];
+  }
   let zcap = {
-    '@context': SECURITY_CONTEXT_V2_URL,
+    '@context': contextUrl,
     // use 128-bit random multibase encoded value
     id: await id()
   };
@@ -63,13 +72,13 @@ export async function delegateCapability(
       parentCapability.parentCapability;
     parentCapability = parentCapability.id;
   }
-  const {id: target, type: targetType, verificationMethod} = invocationTarget;
+  const {id: target, type: targetType, publicAlias} = invocationTarget;
   if(SUPPORTED_KEY_TYPES.includes(targetType)) {
     if(!target) {
       throw new TypeError(
         '"invocationTarget.id" must be set for Web KMS capabilities.');
     }
-    if(!verificationMethod) {
+    if(!publicAlias) {
       throw new TypeError('"invocationTarget.verificationMethod" is required.');
     }
     // TODO: fetch `target` from a key mapping document in the profile's
@@ -77,7 +86,7 @@ export async function delegateCapability(
     zcap.invocationTarget = {
       id: target,
       type: targetType,
-      verificationMethod,
+      publicAlias,
     };
     zcap.parentCapability = parentCapability || target;
     zcap = await delegate({zcap, signer, capabilityChain});
@@ -240,17 +249,24 @@ export async function id() {
 export async function delegate({zcap, signer, capabilityChain}) {
   capabilityChain =
     Array.isArray(capabilityChain) ? capabilityChain : [zcap.parentCapability];
-  // attach capability delegation proof
-  return sign(zcap, {
-    // TODO: map `signer.type` to signature suite
-    suite: new Ed25519Signature2018({
+  let suite;
+  if(signer.type === 'Ed25519VerificationKey2018') {
+    suite = new Ed25519Signature2018({
       signer,
       verificationMethod: signer.id
-    }),
+    });
+  } else if(signer.type === 'Ed25519VerificationKey2020') {
+    suite = new Ed25519Signature2020({
+      signer,
+      verificationMethod: signer.id
+    });
+  }
+  // attach capability delegation proof
+  return sign(zcap, {
+    suite,
     purpose: new CapabilityDelegation({
       capabilityChain
-    }),
-    compactProof: false
+    })
   });
 }
 

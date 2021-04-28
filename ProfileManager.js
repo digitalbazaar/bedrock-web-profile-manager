@@ -677,7 +677,7 @@ export default class ProfileManager {
       delegateEdvHmacRequest.invocationTarget = {
         id: hmac.id,
         type: hmac.type,
-        verificationMethod: hmac.id
+        publicAlias: hmac.id
       };
       delegateEdvHmacRequest.parentCapability = hmac.id;
     } else {
@@ -695,7 +695,7 @@ export default class ProfileManager {
       delegateEdvKakRequest.invocationTarget = {
         id: keyAgreementKey.id,
         type: keyAgreementKey.type,
-        verificationMethod: keyAgreementKey.id
+        publicAlias: keyAgreementKey.id
       };
       delegateEdvKakRequest.parentCapability = keyAgreementKey.id;
     } else {
@@ -1094,7 +1094,7 @@ export default class ProfileManager {
       invocationTarget: {
         id: keyAgreementKey.id,
         type: keyAgreementKey.type,
-        verificationMethod: keyAgreementKey.id
+        publicAlias: keyAgreementKey.id
       },
       parentCapability: keyAgreementKey.id
     };
@@ -1148,5 +1148,6 @@ async function _createCapabilityAgent({handle}) {
   const secret = new Uint8Array(32);
   crypto.getRandomValues(secret);
 
-  return CapabilityAgent.fromSecret({secret, handle});
+  return CapabilityAgent.fromSecret({
+    secret, handle, keyType: 'Ed25519VerificationKey2020'});
 }
