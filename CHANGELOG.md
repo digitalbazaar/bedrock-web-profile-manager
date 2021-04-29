@@ -1,5 +1,19 @@
 # bedrock-web-profile-manager ChangeLog
 
+## 8.0.0 - 2021-03-TBD
+
+### Changed
+- **BREAKING**: Temporarily remove veres-one DID support.
+- Supports `ed25519-2020` signature suite and verification keys.
+- Supports `X25519KAK2020` key type.
+- Update deps.
+  - Use [`@digitalbazaar/zcapld@4.0`](https://github.com/digitalbazaar/zcapld/blob/main/CHANGELOG.md).
+    - ocapld lib has been renamed to @digitalbazaar/zcapld and uses the new zcap-context.
+  - Use [`jsonld-signatures@9.0.2`](https://github.com/digitalbazaar/jsonld-signatures/blob/master/CHANGELOG.md)
+  - Use [`@digitalbazaar/webkms-client@6.0`](https://github.com/digitalbazaar/webkms-client/blob/main/CHANGELOG.md).
+    - webkms-client has been renamed to @digitalbazaar/webkms-client and uses the new webkms-context.
+- Update test deps.
+
 ## 7.0.0 - 2021-03-09
 
 ### Changed
