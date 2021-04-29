@@ -22,11 +22,10 @@
     "did-io": "^0.8.3",
     "did-method-key": "^0.7.0",
     "did-veres-one": "^13.0.0",
-    "ed25519-signature-2020-context": "^1.1.0",
     "edv-client": "digitalbazaar/edv-client#support-ed25519-signature-2020",
     "jsonld-signatures": "^9.0.2",
     "lru-cache": "^6.0.0",
-    "webkms-client": "digitalbazaar/webkms-client#use-webkms-context",
+    "@digitalbazaar/webkms-client": "digitalbazaar/webkms-client#use-webkms-context",
     "webkms-context": "^1.0.0",
     "zcap-context": "^1.2.1"
   },

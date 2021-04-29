@@ -10,7 +10,7 @@ import {
   KeyAgreementKey,
   Hmac,
   KmsClient
-} from 'webkms-client';
+} from '@digitalbazaar/webkms-client';
 import Collection from './Collection.js';
 import {EdvClient, EdvDocument} from 'edv-client';
 import LRU from 'lru-cache';
@@ -650,7 +650,6 @@ export default class ProfileManager {
     assert.parentCapabilitiesValidator({
       parentCapabilities, edvId, hmac, keyAgreementKey
     });
-    console.log('gets here:::::::', invocationSigner);
     const delegateEdvDocumentsRequest = {
       referenceId: `${referenceIdPrefix}-edv-documents`,
       allowedAction: ['read', 'write'],
@@ -704,7 +703,6 @@ export default class ProfileManager {
       delegateEdvKakRequest.invocationTarget = {...kak.invocationTarget};
       delegateEdvKakRequest.parentCapability = kak;
     }
-    console.log(invocationSigner, '<><><><>invocationSigner');
     const zcaps = await Promise.all([
       utils.delegateCapability({
         signer: invocationSigner,
