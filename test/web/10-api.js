@@ -246,7 +246,7 @@ describe('Profile Manager API', () => {
         }
       });
     });
-    it.skip('should successfully initialize w/ default signer', async () => {
+    it('should successfully initialize w/ default signer', async () => {
       let error;
       const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
       let profileId;

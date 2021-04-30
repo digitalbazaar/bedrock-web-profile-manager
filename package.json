@@ -20,8 +20,6 @@
     "@digitalbazaar/webkms-client": "digitalbazaar/webkms-client#use-webkms-context",
     "bedrock-web-profile": "^2.4.1",
     "bedrock-web-session": "^1.6.0",
-    "did-io": "^0.8.3",
-    "did-method-key": "^0.7.0",
     "did-veres-one": "veres-one/did-veres-one#v13.x",
     "edv-client": "digitalbazaar/edv-client#support-ed25519-signature-2020",
     "jsonld-signatures": "^9.0.2",
