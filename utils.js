@@ -9,12 +9,13 @@ import jsigs from 'jsonld-signatures';
 import {securityLoader} from '@digitalbazaar/security-document-loader';
 import zcapCtx from 'zcap-context';
 import webkmsCtx from 'webkms-context';
+import veresOneCtx from 'veres-one-context';
 
 const loader = securityLoader();
 loader.addStatic(zcapCtx.CONTEXT_URL, zcapCtx.CONTEXT);
 loader.addStatic(webkmsCtx.CONTEXT_URL, webkmsCtx.CONTEXT);
 loader.addStatic(
-  Ed25519Signature2020.CONTEXT_URL, Ed25519Signature2020.CONTEXT);
+  veresOneCtx.constants.VERES_ONE_CONTEXT_V1_URL, veresOneCtx.contexts);
 
 const documentLoader = loader.build();
 
