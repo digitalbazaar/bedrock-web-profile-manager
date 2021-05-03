@@ -31,7 +31,7 @@
     "bedrock-test": "^5.3.2",
     "bedrock-validation": "^5.0.0",
     "bedrock-veres-one-context": "digitalbazaar/bedrock-veres-one-context#update-deps",
-    "bedrock-web-profile": "^2.4.1",
+    "bedrock-web-profile": "digitalbazaar/bedrock-web-profile#remove-axios",
     "bedrock-web-profile-manager": "file:..",
     "bedrock-web-session": "^1.6.0",
     "bedrock-zcap-storage": "^3.2.0",
