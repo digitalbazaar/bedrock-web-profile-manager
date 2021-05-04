@@ -269,12 +269,10 @@ export async function delegate({zcap, signer, capabilityChain}) {
   if(signer.type === 'Ed25519VerificationKey2018') {
     suite = new Ed25519Signature2018({
       signer,
-      verificationMethod: signer.id
     });
   } else if(signer.type === 'Ed25519VerificationKey2020') {
     suite = new Ed25519Signature2020({
       signer,
-      verificationMethod: signer.id
     });
   }
   // attach capability delegation proof
