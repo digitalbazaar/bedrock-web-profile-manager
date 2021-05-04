@@ -21,7 +21,7 @@
     "bedrock-web-profile": "digitalbazaar/bedrock-web-profile#remove-axios",
     "bedrock-web-session": "^1.6.0",
     "did-veres-one": "veres-one/did-veres-one#v13.x",
-    "edv-client": "digitalbazaar/edv-client#support-ed25519-signature-2020",
+    "edv-client": "^9.0.0",
     "jsonld-signatures": "^9.0.2",
     "lru-cache": "^6.0.0",
     "veres-one-context": "veres-one/veres-one-context#v12.x",
