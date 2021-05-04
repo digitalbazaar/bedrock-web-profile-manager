@@ -29,7 +29,7 @@ describe('Collection API', () => {
       }
     });
   });
-  it.skip('should create a doc in a collection successfully', async () => {
+  it('should create a doc in a collection successfully', async () => {
     const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
     const {id: profileId} = await profileManager.createProfile(content);
     const {edvClient} = await profileManager.createProfileEdv(
@@ -70,7 +70,7 @@ describe('Collection API', () => {
     result.indexed[0].should.have.keys(['hmac', 'sequence', 'attributes']);
     result.content.should.eql(doc1);
   });
-  it.skip('should get all docs from a collection successfully', async () => {
+  it('should get all docs from a collection successfully', async () => {
     const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
     const {id: profileId} = await profileManager.createProfile(content);
     const {edvClient} = await profileManager.createProfileEdv(
@@ -113,7 +113,7 @@ describe('Collection API', () => {
     contents.should.deep.include(doc1);
     contents.should.deep.include(doc2);
   });
-  it.skip('should get a doc from a collection successfully', async () => {
+  it('should get a doc from a collection successfully', async () => {
     const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
     const {id: profileId} = await profileManager.createProfile(content);
     const {edvClient} = await profileManager.createProfileEdv(
@@ -161,7 +161,7 @@ describe('Collection API', () => {
     result.indexed[0].should.have.keys(['hmac', 'sequence', 'attributes']);
     result.content.should.eql(doc2);
   });
-  it.skip('should remove a doc from a collection successfully', async () => {
+  it('should remove a doc from a collection successfully', async () => {
     const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
     const {id: profileId} = await profileManager.createProfile(content);
     const {edvClient} = await profileManager.createProfileEdv(
@@ -211,7 +211,7 @@ describe('Collection API', () => {
     should.not.exist(err2);
     result2.should.eql([]);
   });
-  it.skip('should update a doc in a collection successfully', async () => {
+  it('should update a doc in a collection successfully', async () => {
     const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
     const {id: profileId} = await profileManager.createProfile(content);
     const {edvClient} = await profileManager.createProfileEdv(

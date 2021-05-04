@@ -17,7 +17,7 @@
     "@digitalbazaar/http-client": "^1.1.0",
     "@digitalbazaar/security-document-loader": "^1.0.0",
     "@digitalbazaar/zcapld": "^4.0.0",
-    "@digitalbazaar/webkms-client": "digitalbazaar/webkms-client#use-webkms-context",
+    "@digitalbazaar/webkms-client": "^6.0.0",
     "bedrock-web-profile": "digitalbazaar/bedrock-web-profile#remove-axios",
     "bedrock-web-session": "^1.6.0",
     "did-veres-one": "veres-one/did-veres-one#v13.x",

@@ -296,7 +296,7 @@ describe('Profile Manager API', () => {
       result.profileAgent.type.should.include.members(['User', 'Agent']);
       result.profileAgent.should.have.property('zcaps');
     });
-    it.skip('should successfully initialize w/ ephemeral signer', async () => {
+    it('should successfully initialize w/ ephemeral signer', async () => {
       let error;
       let result;
       try {
@@ -332,7 +332,7 @@ describe('Profile Manager API', () => {
       result.profileAgent.type.should.include.members(['User', 'Agent']);
       result.profileAgent.should.have.property('zcaps');
     });
-    it.skip('should successfully initialize w/o ephemeral signer', async () => {
+    it('should successfully initialize w/o ephemeral signer', async () => {
       let error;
       let result;
       try {
@@ -427,7 +427,7 @@ describe('Profile Manager API', () => {
         }
       });
     });
-    it.skip('should succeed w/ initialized profile', async () => {
+    it('should succeed w/ initialized profile', async () => {
       let error;
       let result;
       try {
@@ -593,7 +593,7 @@ describe('Profile Manager API', () => {
         }
       });
     });
-    it.skip('should succeed w/ initialized profile access management',
+    it('should succeed w/ initialized profile access management',
       async () => {
         let error;
         let result;
@@ -687,7 +687,7 @@ describe('Profile Manager API', () => {
         }
       });
     });
-    it.skip('should succeed if profile exists', async () => {
+    it('should succeed if profile exists', async () => {
       let error;
       let result;
       try {
@@ -967,7 +967,7 @@ describe('Profile Manager API', () => {
     });
   });
   describe('zcap expiration', () => {
-    it.skip('should delegate a new zcap with new expiration date when a zcap' +
+    it('should delegate a new zcap with new expiration date when a zcap' +
       'delegated to ephemeral DID has expired', async () => {
       let error;
       let result;
