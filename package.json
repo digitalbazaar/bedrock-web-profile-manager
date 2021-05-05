@@ -24,7 +24,7 @@
     "edv-client": "^9.0.0",
     "jsonld-signatures": "^9.0.2",
     "lru-cache": "^6.0.0",
-    "veres-one-context": "veres-one/veres-one-context#v12.x",
+    "veres-one-context": "^12.0.0",
     "webkms-context": "^1.0.0",
     "zcap-context": "^1.2.1"
   },
