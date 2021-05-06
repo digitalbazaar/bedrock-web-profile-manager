@@ -12,6 +12,8 @@
   - Use [`jsonld-signatures@9.0.2`](https://github.com/digitalbazaar/jsonld-signatures/blob/master/CHANGELOG.md)
   - Use [`@digitalbazaar/webkms-client@6.0`](https://github.com/digitalbazaar/webkms-client/blob/main/CHANGELOG.md).
     - webkms-client has been renamed to @digitalbazaar/webkms-client and uses the new webkms-context.
+  - Use [`bedrock-web-profile@3.0`](https://github.com/digitalbazaar/bedrock-web-profile/blob/main/CHANGELOG.md#300---2021-05-06).
+    - Replaced `axios` with `http-client`.
 - Update test deps.
 
 ## 7.0.0 - 2021-03-09
