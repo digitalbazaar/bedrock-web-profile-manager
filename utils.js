@@ -15,8 +15,9 @@ import * as didVeresOne from 'did-veres-one';
 const loader = securityLoader();
 loader.addStatic(zcapCtx.CONTEXT_URL, zcapCtx.CONTEXT);
 loader.addStatic(webkmsCtx.CONTEXT_URL, webkmsCtx.CONTEXT);
-loader.addStatic(
-  veresOneCtx.constants.VERES_ONE_CONTEXT_V1_URL, veresOneCtx.contexts);
+loader.addStatic(veresOneCtx.constants.VERES_ONE_CONTEXT_V1_URL,
+  veresOneCtx.contexts.get(veresOneCtx.constants.VERES_ONE_CONTEXT_V1_URL)
+);
 
 // TODO: Add options from config file
 loader.protocolHandlers.get('did').use(didVeresOne.driver({}));
