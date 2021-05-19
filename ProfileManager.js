@@ -1148,5 +1148,6 @@ async function _createCapabilityAgent({handle}) {
   crypto.getRandomValues(secret);
 
   return CapabilityAgent.fromSecret({
-    secret, handle, keyType: 'Ed25519VerificationKey2020'});
+    secret, handle, keyType: 'Ed25519VerificationKey2020'
+  });
 }
