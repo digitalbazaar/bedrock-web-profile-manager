@@ -10,7 +10,7 @@
     "bedrock": "^4.1.1",
     "bedrock-account": "^5.0.0",
     "bedrock-did-context": "^2.0.0",
-    "bedrock-did-io": "digitalbazaar/bedrock-did-io#update-veres-one",
+    "bedrock-did-io": "^2.0.0",
     "bedrock-edv-storage": "digitalbazaar/bedrock-edv-storage#update-to-use-ed25519-2020",
     "bedrock-express": "^4.0.0",
     "bedrock-https-agent": "^2.0.0",
@@ -33,9 +33,8 @@
     "bedrock-veres-one-context": "^11.0.0",
     "bedrock-web-profile": "^3.0.0",
     "bedrock-web-profile-manager": "file:..",
-    "bedrock-web-session": "^1.6.0",
     "bedrock-zcap-storage": "^3.2.0",
-    "bedrock-zcap-storage-http": "^1.3.0",
+    "edv-client": "^9.0.0",
     "sinon": "^9.1.0"
   }
 }
