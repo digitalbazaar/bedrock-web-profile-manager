@@ -275,6 +275,8 @@ export async function delegate({zcap, signer, capabilityChain}) {
     suite = new Ed25519Signature2020({
       signer,
     });
+  } else {
+    throw new Error(`Unsupported signer type "${signer.type}".`);
   }
   // attach capability delegation proof
   return sign(zcap, {
