@@ -8,8 +8,7 @@ import {
   CapabilityAgent,
   KeystoreAgent,
   KeyAgreementKey,
-  Hmac,
-  KmsClient
+  Hmac
 } from '@digitalbazaar/webkms-client';
 import Collection from './Collection.js';
 import {EdvClient, EdvDocument} from 'edv-client';
@@ -540,10 +539,9 @@ export default class ProfileManager {
     const {capability: zcap} = invocationSigner;
 
     const keystoreId = _getKeystoreId({zcap});
-    const keystore = await KmsClient.getKeystore({id: keystoreId});
     const capabilityAgent = new CapabilityAgent(
       {handle: 'primary', signer: invocationSigner});
-    return new KeystoreAgent({keystore, capabilityAgent});
+    return new KeystoreAgent({keystoreId, capabilityAgent});
   }
 
   // FIXME: expose this or not?

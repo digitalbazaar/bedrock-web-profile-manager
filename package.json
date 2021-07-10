@@ -17,7 +17,7 @@
     "@digitalbazaar/http-client": "^1.1.0",
     "@digitalbazaar/security-document-loader": "^1.0.0",
     "@digitalbazaar/zcapld": "^4.0.0",
-    "@digitalbazaar/webkms-client": "^6.0.0",
+    "@digitalbazaar/webkms-client": "digitalbazaar/webkms-client#update-root-zcaps",
     "bedrock-web-profile": "^3.0.0",
     "did-veres-one": "14.0.0-beta.1",
     "edv-client": "^9.0.0",
