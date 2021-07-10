@@ -1,5 +1,12 @@
 # bedrock-web-profile-manager ChangeLog
 
+## 9.0.0 - 2021-xx-xx
+
+### Changed
+- **BREAKING**: Use webkms-client@7. Most changes are internal, but this
+  version of the library must be used against a WebKMS server that requires
+  authz for fetching keystore configurations.
+
 ## 8.0.3 - 2021-08-19
 
 ### Fixed
