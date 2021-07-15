@@ -8,8 +8,7 @@ import {
   CapabilityAgent,
   KeystoreAgent,
   KeyAgreementKey,
-  Hmac,
-  KmsClient
+  Hmac
 } from '@digitalbazaar/webkms-client';
 import Collection from './Collection.js';
 import {EdvClient, EdvDocument} from 'edv-client';
@@ -540,24 +539,17 @@ export default class ProfileManager {
     const {capability: zcap} = invocationSigner;
 
     const keystoreId = _getKeystoreId({zcap});
-    const keystore = await KmsClient.getKeystore({id: keystoreId});
     const capabilityAgent = new CapabilityAgent(
       {handle: 'primary', signer: invocationSigner});
-    return new KeystoreAgent({keystore, capabilityAgent});
+    return new KeystoreAgent({keystoreId, capabilityAgent});
   }
 
   // FIXME: expose this or not?
   async createEdvRecipientKeys({profileId} = {}) {
     const keystoreAgent = await this.getProfileKeystoreAgent({profileId});
     const [keyAgreementKey, hmac] = await Promise.all([
-      keystoreAgent.generateKey({
-        type: 'keyAgreement',
-        kmsModule: this.kmsModule,
-      }),
-      keystoreAgent.generateKey({
-        type: 'hmac',
-        kmsModule: this.kmsModule,
-      })
+      keystoreAgent.generateKey({type: 'keyAgreement'}),
+      keystoreAgent.generateKey({type: 'hmac'})
     ]);
     return {hmac, keyAgreementKey};
   }
@@ -1146,8 +1138,5 @@ async function _createCapabilityAgent({handle}) {
   const crypto = (self.crypto || self.msCrypto);
   const secret = new Uint8Array(32);
   crypto.getRandomValues(secret);
-
-  return CapabilityAgent.fromSecret({
-    secret, handle, keyType: 'Ed25519VerificationKey2020'
-  });
+  return CapabilityAgent.fromSecret({secret, handle});
 }
