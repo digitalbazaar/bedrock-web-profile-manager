@@ -548,14 +548,8 @@ export default class ProfileManager {
   async createEdvRecipientKeys({profileId} = {}) {
     const keystoreAgent = await this.getProfileKeystoreAgent({profileId});
     const [keyAgreementKey, hmac] = await Promise.all([
-      keystoreAgent.generateKey({
-        type: 'keyAgreement',
-        kmsModule: this.kmsModule,
-      }),
-      keystoreAgent.generateKey({
-        type: 'hmac',
-        kmsModule: this.kmsModule,
-      })
+      keystoreAgent.generateKey({type: 'keyAgreement'}),
+      keystoreAgent.generateKey({type: 'hmac'})
     ]);
     return {hmac, keyAgreementKey};
   }
@@ -1144,8 +1138,5 @@ async function _createCapabilityAgent({handle}) {
   const crypto = (self.crypto || self.msCrypto);
   const secret = new Uint8Array(32);
   crypto.getRandomValues(secret);
-
-  return CapabilityAgent.fromSecret({
-    secret, handle, keyType: 'Ed25519VerificationKey2020'
-  });
+  return CapabilityAgent.fromSecret({secret, handle});
 }
