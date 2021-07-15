@@ -20,7 +20,7 @@
     "@digitalbazaar/zcapld": "^5.1.2",
     "bedrock-web-profile": "^3.0.0",
     "did-veres-one": "14.0.0-beta.1",
-    "edv-client": "^9.0.0",
+    "edv-client": "^9.0.1",
     "jsonld-signatures": "^9.0.2",
     "lru-cache": "^6.0.0",
     "veres-one-context": "^12.0.0",
