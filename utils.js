@@ -268,13 +268,9 @@ export async function delegate({zcap, signer, capabilityChain}) {
     Array.isArray(capabilityChain) ? capabilityChain : [zcap.parentCapability];
   let suite;
   if(signer.type === 'Ed25519VerificationKey2018') {
-    suite = new Ed25519Signature2018({
-      signer,
-    });
+    suite = new Ed25519Signature2018({signer});
   } else if(signer.type === 'Ed25519VerificationKey2020') {
-    suite = new Ed25519Signature2020({
-      signer,
-    });
+    suite = new Ed25519Signature2020({signer});
   } else {
     throw new Error(`Unsupported signer type "${signer.type}".`);
   }
