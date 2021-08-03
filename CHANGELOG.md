@@ -1,5 +1,10 @@
 # bedrock-web-profile-manager ChangeLog
 
+## 10.1.0 - 2021-TBD
+
+### Changed
+- Add support for Node.js via `isomorphic-webcrypto`.
+
 ## 10.0.1 - 2021-10-05
 
 ### Fixed
