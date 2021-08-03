@@ -3,6 +3,9 @@
   "version": "8.0.2",
   "description": "Profile management for Bedrock Web Apps",
   "main": "index.js",
+  "browser": {
+    "./crypto.js": "./cryto-browser.js"
+  },
   "scripts": {
     "generate-readme": "jsdoc2md -t template.hbs *.js > README.md",
     "lint": "eslint ."
@@ -21,6 +24,7 @@
     "bedrock-web-profile": "^3.0.0",
     "did-veres-one": "14.0.0-beta.1",
     "edv-client": "^9.0.0",
+    "isomorphic-webcrypto": "^2.3.8",
     "jsonld-signatures": "^9.0.2",
     "lru-cache": "^6.0.0",
     "veres-one-context": "^12.0.0",

@@ -17,6 +17,7 @@ import LRU from 'lru-cache';
 import keyResolver from './keyResolver.js';
 import utils from './utils.js';
 import assert from './assert.js';
+import crypto from './crypto.js';
 
 const JWE_ALG = 'ECDH-ES+A256KW';
 const ZCAP_REFERENCE_IDS = {
@@ -1143,7 +1144,6 @@ function _getProfileInvocationZcapKeyReferenceId(
 
 async function _createCapabilityAgent({handle}) {
   // generate a secret and load a new capability agent
-  const crypto = (self.crypto || self.msCrypto);
   const secret = new Uint8Array(32);
   crypto.getRandomValues(secret);
 

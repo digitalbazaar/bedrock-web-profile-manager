@@ -1,5 +1,8 @@
 # bedrock-web-profile-manager ChangeLog
 
+### Changed
+- Add support for Node.js via `isomorphic-webcrypto`.
+
 ## 8.0.3 - 2021-08-19
 
 ### Fixed
