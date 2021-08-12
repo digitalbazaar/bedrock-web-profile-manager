@@ -96,7 +96,7 @@ export async function delegateCapability(
         '"invocationTarget.id" must be set for Web KMS capabilities.');
     }
     if(!publicAlias) {
-      throw new TypeError('"invocationTarget.verificationMethod" is required.');
+      throw new TypeError('"invocationTarget.publicAlias" is required.');
     }
     // TODO: fetch `target` from a key mapping document in the profile's
     // edv to get public key ID to set as `referenceId`
