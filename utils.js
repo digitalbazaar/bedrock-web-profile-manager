@@ -105,7 +105,12 @@ export async function delegateCapability(
       type: targetType,
       publicAlias,
     };
-    zcap.parentCapability = parentCapability || target;
+    let parentZcap;
+    if(target) {
+      const keystoreId = parseKeystoreId(target)
+      parentZcap = `urn:zcap:root:${encodeURIComponent(keystoreId)}`;
+    }
+    zcap.parentCapability = parentCapability || parentZcap;
     zcap = await delegate({zcap, signer, capabilityChain});
 
     return zcap;
@@ -284,6 +289,21 @@ export async function delegate({zcap, signer, capabilityChain}) {
   });
 }
 
+/**
+ * Parses the WebKMS Keystore id from the id of a WebKMS Key.
+ *
+ * @property {string} keyId - An id of a WebKMS Key.
+ *
+ * @returns {string} Returns a WebKMS Keystore id.
+ */
+export function parseKeystoreId(keyId) {
+  // key ID format: <baseUrl>/<keystores-path>/<keystore-id>/keys/<key-id>
+  const idx = keyId.lastIndexOf('/keys/');
+  if(idx === -1) {
+    throw new Error(`Invalid key ID "${keyId}".`);
+  }
+  return keyId.substr(0, idx);
+}
 // FIXME: Do not introsepect url to get the Keystore ID
 export function deriveKeystoreId(id) {
   const urlObj = new URL(id);
@@ -302,4 +322,5 @@ export default {
   id,
   delegate,
   deriveKeystoreId,
+  parseKeystoreId,
 };
