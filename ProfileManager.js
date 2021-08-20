@@ -671,7 +671,7 @@ export default class ProfileManager {
         type: hmac.type,
         publicAlias: hmac.id
       };
-      const keystoreId = utils.parseKeystoreId(hmac.id)
+      const keystoreId = utils.parseKeystoreId(hmac.id);
       const parentZcap = `urn:zcap:root:${encodeURIComponent(keystoreId)}`;
       delegateEdvHmacRequest.parentCapability = parentZcap;
     } else {
@@ -691,7 +691,7 @@ export default class ProfileManager {
         type: keyAgreementKey.type,
         publicAlias: keyAgreementKey.id
       };
-      const keystoreId = utils.parseKeystoreId(keyAgreementKey.id)
+      const keystoreId = utils.parseKeystoreId(keyAgreementKey.id);
       const parentZcap = `urn:zcap:root:${encodeURIComponent(keystoreId)}`;
       delegateEdvKakRequest.parentCapability = parentZcap;
     } else {
@@ -1082,7 +1082,7 @@ export default class ProfileManager {
         type: 'urn:edv:document'
       };
     }
-    const keystoreId = utils.parseKeystoreId(keyAgreementKey.id)
+    const keystoreId = utils.parseKeystoreId(keyAgreementKey.id);
     const parentZcap = `urn:zcap:root:${encodeURIComponent(keystoreId)}`;
     const delegateEdvKakRequest = {
       referenceId: ZCAP_REFERENCE_IDS.userKak,

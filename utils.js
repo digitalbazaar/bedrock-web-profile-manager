@@ -107,7 +107,7 @@ export async function delegateCapability(
     };
     let parentZcap;
     if(target) {
-      const keystoreId = parseKeystoreId(target)
+      const keystoreId = parseKeystoreId(target);
       parentZcap = `urn:zcap:root:${encodeURIComponent(keystoreId)}`;
     }
     zcap.parentCapability = parentCapability || parentZcap;
