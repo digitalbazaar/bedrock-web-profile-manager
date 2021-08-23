@@ -525,11 +525,19 @@ export default class ProfileManager {
       this.getProfile({id: profileAgent.profile}));
 
     // TODO: Use proper promise-fun library to limit concurrency
-    const profiles = await Promise.all(promises);
+    const profiles = await Promise.allSettled(promises);
     if(!type) {
       return profiles;
     }
-    return profiles.filter(profile => profile.type.includes(type));
+    // Only return valid profiles
+    // if there is a malformed profile warn the client
+    return profiles.filter(profile => {
+      if(!profile.status) {
+        console.warn('Filtering out unprovisioned profile.');
+        return false;
+      }
+      return profile.type.includes(type);
+    });
   }
 
   async getProfileKeystoreAgent({profileId} = {}) {
