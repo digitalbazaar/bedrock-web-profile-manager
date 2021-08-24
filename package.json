@@ -16,7 +16,7 @@
     "@digitalbazaar/ed25519-signature-2020": "^3.0.0",
     "@digitalbazaar/http-client": "^1.1.0",
     "@digitalbazaar/security-document-loader": "^1.0.0",
-    "@digitalbazaar/webkms-client": "^6.0.0",
+    "@digitalbazaar/webkms-client": "^6.0.1",
     "@digitalbazaar/zcapld": "^5.1.2",
     "bedrock-web-profile": "^3.0.0",
     "did-veres-one": "14.0.0-beta.1",
