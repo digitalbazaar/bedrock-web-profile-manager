@@ -666,12 +666,13 @@ export default class ProfileManager {
       controller: profileAgentId
     };
     if(hmac) {
+      const keyId = hmac.kmsId ? hmac.kmsId : hmac.id;
       delegateEdvHmacRequest.invocationTarget = {
-        id: hmac.id,
+        id: keyId,
         type: hmac.type,
         publicAlias: hmac.id
       };
-      const keystoreId = utils.parseKeystoreId(hmac.id);
+      const keystoreId = utils.parseKeystoreId(keyId);
       const parentZcap = `urn:zcap:root:${encodeURIComponent(keystoreId)}`;
       delegateEdvHmacRequest.parentCapability = parentZcap;
     } else {
@@ -686,12 +687,14 @@ export default class ProfileManager {
       controller: profileAgentId
     };
     if(keyAgreementKey) {
+      const keyId = keyAgreementKey.kmsId ? keyAgreementKey.kmsId :
+        keyAgreementKey.id;
       delegateEdvKakRequest.invocationTarget = {
-        id: keyAgreementKey.id,
+        id: keyId,
         type: keyAgreementKey.type,
         publicAlias: keyAgreementKey.id
       };
-      const keystoreId = utils.parseKeystoreId(keyAgreementKey.id);
+      const keystoreId = utils.parseKeystoreId(keyId);
       const parentZcap = `urn:zcap:root:${encodeURIComponent(keystoreId)}`;
       delegateEdvKakRequest.parentCapability = parentZcap;
     } else {
@@ -1082,14 +1085,16 @@ export default class ProfileManager {
         type: 'urn:edv:document'
       };
     }
-    const keystoreId = utils.parseKeystoreId(keyAgreementKey.id);
+    const keyId = keyAgreementKey.kmsId ? keyAgreementKey.kmsId :
+      keyAgreementKey.id;
+    const keystoreId = utils.parseKeystoreId(keyId);
     const parentZcap = `urn:zcap:root:${encodeURIComponent(keystoreId)}`;
     const delegateEdvKakRequest = {
       referenceId: ZCAP_REFERENCE_IDS.userKak,
       allowedAction: ['deriveSecret', 'sign'],
       controller: profileAgentId,
       invocationTarget: {
-        id: keyAgreementKey.id,
+        id: keyId,
         type: keyAgreementKey.type,
         publicAlias: keyAgreementKey.id
       },

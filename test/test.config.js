@@ -46,3 +46,6 @@ config['kms-http'].requireAuthentication = false;
 
 config.server.host = 'localhost:9876';
 config.kms.allowedHost = config.server.host;
+
+config.profile.kms.baseUrl = `${config.server.baseUri}/kms`;
+config.profile.kms.ipAllowList = ['127.0.0.1/32'];

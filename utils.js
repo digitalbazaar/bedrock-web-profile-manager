@@ -292,7 +292,7 @@ export async function delegate({zcap, signer, capabilityChain}) {
 /**
  * Parses the WebKMS Keystore id from the id of a WebKMS Key.
  *
- * @property {string} keyId - An id of a WebKMS Key.
+ * @param {string} keyId - An id of a WebKMS Key.
  *
  * @returns {string} Returns a WebKMS Keystore id.
  */

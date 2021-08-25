@@ -531,8 +531,7 @@ describe('Profile Manager API', () => {
       try {
         const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
         const {id: profileId} = await profileManager.createProfile(content);
-        result = await profileManager.getProfileKeystoreAgent(
-          {profileId});
+        result = await profileManager.getProfileKeystoreAgent({profileId});
       } catch(e) {
         error = e;
       }
@@ -541,7 +540,7 @@ describe('Profile Manager API', () => {
       result.should.have.property('capabilityAgent');
       result.capabilityAgent.should.have.property('id');
       result.capabilityAgent.id.should.contain('did:v1:');
-      result.should.have.property('keystore');
+      result.should.have.property('keystoreId');
       result.should.have.property('kmsClient');
     });
     it('should fail if profileId is undefined', async () => {
@@ -791,7 +790,7 @@ describe('Profile Manager API', () => {
       error.name.should.equal('TypeError');
       error.message.should.contain('profileId');
     });
-    it('should fail after parentCapabilities assertation', async () => {
+    it('should fail after parentCapabilities assertion', async () => {
       const {
         parentCapabilities,
         edvId,
