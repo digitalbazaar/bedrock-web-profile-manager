@@ -16,14 +16,33 @@ require('bedrock-ssm-mongodb');
 require('bedrock-edv-storage');
 
 // mock product IDs and reverse lookup for webkms/edv/etc service products
-const productIdMap = new Map([
-  // webkms service
-  ['webkms', 'urn:uuid:80a82316-e8c2-11eb-9570-10bf48838a41'],
-  ['urn:uuid:80a82316-e8c2-11eb-9570-10bf48838a41', 'webkms'],
-  // edv service
-  ['edv', 'urn:uuid:dbd15f08-ff67-11eb-893b-10bf48838a41'],
-  ['urn:uuid:dbd15f08-ff67-11eb-893b-10bf48838a41', 'edv']
-]);
+const productIdMap = new Map();
+
+const products = [{
+  // eslint-disable-next-line max-len
+  // Use product ID found in bedrock-profile-http: https://github.com/digitalbazaar/bedrock-profile-http/blob/ded73027d0ae6db929a543057ec60ad0a58c5da9/lib/http.js#L60
+  id: 'urn:uuid:80a82316-e8c2-11eb-9570-10bf48838a41',
+  name: 'Example KMS',
+  service: {
+    // default dev `id` configured in `bedrock-kms-http`
+    id: 'did:key:z6MkwZ7AXrDpuVi5duY2qvVSx1tBkGmVnmRjDvvwzoVnAzC4',
+    type: 'webkms',
+  }
+}, {
+  // Use default `veres-vault` dev `id` and `serviceId`
+  id: 'urn:uuid:dbd15f08-ff67-11eb-893b-10bf48838a41',
+  name: 'Example EDV',
+  service: {
+    // default dev `id` configured in `bedrock-edv-storage`
+    id: 'did:key:z6MkhNyDoLpNcPv5grXoJSJVJjvApd46JU5nPL6cwi88caYW',
+    type: 'edv',
+  }
+}];
+
+for(const product of products) {
+  productIdMap.set(product.id, product);
+  productIdMap.set(product.name, product);
+}
 
 bedrock.events.on('bedrock.init', async () => {
   /* Handlers need to be added before `bedrock.start` is called. These are
@@ -31,9 +50,12 @@ bedrock.events.on('bedrock.init', async () => {
   handlers.setCreateHandler({
     handler({meter} = {}) {
       // use configured meter usage reporter as service ID for tests
-      const clientName = productIdMap.get(meter.product.id);
-      meter.serviceId = bedrock.config['meter-usage-reporter']
-        .clients[clientName].id;
+      const product = productIdMap.get(meter.product.id);
+      if(!product) {
+        console.log(`Incorrect test setup. Product not found.`, {meter});
+        process.exit(1);
+      }
+      meter.serviceId = product.service.id;
       return {meter};
     }
   });
@@ -43,7 +65,6 @@ bedrock.events.on('bedrock.init', async () => {
 });
 
 const brPassport = require('bedrock-passport');
-// const mockData = require('./web/mock-data');
 brPassport.optionallyAuthenticated = (req, res, next) => {
   req.user = {
     account: {
