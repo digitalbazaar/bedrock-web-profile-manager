@@ -724,7 +724,7 @@ export default class ProfileManager {
     assert.nonEmptyString(profileId, 'profileId');
     const {invocationSigner: signer} = await this.getProfileSigner({profileId});
     const keystoreAgent = await this.getProfileKeystoreAgent({profileId});
-    const {id: keystoreId} = keystoreAgent.keystore;
+    const {keystoreId} = keystoreAgent;
     return utils.delegateCapability({signer, keystoreId, request});
   }
 

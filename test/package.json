@@ -29,7 +29,7 @@
     "bedrock-passport": "^6.1.0",
     "bedrock-permission": "^3.2.0",
     "bedrock-profile": "^12.0.0",
-    "bedrock-profile-http": "digitalbazaar/bedrock-profile-http#update-meter-creation",
+    "bedrock-profile-http": "^9.0.0",
     "bedrock-security-context": "^4.1.0",
     "bedrock-server": "^3.0.0",
     "bedrock-ssm-mongodb": "^6.0.0",
