@@ -2,6 +2,15 @@
 
 ## 10.0.0 - 2021-09-03
 
+### Fixed
+- Fix destructuring of `keystoreId` in `delegateCapability()`. Previously
+  `keystoreAgent` had `keystore` property which provided the id, but now
+  it no longer has the `keystore` property, instead it has the `keystoreId`
+  property.
+- Update `bedrock-profile-http` in test.
+
+## 10.0.0 - 2021-09-03
+
 ### Changed
 - **BREAKING**: No changes to the public API. Must use bedrock-kms-http@9,
   bedrock-meter-http@2, bedrock-meter-usage-reporter@4, bedrock-profile@12,
