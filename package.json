@@ -4,7 +4,7 @@
   "description": "Profile management for Bedrock Web Apps",
   "main": "index.js",
   "browser": {
-    "./crypto.js": "./cryto-browser.js"
+    "./crypto.js": "./crypto-browser.js"
   },
   "scripts": {
     "generate-readme": "jsdoc2md -t template.hbs *.js > README.md",
