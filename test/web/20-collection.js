@@ -2,7 +2,7 @@
  * Copyright (c) 2019-2021 Digital Bazaar, Inc. All rights reserved.
  */
 import {ProfileManager} from 'bedrock-web-profile-manager';
-import {EdvClient} from 'edv-client';
+import {EdvClient} from '@digitalbazaar/edv-client';
 
 const ACCOUNT_ID = 'urn:uuid:ffaf5d84-7dc2-4f7b-9825-cc8d2e5a5d06';
 const KMS_MODULE = 'ssm-v1';
@@ -31,9 +31,12 @@ describe('Collection API', () => {
   });
   it('should create a doc in a collection successfully', async () => {
     const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-    const {id: profileId} = await profileManager.createProfile(content);
+    const {id: profileId, meters} = await profileManager.createProfile(content);
+    const {meter: edvMeter} = meters.find(
+      m => m.meter.referenceId === 'profile:core:edv');
+
     const {edvClient} = await profileManager.createProfileEdv(
-      {profileId, referenceId: 'example'});
+      {profileId, meterId: edvMeter.id, referenceId: 'example'});
 
     await profileManager.initializeAccessManagement({
       profileId,
@@ -72,9 +75,12 @@ describe('Collection API', () => {
   });
   it('should get all docs from a collection successfully', async () => {
     const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-    const {id: profileId} = await profileManager.createProfile(content);
+    const {id: profileId, meters} = await profileManager.createProfile(content);
+    const {meter: edvMeter} = meters.find(
+      m => m.meter.referenceId === 'profile:core:edv');
+
     const {edvClient} = await profileManager.createProfileEdv(
-      {profileId, referenceId: 'example'});
+      {profileId, meterId: edvMeter.id, referenceId: 'example'});
 
     await profileManager.initializeAccessManagement({
       profileId,
@@ -115,9 +121,12 @@ describe('Collection API', () => {
   });
   it('should get a doc from a collection successfully', async () => {
     const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-    const {id: profileId} = await profileManager.createProfile(content);
+    const {id: profileId, meters} = await profileManager.createProfile(content);
+    const {meter: edvMeter} = meters.find(
+      m => m.meter.referenceId === 'profile:core:edv');
+
     const {edvClient} = await profileManager.createProfileEdv(
-      {profileId, referenceId: 'example'});
+      {profileId, meterId: edvMeter.id, referenceId: 'example'});
 
     await profileManager.initializeAccessManagement({
       profileId,
@@ -163,9 +172,12 @@ describe('Collection API', () => {
   });
   it('should remove a doc from a collection successfully', async () => {
     const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-    const {id: profileId} = await profileManager.createProfile(content);
+    const {id: profileId, meters} = await profileManager.createProfile(content);
+    const {meter: edvMeter} = meters.find(
+      m => m.meter.referenceId === 'profile:core:edv');
+
     const {edvClient} = await profileManager.createProfileEdv(
-      {profileId, referenceId: 'example'});
+      {profileId, meterId: edvMeter.id, referenceId: 'example'});
 
     await profileManager.initializeAccessManagement({
       profileId,
@@ -213,9 +225,12 @@ describe('Collection API', () => {
   });
   it('should update a doc in a collection successfully', async () => {
     const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-    const {id: profileId} = await profileManager.createProfile(content);
+    const {id: profileId, meters} = await profileManager.createProfile(content);
+    const {meter: edvMeter} = meters.find(
+      m => m.meter.referenceId === 'profile:core:edv');
+
     const {edvClient} = await profileManager.createProfileEdv(
-      {profileId, referenceId: 'example'});
+      {profileId, meterId: edvMeter.id, referenceId: 'example'});
 
     await profileManager.initializeAccessManagement({
       profileId,

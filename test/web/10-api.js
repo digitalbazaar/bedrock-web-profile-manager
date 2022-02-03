@@ -250,18 +250,22 @@ describe('Profile Manager API', () => {
       let error;
       const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
       let profileId;
+      let meters;
       try {
-        ({id: profileId} = await profileManager.createProfile(content));
+        ({id: profileId, meters} = await profileManager.createProfile(content));
       } catch(e) {
         error = e;
       }
+
       should.not.exist(error);
 
       error = null;
       let edvClient;
+      const {meter: edvMeter} = meters.find(
+        m => m.meter.referenceId === 'profile:core:edv');
       try {
         ({edvClient} = await profileManager.createProfileEdv(
-          {profileId, referenceId: 'example'}));
+          {profileId, meterId: edvMeter.id, referenceId: 'example'}));
       } catch(e) {
         error = e;
       }
@@ -280,6 +284,7 @@ describe('Profile Manager API', () => {
       } catch(e) {
         error = e;
       }
+
       should.not.exist(error);
       should.exist(result);
       result.should.have.property('profile');
@@ -301,10 +306,13 @@ describe('Profile Manager API', () => {
       let result;
       try {
         const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-        const {id: profileId} = await profileManager.createProfile(content);
+        const {id: profileId, meters} = await profileManager.createProfile(
+          content);
+        const {meter: edvMeter} = meters.find(
+          m => m.meter.referenceId === 'profile:core:edv');
 
         const {edvClient} = await profileManager.createProfileEdv(
-          {profileId, referenceId: 'example'});
+          {profileId, meterId: edvMeter.id, referenceId: 'example'});
 
         result = await profileManager.initializeAccessManagement({
           profileId,
@@ -337,10 +345,13 @@ describe('Profile Manager API', () => {
       let result;
       try {
         const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-        const {id: profileId} = await profileManager.createProfile(content);
+        const {id: profileId, meters} = await profileManager.createProfile(
+          content);
+        const {meter: edvMeter} = meters.find(
+          m => m.meter.referenceId === 'profile:core:edv');
 
         const {edvClient} = await profileManager.createProfileEdv(
-          {profileId, referenceId: 'example'});
+          {profileId, meterId: edvMeter.id, referenceId: 'example'});
 
         result = await profileManager.initializeAccessManagement({
           profileId,
@@ -432,10 +443,13 @@ describe('Profile Manager API', () => {
       let result;
       try {
         const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-        const {id: profileId} = await profileManager.createProfile(content);
+        const {id: profileId, meters} = await profileManager.createProfile(
+          content);
+        const {meter: edvMeter} = meters.find(
+          m => m.meter.referenceId === 'profile:core:edv');
 
         const {edvClient} = await profileManager.createProfileEdv(
-          {profileId, referenceId: 'example'});
+          {profileId, meterId: edvMeter.id, referenceId: 'example'});
 
         result = await profileManager.initializeAccessManagement({
           profileId,
@@ -598,10 +612,13 @@ describe('Profile Manager API', () => {
         let result;
         try {
           const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-          const {id: profileId} = await profileManager.createProfile(content);
+          const {id: profileId, meters} = await profileManager.createProfile(
+            content);
+          const {meter: edvMeter} = meters.find(
+            m => m.meter.referenceId === 'profile:core:edv');
 
           const {edvClient} = await profileManager.createProfileEdv(
-            {profileId, referenceId: 'example'});
+            {profileId, meterId: edvMeter.id, referenceId: 'example'});
 
           result = await profileManager.initializeAccessManagement({
             profileId,
@@ -615,14 +632,14 @@ describe('Profile Manager API', () => {
         } catch(e) {
           error = e;
         }
+        should.not.exist(error);
+        should.exist(result);
         result.should.have.property('profile');
         result.profile.should.have.property('id');
         result.profile.id.should.contain('did:v1:');
         result.profile.should.have.property('accessManagement');
         result.should.have.property('profileManager');
         result.should.have.property('users');
-        should.not.exist(error);
-        should.exist(result);
       });
     it('should fail w/ uninitialized profile access management', async () => {
       let error;
@@ -691,10 +708,13 @@ describe('Profile Manager API', () => {
       let result;
       try {
         const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-        const {id: profileId} = await profileManager.createProfile(content);
+        const {id: profileId, meters} = await profileManager.createProfile(
+          content);
+        const {meter: edvMeter} = meters.find(
+          m => m.meter.referenceId === 'profile:core:edv');
 
         result = await profileManager.createProfileEdv(
-          {profileId, referenceId: 'example'});
+          {profileId, meterId: edvMeter.id, referenceId: 'example'});
       } catch(e) {
         error = e;
       }
@@ -987,9 +1007,13 @@ describe('Profile Manager API', () => {
         }
       });
       const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-      const {id: profileId} = await profileManager.createProfile(content);
+      const {id: profileId, meters} = await profileManager.createProfile(
+        content);
+      const {meter: edvMeter} = meters.find(
+        m => m.meter.referenceId === 'profile:core:edv');
+
       const {edvClient} = await profileManager.createProfileEdv(
-        {profileId, referenceId: 'example'});
+        {profileId, meterId: edvMeter.id, referenceId: 'example'});
       try {
         result = await profileManager.initializeAccessManagement({
           profileId,

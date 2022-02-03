@@ -14,7 +14,7 @@ config.karma.config.proxies = {
   }
 };
 config.karma.config.proxyValidateSSL = false;
-// // Enable for rapid unit test development
+// Enable for rapid unit test development
 // config.karma.config.singleRun = false;
 // config.karma.config.browsers = ['Chrome_special'];
 // config.karma.config.customLaunchers = {
@@ -49,3 +49,7 @@ config.kms.allowedHost = config.server.host;
 
 config.profile.kms.baseUrl = `${config.server.baseUri}/kms`;
 config.profile.kms.ipAllowList = ['127.0.0.1/32'];
+
+// use session
+config.express.useSession = true;
+config.express.jsonErrorLevel = 'full';

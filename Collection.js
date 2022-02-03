@@ -1,7 +1,7 @@
 /*!
  * Copyright (c) 2020-2021 Digital Bazaar, Inc. All rights reserved.
  */
-import {EdvClient, EdvDocument} from 'edv-client';
+import {EdvClient, EdvDocument} from '@digitalbazaar/edv-client';
 
 const JWE_ALG = 'ECDH-ES+A256KW';
 
