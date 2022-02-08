@@ -1,5 +1,11 @@
 # bedrock-web-profile-manager ChangeLog
 
+## 11.0.0 - 2022-xx-xx
+
+### Changed
+- **BREAKING**: Require `meterId` as a parameter for `createProfileEdv`. Must
+  use bedrock-profile@13 and use bedrock-profile-http@10.
+
 ## 10.1.0 - 2021-10-06
 
 ### Changed
