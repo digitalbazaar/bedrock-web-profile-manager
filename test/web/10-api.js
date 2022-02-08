@@ -984,8 +984,8 @@ describe('Profile Manager API', () => {
     });
   });
   describe('zcap expiration', () => {
-    it('should delegate a new zcap with new expiration date when a zcap' +
-      'delegated to ephemeral DID has expired', async () => {
+    it('should delegate a new zcap with new expiration date when a ' +
+      'zcap delegated to ephemeral DID has expired', async () => {
       let error;
       let result;
       const profileManager = new ProfileManager({
