@@ -756,7 +756,9 @@ export default class ProfileManager {
       hmac: await Hmac.fromCapability({
         capability: hmacZcap,
         invocationSigner
-      })
+      }),
+      capability: documentsZcap,
+      invocationSigner
     });
 
     // TODO: consider storing indexes for profile EDVs in the profile's
@@ -813,7 +815,6 @@ export default class ProfileManager {
   async _getAgentCapability({id, profileAgent, useEphemeralSigner}) {
     const agentSigner = await this._getAgentSigner(
       {profileAgentId: profileAgent.id, useEphemeralSigner: false});
-    console.trace();
     const originalZcap = profileAgent.zcaps[id];
     if(!originalZcap) {
       const {id: profileAgentId} = profileAgent;
@@ -831,13 +832,11 @@ export default class ProfileManager {
     // restrictive than its parent.
     if(agentSigner && agentSigner.capability) {
       expires = new Date(agentSigner.capability.expires);
-      expires.setSeconds(expires.getSeconds() - 1);
     }
 
     const originalZcapExpiration = new Date(originalZcap.expires);
     if(originalZcapExpiration < expires) {
       expires = originalZcapExpiration;
-      expires.setSeconds(expires.getSeconds() - 1);
     }
 
     return utils.delegateCapability({
