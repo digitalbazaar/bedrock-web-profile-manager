@@ -605,7 +605,6 @@ export default class ProfileManager {
       sequence: 0,
       controller: profileId,
       referenceId,
-      // FIXME: 12341234
       meterId,
       keyAgreementKey: {id: keyAgreementKey.id, type: keyAgreementKey.type},
       hmac: {id: hmac.id, type: hmac.type}
