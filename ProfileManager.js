@@ -394,7 +394,10 @@ export default class ProfileManager {
       account: this.accountId,
       profileAgentId,
       // this map includes capabilities for user document and kak
-      zcaps: agentRecordZcaps
+      zcaps: {
+        ...profileAgentRecord.profileAgent.zcaps,
+        ...agentRecordZcaps
+      }
     });
     return {profile, profileAgent};
   }
@@ -632,10 +635,16 @@ export default class ProfileManager {
     assert.parentCapabilitiesValidator({
       parentCapabilities, edvId, hmac, keyAgreementKey
     });
+
+    // 90 day expiration for EDV zcaps
+    const expires = new Date();
+    expires.setDate(expires.getDate() + 90);
+
     const delegateEdvDocumentsRequest = {
       referenceId: `${referenceIdPrefix}-edv-documents`,
       allowedAction: ['read', 'write'],
       controller: profileAgentId,
+      expires,
       // FIXME: Find proper home for type property
       type: 'urn:edv:documents'
     };
@@ -652,7 +661,8 @@ export default class ProfileManager {
     const delegateEdvHmacRequest = {
       referenceId: `${referenceIdPrefix}-edv-hmac`,
       allowedAction: 'sign',
-      controller: profileAgentId
+      controller: profileAgentId,
+      expires,
     };
     if(hmac) {
       const keyId = hmac.kmsId ? hmac.kmsId : hmac.id;
@@ -671,7 +681,8 @@ export default class ProfileManager {
     const delegateEdvKakRequest = {
       referenceId: `${referenceIdPrefix}-edv-kak`,
       allowedAction: ['deriveSecret', 'sign'],
-      controller: profileAgentId
+      controller: profileAgentId,
+      expires,
     };
     if(keyAgreementKey) {
       const keyId = keyAgreementKey.kmsId ? keyAgreementKey.kmsId :
@@ -826,8 +837,8 @@ export default class ProfileManager {
     }
     const ephemeralSigner = await this._getAgentSigner(
       {profileAgentId: profileAgent.id, useEphemeralSigner: true});
-    let expires;
 
+    let expires;
     // Ensures the `expires` property in a delegated capability is not less
     // restrictive than its parent.
     if(agentSigner && agentSigner.capability) {
@@ -1024,11 +1035,16 @@ export default class ProfileManager {
     edvId, profileAgentId, docId, invocationTarget, edvParentCapability,
     invocationSigner
   }) {
+    // 90 day expiration for EDV zcaps
+    const expires = new Date();
+    expires.setDate(expires.getDate() + 90);
+
     const delegateUserDocEdvRequest = {
       referenceId: ZCAP_REFERENCE_IDS.profileDoc,
       allowedAction: ['read'],
       controller: profileAgentId,
       parentCapability: edvParentCapability,
+      expires,
       type: 'urn:edv:document'
     };
     if(invocationTarget) {
@@ -1050,13 +1066,18 @@ export default class ProfileManager {
     edvId, profileAgentId, docId, invocationTarget, edvParentCapability,
     keyAgreementKey, invocationSigner
   }) {
+    // 90 day expiration for EDV zcaps
+    const expires = new Date();
+    expires.setDate(expires.getDate() + 90);
+
     const delegateEdvDocumentRequest = {
       referenceId: `profile-agent-edv-document`,
       // the profile agent is only allowed to read its own doc
       allowedAction: ['read'],
       controller: profileAgentId,
       parentCapability: edvParentCapability,
-      type: 'urn:edv:document'
+      type: 'urn:edv:document',
+      expires,
     };
     if(invocationTarget) {
       delegateEdvDocumentRequest.invocationTarget = invocationTarget;
@@ -1076,7 +1097,8 @@ export default class ProfileManager {
       invocationTarget: keyId,
       type: keyAgreementKey.type,
       publicAlias: keyAgreementKey.id,
-      parentCapability: parentZcap
+      parentCapability: parentZcap,
+      expires,
     };
     const [userDocumentZcap, userKakZcap] = await Promise.all([
       utils.delegateCapability({

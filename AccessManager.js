@@ -104,7 +104,10 @@ export default class AccessManager {
       account: accountId,
       profileAgentId,
       // this map includes capabilities for user document and kak
-      zcaps: agentRecordZcaps
+      zcaps: {
+        ...profileAgent.zcaps,
+        ...agentRecordZcaps
+      }
     });
 
     return agentDoc.content;
