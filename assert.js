@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2020-2021 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2020-2022 Digital Bazaar, Inc. All rights reserved.
  */
 
 /**
@@ -21,8 +21,9 @@ export function nonEmptyString(value, key) {
  * Ensures `parentCapabilities` has all required properties.
  *
  * @param {object} options - The options to use.
- * @param {object} options.parentCapabilities - Contains the properties edvId
- *   and edvRevocations.
+ * @param {object} options.parentCapabilities - Contains an optional `edv`
+ *   `hmac`, and `keyAgreementKey` parent zcaps; any of these may be passed
+ *   in lieu of the respective `edvId`, `hmac`, or `keyAgreementKey`.
  * @param {string} options.edvId - The ID of the EDV that must be
  *   a URL that refers to the EDV's root storage location.
  * @param {object} options.hmac - A default HMAC API for blinding

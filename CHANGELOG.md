@@ -11,6 +11,10 @@
   where `zcaps` is an object with keys that are reference IDs and values that
   are the matching zcaps.
 
+### Removed
+- Remove `edvRevocation` and any other zcaps for performing revocations; these
+  are no longer needed to revoke zcaps.
+
 ## 10.1.0 - 2021-10-06
 
 ### Changed

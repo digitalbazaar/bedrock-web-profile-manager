@@ -203,8 +203,6 @@ export default class ProfileManager {
    * @param {Array} [options.indexes] - The indexes to be used.
    * @param {object} [options.capability] - The capability to use to access
    *   the EDV; either this or an EDV ID must be given.
-   * @param {object} [options.revocationCapability] - The capability to use to
-   *   revoke delegated EDV zcaps.
    * @param {boolean} options.useEphemeralSigner - Flag to enable invoking
    *   capabilities with the ephemeral invocation signer associated with the
    *   currently authenticated session, default `true`. See more in class
@@ -221,7 +219,6 @@ export default class ProfileManager {
     keyAgreementKey,
     edvId,
     capability,
-    revocationCapability,
     indexes = [],
     useEphemeralSigner = true
   }) {
@@ -255,14 +252,11 @@ export default class ProfileManager {
     };
     const profileZcaps = {...profileContent.zcaps};
     if(capability) {
-      profileZcaps[capability.referenceId] = capability;
+      const referenceId = `user-edv-documents`;
+      profileZcaps[referenceId] = capability;
       accessManagement.zcaps = {
-        write: capability.referenceId
+        write: referenceId
       };
-      if(revocationCapability) {
-        accessManagement.zcaps.revoke = revocationCapability.referenceId;
-        profileZcaps[revocationCapability.referenceId] = revocationCapability;
-      }
     } else {
       // default capability to root zcap
       capability = `urn:zcap:root:${encodeURIComponent(edvId)}`;
@@ -342,8 +336,7 @@ export default class ProfileManager {
       hmac,
       keyAgreementKey,
       parentCapabilities: {
-        edv: capability,
-        edvRevocations: revocationCapability
+        edv: capability
       },
       invocationSigner,
       profileAgentId,
