@@ -5,6 +5,11 @@
 ### Changed
 - **BREAKING**: Require `meterId` as a parameter for `createProfileEdv`. Must
   use bedrock-profile@13 and use bedrock-profile-http@10.
+- **BREAKING**: `ProfileManager.getAgentCapability` must be passed a zcap
+  `referenceId`, not its `id`.
+- **BREAKING**: `ProfileManager.delegateEdvCapabilities` now returns `{zcaps}`
+  where `zcaps` is an object with keys that are reference IDs and values that
+  are the matching zcaps.
 
 ## 10.1.0 - 2021-10-06
 

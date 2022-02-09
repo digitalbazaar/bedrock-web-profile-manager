@@ -134,7 +134,8 @@ export default class ProfileManager {
    * a cache or delegates one on the fly if it does not exist.
    *
    * @param {object} options - The options to use.
-   * @param {string} options.id - The reference ID of the zcap.
+   * @param {string} [options.id] - The ID of the zcap (not supported).
+   * @param {string} options.referenceId - The reference ID of the zcap.
    * @param {string} options.profileAgent - The profile agent requesting a zcap.
    * @param {boolean} options.useEphemeralSigner - Flag to enable invoking
    *   capabilities with the ephemeral invocation signer associated with the
@@ -143,9 +144,16 @@ export default class ProfileManager {
    *
    * @returns {Promise<object>} The capability for the profile agent.
    */
-  async getAgentCapability({id, profileAgent, useEphemeralSigner = true}) {
+  async getAgentCapability({
+    id, referenceId, profileAgent, useEphemeralSigner = true
+  }) {
+    if(id !== undefined) {
+      throw new Error('"referenceId" must be provided, not "id".');
+    }
+
     const capabilityCacheKey = `profileAgent-${profileAgent.id}-zcaps`;
-    const capabilityKey = `${capabilityCacheKey}-${id}-${useEphemeralSigner}`;
+    const capabilityKey =
+      `${capabilityCacheKey}-${referenceId}-${useEphemeralSigner}`;
     const capabilityCache = this._getCache(capabilityCacheKey);
     let agentZcap = capabilityCache.get(capabilityKey);
     if(agentZcap) {
@@ -153,7 +161,7 @@ export default class ProfileManager {
     }
 
     const promise = this._getAgentCapability(
-      {id, profileAgent, useEphemeralSigner});
+      {referenceId, profileAgent, useEphemeralSigner});
     try {
       agentZcap = await promise;
       const now = Date.now();
@@ -358,7 +366,7 @@ export default class ProfileManager {
       }
     }
     const profileAgentZcaps = {};
-    for(const {zcap, referenceId} of userEdvZcaps) {
+    for(const [referenceId, zcap] of Object.entries(userEdvZcaps)) {
       profileAgentZcaps[referenceId] = zcap;
     }
     const profileAgent = {
@@ -428,7 +436,7 @@ export default class ProfileManager {
       profileId
     });
     const zcap = await this.getAgentCapability({
-      id: zcapReferenceId,
+      referenceId: zcapReferenceId,
       useEphemeralSigner,
       profileId,
       profileAgent
@@ -470,16 +478,16 @@ export default class ProfileManager {
     // 2. zcap for reading entire users EDV
     const profileAgent = await this.getAgent({profileId: id});
     const capability = await this.getAgentCapability({
-      id: ZCAP_REFERENCE_IDS.profileDoc,
+      referenceId: ZCAP_REFERENCE_IDS.profileDoc,
       useEphemeralSigner,
       profileAgent
     }) || await this.getAgentCapability({
-      id: ZCAP_REFERENCE_IDS.userDocs,
+      referenceId: ZCAP_REFERENCE_IDS.userDocs,
       useEphemeralSigner,
       profileAgent
     });
     const userKakZcap = await this.getAgentCapability({
-      id: ZCAP_REFERENCE_IDS.userKak,
+      referenceId: ZCAP_REFERENCE_IDS.userKak,
       useEphemeralSigner,
       profileAgent
     });
@@ -561,8 +569,9 @@ export default class ProfileManager {
       ZCAP_REFERENCE_IDS.userKak,
       ZCAP_REFERENCE_IDS.userHmac
     ];
-    const promises = referenceIds.map(async id =>
-      this.getAgentCapability({id, useEphemeralSigner, profileAgent}));
+    const promises = referenceIds.map(
+      async referenceId => this.getAgentCapability(
+        {referenceId, useEphemeralSigner, profileAgent}));
     const [capability, userKak, userHmac] = await Promise.all(promises);
     const invocationSigner = await this._getAgentSigner({
       profileAgentId: profileAgent.id,
@@ -703,14 +712,16 @@ export default class ProfileManager {
       delegateEdvHmacRequest,
       delegateEdvKakRequest,
     ];
-    let zcaps = await Promise.all(
+    const delegated = await Promise.all(
       requests.map(request => utils.delegateCapability({
         signer: invocationSigner,
         request,
-      }))
-    );
-    zcaps = zcaps.map(
-      (zcap, i) => ({zcap, referenceId: requests[i].referenceId}));
+      })));
+    // build zcap referenceId => zcap map
+    const zcaps = {};
+    for(const [i, zcap] of delegated.entries()) {
+      zcaps[requests[i].referenceId] = zcap;
+    }
     return {zcaps};
   }
 
@@ -744,8 +755,9 @@ export default class ProfileManager {
     const profileAgent = await this.getAgent({profileId});
 
     const referenceIds = [refs.documents, refs.kak, refs.hmac];
-    const promises = referenceIds.map(async id =>
-      this.getAgentCapability({id, useEphemeralSigner, profileAgent}));
+    const promises = referenceIds.map(
+      async referenceId => this.getAgentCapability({
+        referenceId, useEphemeralSigner, profileAgent}));
     const [documentsZcap, kakZcap, hmacZcap] = await Promise.all(promises);
     const invocationSigner = await this._getAgentSigner({
       profileAgentId: profileAgent.id,
@@ -823,14 +835,15 @@ export default class ProfileManager {
     }
   }
 
-  async _getAgentCapability({id, profileAgent, useEphemeralSigner}) {
+  async _getAgentCapability({referenceId, profileAgent, useEphemeralSigner}) {
     const agentSigner = await this._getAgentSigner(
       {profileAgentId: profileAgent.id, useEphemeralSigner: false});
-    const originalZcap = profileAgent.zcaps[id];
+    const originalZcap = profileAgent.zcaps[referenceId];
     if(!originalZcap) {
       const {id: profileAgentId} = profileAgent;
       throw new Error(
-        `The agent "${profileAgentId}" does not have the zcap: "${id}"`);
+        `The agent "${profileAgentId}" does not have the zcap with ` +
+        `reference ID "${referenceId}".`);
     }
     if(!useEphemeralSigner) {
       return originalZcap;
@@ -896,18 +909,14 @@ export default class ProfileManager {
     if(agentContent) {
       return agentContent;
     }
-    const refs = {
-      userKak: 'userKak',
-      userDocument: 'userDocument'
-    };
     // determine if `profileAgent` has a userDocument yet
     const capability = await this.getAgentCapability({
-      id: refs.userDocument,
+      referenceId: 'userDocument',
       useEphemeralSigner,
       profileAgent
     });
     const userKak = await this.getAgentCapability({
-      id: refs.userKak,
+      referenceId: 'userKak',
       useEphemeralSigner,
       profileAgent
     });
@@ -928,8 +937,8 @@ export default class ProfileManager {
       invocationSigner
     });
 
-    const promise = this._readAgentContent(
-      {edvDocument, zcaps: profileAgent.zcaps});
+    // merge profile agent EDV doc content w/ backend profile agent record
+    const promise = this._mergeAgentContent({edvDocument, profileAgent});
     agentContentCache.set(contentKey, promise);
 
     try {
@@ -940,7 +949,8 @@ export default class ProfileManager {
     }
   }
 
-  async _readAgentContent({edvDocument, zcaps}) {
+  async _mergeAgentContent({edvDocument, profileAgent}) {
+    const {zcaps} = profileAgent;
     const {content} = await edvDocument.read();
     // update zcaps to include zcaps from agent record
     for(const [referenceId, zcap] of Object.entries(zcaps)) {
