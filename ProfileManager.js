@@ -303,7 +303,7 @@ export default class ProfileManager {
     // write profile user doc and delegate zcaps for the root profile to
     // access it in parallel
     const [, profileDocZcap, {zcaps: userEdvZcaps}] = await Promise.all([
-      await profileUserDoc.write({
+      profileUserDoc.write({
         doc: {id: profileDocId, content: profile}
       }),
       // delegate zcap for accessing the profile doc to root profile agent
@@ -1059,24 +1059,21 @@ export default class ProfileManager {
       },
       authorizedDate: (new Date()).toISOString()
     };
-    // FIXME: write `agentDoc`, delegate record zcaps, and get existing
-    // agent record in parallel
-    await agentDoc.write({
-      doc: {
-        id: agentDocId,
-        content: profileAgent
-      }
-    });
-    // create zcaps for accessing profile agent user doc for storage in
-    // the agent record
-    const agentRecordZcaps = await this._delegateAgentRecordZcaps({
-      edvId,
-      profileAgentId,
-      docId: agentDocId,
-      edvParentCapability: capability,
-      keyAgreementKey, invocationSigner
-    });
-    const profileAgentRecord = await this._getAgentRecord({profileId});
+
+    // write `agentDoc`, delegate record zcaps, and get existing agent
+    // record in parallel
+    const [, agentRecordZcaps, profileAgentRecord] = await Promise.all([
+      agentDoc.write({
+        doc: {id: agentDocId, content: profileAgent}
+      }),
+      // create zcaps for accessing profile agent user doc for storage in
+      // the agent record
+      this._delegateAgentRecordZcaps({
+        edvId, profileAgentId, docId: agentDocId,
+        edvParentCapability: capability, keyAgreementKey, invocationSigner
+      }),
+      this._getAgentRecord({profileId})
+    ]);
 
     // store capabilities for accessing the profile agent's user document and
     // the kak in the profileAgent record in the backend
