@@ -743,7 +743,7 @@ export default class ProfileManager {
     this._cacheContainer.clear();
   }
 
-  async _sessionChanged({authentication, newData}) {
+  async _sessionChanged({newData}) {
     const {account = {}} = newData;
     const {id: newAccountId = null} = account;
 
