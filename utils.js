@@ -5,9 +5,9 @@ import {Ed25519Signature2018} from '@digitalbazaar/ed25519-signature-2018';
 import {Ed25519Signature2020} from '@digitalbazaar/ed25519-signature-2020';
 import {EdvClient} from '@digitalbazaar/edv-client';
 import {securityLoader} from '@digitalbazaar/security-document-loader';
-import zcapCtx from 'zcap-context';
+import zcapCtx from '@digitalbazaar/zcap-context';
 import {ZcapClient} from '@digitalbazaar/ezcap';
-import webkmsCtx from 'webkms-context';
+import webkmsCtx from '@digitalbazaar/webkms-context';
 import veresOneCtx from 'veres-one-context';
 import * as didVeresOne from 'did-veres-one';
 

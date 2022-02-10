@@ -17,25 +17,22 @@
   "dependencies": {
     "@digitalbazaar/ed25519-signature-2018": "^2.0.1",
     "@digitalbazaar/ed25519-signature-2020": "^3.0.0",
-    "@digitalbazaar/edv-client": "^11.0.0",
+    "@digitalbazaar/edv-client": "^11.3.0",
     "@digitalbazaar/ezcap": "^2.0.1",
-    "@digitalbazaar/http-client": "^1.1.0",
+    "@digitalbazaar/http-client": "^2.0.1",
     "@digitalbazaar/security-document-loader": "^1.1.1",
-    "@digitalbazaar/webkms-client": "^9.1.0",
-    "@digitalbazaar/zcap": "^7.2.0",
-    "bedrock-web-profile": "digitalbazaar/bedrock-web-profile#main",
+    "@digitalbazaar/webkms-client": "^9.2.0",
+    "@digitalbazaar/zcap-context": "^2.0.0",
+    "bedrock-web-profile": "^4.0.0",
     "did-veres-one": "14.0.0-beta.4",
-    "jsonld-signatures": "^9.3.0",
     "isomorphic-webcrypto": "^2.3.8",
     "lru-cache": "^6.0.0",
-    "veres-one-context": "^12.0.0",
-    "webkms-context": "^1.0.0",
-    "zcap-context": "^1.2.1"
+    "veres-one-context": "^12.0.0"
   },
   "devDependencies": {
-    "eslint": "^7.31.0",
+    "eslint": "^7.32.0",
     "eslint-config-digitalbazaar": "^2.8.0",
-    "eslint-plugin-jsdoc": "^28.6.1",
+    "eslint-plugin-jsdoc": "^37.8.2",
     "jsdoc": "^3.6.4",
     "jsdoc-to-markdown": "^6.0.1"
   }
