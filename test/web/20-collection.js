@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2019-2021 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2019-2022 Digital Bazaar, Inc. All rights reserved.
  */
 import {ProfileManager} from 'bedrock-web-profile-manager';
 import {EdvClient} from '@digitalbazaar/edv-client';
@@ -15,8 +15,7 @@ describe('Collection API', () => {
     profileManager = new ProfileManager({
       kmsModule: KMS_MODULE,
       kmsBaseUrl: KMS_BASE_URL,
-      edvBaseUrl: EDV_BASE_URL,
-      recoveryHost: window.location.host
+      edvBaseUrl: EDV_BASE_URL
     });
     await profileManager.setSession({
       session: {

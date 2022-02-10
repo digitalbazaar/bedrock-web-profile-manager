@@ -23,7 +23,7 @@
     "@digitalbazaar/security-document-loader": "^1.1.1",
     "@digitalbazaar/webkms-client": "^9.1.0",
     "@digitalbazaar/zcap": "^7.2.0",
-    "bedrock-web-profile": "^3.0.0",
+    "bedrock-web-profile": "digitalbazaar/bedrock-web-profile#main",
     "did-veres-one": "14.0.0-beta.4",
     "jsonld-signatures": "^9.3.0",
     "isomorphic-webcrypto": "^2.3.8",

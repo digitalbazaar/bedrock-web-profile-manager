@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2019-2021 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2019-2022 Digital Bazaar, Inc. All rights reserved.
  */
 import {ProfileManager} from 'bedrock-web-profile-manager';
 import {ProfileService} from 'bedrock-web-profile';
@@ -17,8 +17,7 @@ describe('Profile Manager API', () => {
       const profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: EDV_BASE_URL,
-        recoveryHost: window.location.host
+        edvBaseUrl: EDV_BASE_URL
       });
 
       await profileManager.setSession({
@@ -64,7 +63,6 @@ describe('Profile Manager API', () => {
           kmsModule: KMS_MODULE,
           kmsBaseUrl: KMS_BASE_URL,
           edvBaseUrl: EDV_BASE_URL,
-          recoveryHost: window.location.host,
           profileService
         });
 
@@ -102,8 +100,7 @@ describe('Profile Manager API', () => {
       profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: EDV_BASE_URL,
-        recoveryHost: window.location.host
+        edvBaseUrl: EDV_BASE_URL
       });
 
       await profileManager.setSession({
@@ -167,8 +164,7 @@ describe('Profile Manager API', () => {
       profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: EDV_BASE_URL,
-        recoveryHost: window.location.host
+        edvBaseUrl: EDV_BASE_URL
       });
 
       await profileManager.setSession({
@@ -231,8 +227,7 @@ describe('Profile Manager API', () => {
       profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: EDV_BASE_URL,
-        recoveryHost: window.location.host
+        edvBaseUrl: EDV_BASE_URL
       });
 
       await profileManager.setSession({
@@ -246,7 +241,7 @@ describe('Profile Manager API', () => {
         }
       });
     });
-    it('should successfully initialize w/ default signer', async () => {
+    it.only('should successfully initialize', async () => {
       let error;
       const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
       let profileId;
@@ -255,8 +250,8 @@ describe('Profile Manager API', () => {
         ({id: profileId, meters} = await profileManager.createProfile(content));
       } catch(e) {
         error = e;
+        console.log('error1', e);
       }
-
       should.not.exist(error);
 
       error = null;
@@ -268,6 +263,7 @@ describe('Profile Manager API', () => {
           {profileId, meterId: edvMeter.id, referenceId: 'example'}));
       } catch(e) {
         error = e;
+        console.log('error2', e);
       }
       should.not.exist(error);
 
@@ -283,86 +279,7 @@ describe('Profile Manager API', () => {
         });
       } catch(e) {
         error = e;
-      }
-
-      should.not.exist(error);
-      should.exist(result);
-      result.should.have.property('profile');
-      result.profile.should.have.property('id');
-      result.profile.id.should.be.a('string');
-      result.profile.id.should.contain('did:v1:');
-      result.profile.should.have.property('accessManagement');
-      result.profile.should.have.property('type');
-      result.profile.type.should.include.members(['User', 'Profile']);
-      result.should.have.property('profileAgent');
-      result.profileAgent.should.have.property('id');
-      result.profileAgent.id.should.contain('did:key:');
-      result.profileAgent.should.have.property('type');
-      result.profileAgent.type.should.include.members(['User', 'Agent']);
-      result.profileAgent.should.have.property('zcaps');
-    });
-    it('should successfully initialize w/ ephemeral signer', async () => {
-      let error;
-      let result;
-      try {
-        const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-        const {id: profileId, meters} = await profileManager.createProfile(
-          content);
-        const {meter: edvMeter} = meters.find(
-          m => m.meter.referenceId === 'profile:core:edv');
-
-        const {edvClient} = await profileManager.createProfileEdv(
-          {profileId, meterId: edvMeter.id, referenceId: 'example'});
-
-        result = await profileManager.initializeAccessManagement({
-          profileId,
-          profileContent: {foo: true},
-          edvId: edvClient.id,
-          hmac: edvClient.hmac,
-          keyAgreementKey: edvClient.keyAgreementKey
-        });
-      } catch(e) {
-        error = e;
-      }
-      should.not.exist(error);
-      should.exist(result);
-      result.should.have.property('profile');
-      result.profile.should.have.property('id');
-      result.profile.id.should.be.a('string');
-      result.profile.id.should.contain('did:v1:');
-      result.profile.should.have.property('accessManagement');
-      result.profile.should.have.property('type');
-      result.profile.type.should.include.members(['User', 'Profile']);
-      result.should.have.property('profileAgent');
-      result.profileAgent.should.have.property('id');
-      result.profileAgent.id.should.contain('did:key:');
-      result.profileAgent.should.have.property('type');
-      result.profileAgent.type.should.include.members(['User', 'Agent']);
-      result.profileAgent.should.have.property('zcaps');
-    });
-    it('should successfully initialize w/o ephemeral signer', async () => {
-      let error;
-      let result;
-      try {
-        const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-        const {id: profileId, meters} = await profileManager.createProfile(
-          content);
-        const {meter: edvMeter} = meters.find(
-          m => m.meter.referenceId === 'profile:core:edv');
-
-        const {edvClient} = await profileManager.createProfileEdv(
-          {profileId, meterId: edvMeter.id, referenceId: 'example'});
-
-        result = await profileManager.initializeAccessManagement({
-          profileId,
-          profileContent: {foo: true},
-          edvId: edvClient.id,
-          hmac: edvClient.hmac,
-          keyAgreementKey: edvClient.keyAgreementKey,
-          useEphemeralSigner: false
-        });
-      } catch(e) {
-        error = e;
+        console.log('error3', e);
       }
       should.not.exist(error);
       should.exist(result);
@@ -423,8 +340,7 @@ describe('Profile Manager API', () => {
       profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: EDV_BASE_URL,
-        recoveryHost: window.location.host
+        edvBaseUrl: EDV_BASE_URL
       });
 
       await profileManager.setSession({
@@ -524,8 +440,7 @@ describe('Profile Manager API', () => {
       profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: EDV_BASE_URL,
-        recoveryHost: window.location.host
+        edvBaseUrl: EDV_BASE_URL
       });
 
       await profileManager.setSession({
@@ -591,8 +506,7 @@ describe('Profile Manager API', () => {
       profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: EDV_BASE_URL,
-        recoveryHost: window.location.host
+        edvBaseUrl: EDV_BASE_URL
       });
 
       await profileManager.setSession({
@@ -688,8 +602,7 @@ describe('Profile Manager API', () => {
       profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: EDV_BASE_URL,
-        recoveryHost: window.location.host
+        edvBaseUrl: EDV_BASE_URL
       });
 
       await profileManager.setSession({
@@ -764,8 +677,7 @@ describe('Profile Manager API', () => {
       profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: EDV_BASE_URL,
-        recoveryHost: window.location.host
+        edvBaseUrl: EDV_BASE_URL
       });
     });
     it('should fail if profileId is undefined', async () => {
@@ -901,8 +813,7 @@ describe('Profile Manager API', () => {
       profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: EDV_BASE_URL,
-        recoveryHost: window.location.host
+        edvBaseUrl: EDV_BASE_URL
       });
     });
     it('should fail if profileId is undefined', async () => {
@@ -946,8 +857,7 @@ describe('Profile Manager API', () => {
       profileManager = new ProfileManager({
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
-        edvBaseUrl: EDV_BASE_URL,
-        recoveryHost: window.location.host
+        edvBaseUrl: EDV_BASE_URL
       });
     });
     it('should fail if profileId is undefined', async () => {
@@ -992,7 +902,6 @@ describe('Profile Manager API', () => {
         kmsModule: KMS_MODULE,
         kmsBaseUrl: KMS_BASE_URL,
         edvBaseUrl: EDV_BASE_URL,
-        recoveryHost: window.location.host,
         // intentionally make zcap expired
         zcapGracePeriod: 100000000000000
       });
