@@ -755,11 +755,6 @@ export default class ProfileManager {
     // update state
     this.accountId = newAccountId;
     this._resetCache();
-
-    if(!(authentication || newData.account)) {
-      // no account in session, return
-      return;
-    }
   }
 
   async _delegateAgentCapability({referenceId, profileAgent}) {
