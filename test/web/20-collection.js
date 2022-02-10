@@ -5,14 +5,12 @@ import {ProfileManager} from 'bedrock-web-profile-manager';
 import {EdvClient} from '@digitalbazaar/edv-client';
 
 const ACCOUNT_ID = 'urn:uuid:ffaf5d84-7dc2-4f7b-9825-cc8d2e5a5d06';
-const KMS_BASE_URL = `${window.location.origin}/kms`;
 const EDV_BASE_URL = `${window.location.origin}/edvs`;
 
 describe('Collection API', () => {
   let profileManager;
   beforeEach(async () => {
     profileManager = new ProfileManager({
-      kmsBaseUrl: KMS_BASE_URL,
       edvBaseUrl: EDV_BASE_URL
     });
     await profileManager.setSession({
