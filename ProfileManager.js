@@ -155,7 +155,7 @@ export default class ProfileManager {
     }
 
     // cache miss, delegate agent capability
-    const promise = this._delegatedAgentCapability(
+    const promise = this._delegateAgentCapability(
       {referenceId, profileAgent});
     try {
       const zcap = await promise;
@@ -394,59 +394,68 @@ export default class ProfileManager {
    *
    * @param {object} options - The options to use.
    * @param {string} options.id - The ID of the profile to get.
-   * @param {boolean} options.useEphemeralSigner - Flag to enable invoking
-   *   capabilities with the ephemeral invocation signer associated with the
-   *   currently authenticated session, default `true`. See more in class
-   *   description.
    *
-   * @returns {Promise<object>} Signer API for the profile as
-   * `invocationSigner`.
+   * @returns {Promise<object>} Content for the given profile.
    */
-  async getProfile({id, useEphemeralSigner = true} = {}) {
+  async getProfile({id} = {}) {
     assert.nonEmptyString(id, 'id');
 
-    // check for a zcap for getting the profile in this order:
-    // 1. zcap for reading just the profile
-    // 2. zcap for reading entire users EDV
+    // check for at least one zcap for getting the profile:
+    // 1. zcap for reading just the profile, or
+    // 2. zcap for reading entire user EDV
     const profileAgent = await this.getAgent({profileId: id});
-    const capability = await this.getDelegatedAgentCapability({
-      referenceId: ZCAP_REFERENCE_IDS.profileDoc,
-      useEphemeralSigner,
-      profileAgent
-    }) || await this.getAgentCapability({
-      referenceId: ZCAP_REFERENCE_IDS.userDocs,
-      useEphemeralSigner,
-      profileAgent
-    });
-    const userKakZcap = await this.getDelegatedAgentCapability({
-      referenceId: ZCAP_REFERENCE_IDS.userKak,
-      profileAgent
-    });
-    const invocationSigner = await this._getAgentSigner({
-      profileAgentId: profileAgent.id,
-      useEphemeralSigner
-    });
-    if(!capability) {
-      // TODO: implement on demand delegation; if agent has a zcap for using
-      // the profile's zcap delegation key, delegate a zcap for reading from
-      // the user's EDV
-      throw new Error(
-        `Profile agent "${profileAgent.id}" is not authorized to read ` +
-        `profile "${id}".`);
+    const [
+      {value: profileDocZcap, reason: error1},
+      {value: userEdvZcap, reason: error2},
+      {value: userKakZcap, reason: error3},
+      {value: invocationSigner, reason: error4}
+    ] = await Promise.allSettled([
+      this.getDelegatedAgentCapability({
+        referenceId: ZCAP_REFERENCE_IDS.profileDoc,
+        profileAgent
+      }),
+      this.getDelegatedAgentCapability({
+        referenceId: ZCAP_REFERENCE_IDS.userDocs,
+        profileAgent
+      }),
+      this.getDelegatedAgentCapability({
+        referenceId: ZCAP_REFERENCE_IDS.userKak,
+        profileAgent
+      }),
+      this._getEphemeralSigner({profileAgentId: profileAgent.id})
+    ]);
+    const capability = profileDocZcap || userEdvZcap;
+    if(!(capability && userKakZcap && invocationSigner)) {
+      // if neither of the first EDV zcaps nor the KAK zcap were
+      // found, then the agent does not have access
+      if((error1.name === 'NotFoundError' &&
+        error2.name === 'NotFoundError') ||
+        error3.name === 'NotFoundError') {
+        // TODO: implement on demand delegation; if agent has a zcap for
+        // using the profile's zcap delegation key, delegate a zcap for
+        // reading from the user's EDV
+        throw new Error(
+          `Profile agent "${profileAgent.id}" is not authorized to ` +
+          `read profile "${id}".`);
+      }
+      // aggregate and throw other errors.
+      const error = new Error('Could not get profile.');
+      error.name = 'AggregateError';
+      error.errors = [error1, error2, error3, error4];
+      throw error;
     }
 
-    // read the profile's user doc *as* the profile agent
+    // read the profile's user doc
     const edvDocument = new EdvDocument({
       capability,
       keyAgreementKey: await KeyAgreementKey.fromCapability({
         capability: userKakZcap,
-        invocationSigner,
+        invocationSigner
       }),
       invocationSigner
     });
 
     const {content} = await edvDocument.read();
-
     return content;
   }
 
@@ -488,7 +497,7 @@ export default class ProfileManager {
     return {hmac, keyAgreementKey};
   }
 
-  async getAccessManager({profileId, useEphemeralSigner = true} = {}) {
+  async getAccessManager({profileId} = {}) {
     assert.nonEmptyString(profileId, 'profileId');
     const [profile, profileAgent] = await Promise.all([
       this.getProfile({id: profileId}),
@@ -501,13 +510,11 @@ export default class ProfileManager {
       ZCAP_REFERENCE_IDS.userHmac
     ];
     const promises = referenceIds.map(
-      async referenceId => this.getAgentCapability(
-        {referenceId, useEphemeralSigner, profileAgent}));
+      async referenceId => this.getDelegatedAgentCapability(
+        {referenceId, profileAgent}));
     const [capability, userKak, userHmac] = await Promise.all(promises);
-    const invocationSigner = await this._getAgentSigner({
-      profileAgentId: profileAgent.id,
-      useEphemeralSigner
-    });
+    const invocationSigner = await this._getEphemeralSigner(
+      {profileAgentId: profileAgent.id});
 
     if(!(capability && userKak && userHmac)) {
       throw new Error(
@@ -520,12 +527,12 @@ export default class ProfileManager {
       keyResolver,
       keyAgreementKey: await KeyAgreementKey.fromCapability({
         capability: userKak,
-        invocationSigner,
+        invocationSigner
       }),
       hmac: await Hmac.fromCapability({
         capability: userHmac,
-        invocationSigner,
-      }),
+        invocationSigner
+      })
     });
     for(const index of indexes) {
       edvClient.ensureIndex(index);
@@ -559,7 +566,7 @@ export default class ProfileManager {
       id: config.id,
       keyResolver,
       keyAgreementKey,
-      hmac,
+      hmac
     });
     return {edvClient};
   }
@@ -675,8 +682,7 @@ export default class ProfileManager {
   }
 
   // FIXME: remove exposure of this?
-  async getProfileEdvAccess(
-    {profileId, referenceIdPrefix, useEphemeralSigner = true} = {}) {
+  async getProfileEdvAccess({profileId, referenceIdPrefix} = {}) {
     assert.nonEmptyString(profileId, 'profileId');
     const refs = {
       documents: `${referenceIdPrefix}-edv-documents`,
@@ -688,13 +694,11 @@ export default class ProfileManager {
 
     const referenceIds = [refs.documents, refs.kak, refs.hmac];
     const promises = referenceIds.map(
-      async referenceId => this.getAgentCapability({
-        referenceId, useEphemeralSigner, profileAgent}));
+      async referenceId => this.getDelegatedAgentCapability(
+        {referenceId, profileAgent}));
     const [documentsZcap, kakZcap, hmacZcap] = await Promise.all(promises);
-    const invocationSigner = await this._getAgentSigner({
-      profileAgentId: profileAgent.id,
-      useEphemeralSigner
-    });
+    const invocationSigner = await this._getEphemeralSigner(
+      {profileAgentId: profileAgent.id});
 
     if(!(documentsZcap && hmacZcap && kakZcap)) {
       throw new Error(
@@ -767,7 +771,7 @@ export default class ProfileManager {
     }
   }
 
-  async _delegatedAgentCapability({referenceId, profileAgent}) {
+  async _delegateAgentCapability({referenceId, profileAgent}) {
     // get original zcap to be delegated
     const {id: profileAgentId} = profileAgent;
     const originalZcap = profileAgent.zcaps[referenceId];

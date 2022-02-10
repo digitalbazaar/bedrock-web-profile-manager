@@ -241,7 +241,7 @@ describe('Profile Manager API', () => {
         }
       });
     });
-    it.only('should successfully initialize', async () => {
+    it('should successfully initialize', async () => {
       let error;
       const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
       let profileId;
@@ -250,7 +250,6 @@ describe('Profile Manager API', () => {
         ({id: profileId, meters} = await profileManager.createProfile(content));
       } catch(e) {
         error = e;
-        console.log('error1', e);
       }
       should.not.exist(error);
 
@@ -263,7 +262,6 @@ describe('Profile Manager API', () => {
           {profileId, meterId: edvMeter.id, referenceId: 'example'}));
       } catch(e) {
         error = e;
-        console.log('error2', e);
       }
       should.not.exist(error);
 
@@ -279,7 +277,6 @@ describe('Profile Manager API', () => {
         });
       } catch(e) {
         error = e;
-        console.log('error3', e);
       }
       should.not.exist(error);
       should.exist(result);
