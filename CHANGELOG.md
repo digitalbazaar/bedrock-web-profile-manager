@@ -17,6 +17,8 @@
 ### Removed
 - Remove `edvRevocation` and any other zcaps for performing revocations; these
   are no longer needed to revoke zcaps.
+- Remove `kmsModule` parameter; it is no longer used as the KMS module is
+  already set in a profile / profile agent's keystore via the backend service.
 
 ## 10.1.0 - 2021-10-06
 

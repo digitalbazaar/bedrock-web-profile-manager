@@ -32,16 +32,16 @@ export default class ProfileManager {
   /**
    * Creates a new instance of a ProfileManager and attaches it to the given
    * session instance. This ProfileManager will track changes to the given
-   * session, creating and/or caching account and profile edvs as needed. Some
-   * of the methods contain an optional `useEphemeralSigner` parameter that
-   * enables invoking the profile's zcap invocation key with an ephemeral
-   * capability agent instead of using the profile agent's zcap invocation key
-   * directly. This significantly reduces the number of hits to a WebKMS. The
-   * ephemeral capability agent is not long lived and can only be used locally.
-   * This helps to keep a decent security profile.
+   * session, creating and/or caching account and profile edvs as needed.
+   *
+   * Some methods delegate profile agent zcaps to an ephemeral capability
+   * agent instead of using the profile agent's zcap invocation key directly.
+   * This is required because the profile agent's zcap invocation key is IP
+   * restricted. It also significantly reduces the number of hits to a WebKMS.
+   * The ephemeral capability agent is not long lived and can only be used
+   * locally. This helps create a decent security profile.
    *
    * @param {object} options - The options to use.
-   * @param {string} options.kmsModule - The KMS module to use to generate keys.
    * @param {string} options.edvBaseUrl - The base URL for the EDV service,
    *   used to store documents.
    * @param {number} [options.zcapGracePeriod] - Zcap is considered expired if
@@ -53,20 +53,17 @@ export default class ProfileManager {
    * @returns {ProfileManager} - The new instance.
    */
   constructor({
-    edvBaseUrl, kmsModule, zcapGracePeriod = DEFAULT_ZCAP_GRACE_PERIOD,
+    edvBaseUrl,
+    zcapGracePeriod = DEFAULT_ZCAP_GRACE_PERIOD,
     zcapTtl = DEFAULT_ZCAP_TTL,
     profileService = new ProfileService()
   } = {}) {
-    if(typeof kmsModule !== 'string') {
-      throw new TypeError('"kmsModule" must be a string.');
-    }
     if(typeof edvBaseUrl !== 'string') {
       throw new TypeError('"edvBaseUrl" must be a string.');
     }
     this._profileService = profileService;
     this.session = null;
     this.accountId = null;
-    this.kmsModule = kmsModule;
     this.edvBaseUrl = edvBaseUrl;
     this._cacheContainer = new Map();
     this.zcapGracePeriod = zcapGracePeriod;
