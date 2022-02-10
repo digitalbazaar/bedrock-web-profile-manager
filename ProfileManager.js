@@ -300,36 +300,27 @@ export default class ProfileManager {
       zcaps: profileZcaps
     };
 
-    // FIXME: write profile user doc and delegate zcaps for the root
-    // profile to access it in parallel
-    await profileUserDoc.write({
-      doc: {
-        id: profileDocId,
-        content: profile
-      }
-    });
-    // delegate zcap for accessing the profile doc to root profile agent
-    const profileDocZcap = await this._delegateProfileUserDocZcap({
-      edvId,
-      profileAgentId,
-      docId: profileDocId,
-      edvParentCapability: capability,
-      invocationSigner
-    });
-    // FIXME: `user-edv-kak` is a duplicate of `userKak` and should be
-    // consolidated
-    // generate zcap for accessing the user EDV generally
-    const {zcaps: userEdvZcaps} = await this.delegateEdvCapabilities({
-      edvId,
-      hmac,
-      keyAgreementKey,
-      parentCapabilities: {
-        edv: capability
-      },
-      invocationSigner,
-      profileAgentId,
-      referenceIdPrefix: 'user'
-    });
+    // write profile user doc and delegate zcaps for the root profile to
+    // access it in parallel
+    const [, profileDocZcap, {zcaps: userEdvZcaps}] = await Promise.all([
+      await profileUserDoc.write({
+        doc: {id: profileDocId, content: profile}
+      }),
+      // delegate zcap for accessing the profile doc to root profile agent
+      this._delegateProfileUserDocZcap({
+        edvId, profileAgentId, docId: profileDocId,
+        edvParentCapability: capability, invocationSigner
+      }),
+      // FIXME: `user-edv-kak` is a duplicate of `userKak` and should be
+      // consolidated
+      // generate zcap for accessing the user EDV generally
+      this.delegateEdvCapabilities({
+        edvId, hmac, keyAgreementKey,
+        parentCapabilities: {edv: capability},
+        invocationSigner, profileAgentId,
+        referenceIdPrefix: 'user'
+      })
+    ]);
 
     // create the user document for the root profile agent
     const {profileAgent} = await this._writeRootProfileAgentUserDoc({
