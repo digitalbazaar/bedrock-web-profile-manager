@@ -619,7 +619,7 @@ export default class ProfileManager {
 
     const delegateEdvKakRequest = {
       referenceId: `${referenceIdPrefix}-edv-kak`,
-      allowedAction: ['deriveSecret', 'sign'],
+      allowedAction: ['deriveSecret'],
       controller: profileAgentId,
       expires,
     };
@@ -991,7 +991,7 @@ export default class ProfileManager {
     const parentZcap = `urn:zcap:root:${encodeURIComponent(keystoreId)}`;
     const delegateEdvKakRequest = {
       referenceId: ZCAP_REFERENCE_IDS.userKak,
-      allowedAction: ['deriveSecret', 'sign'],
+      allowedAction: ['deriveSecret'],
       controller: profileAgentId,
       invocationTarget: keyId,
       type: keyAgreementKey.type,
