@@ -37,7 +37,7 @@
     "bedrock-test": "^6.0.0",
     "bedrock-validation": "^5.0.0",
     "bedrock-veres-one-context": "^12.0.0",
-    "bedrock-web-profile": "^3.0.0",
+    "bedrock-web-profile": "digitalbazaar/bedrock-web-profile#main",
     "bedrock-web-profile-manager": "file:..",
     "bedrock-zcap-storage": "^5.0.0",
     "sinon": "^9.1.0"
