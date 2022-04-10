@@ -15,6 +15,9 @@
     "type": "git",
     "url": "https://github.com/digitalbazaar/bedrock-web-profile-manager"
   },
+  "files": [
+    "lib/*"
+  ],
   "dependencies": {
     "@bedrock/web-profile": "^5.0.0",
     "@digitalbazaar/ed25519-signature-2018": "^2.0.1",
