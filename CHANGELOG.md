@@ -1,5 +1,11 @@
 # bedrock-web-profile-manager ChangeLog
 
+## 15.0.0 - 2022-04-xx
+
+### Changed
+- **BREAKING**: Rename package to `@bedrock/web-profile-manager`.
+- **BREAKING**: Convert to module (ESM).
+
 ## 14.0.1 - 2022-03-18
 
 ### Fixed

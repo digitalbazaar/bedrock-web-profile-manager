@@ -1,19 +1,20 @@
 /*!
  * Copyright (c) 2019-2022 Digital Bazaar, Inc. All rights reserved.
  */
-const bedrock = require('bedrock');
-require('bedrock-mongodb');
-require('bedrock-https-agent');
-require('bedrock-security-context');
-require('bedrock-profile');
-require('bedrock-profile-http');
-require('bedrock-kms');
-require('bedrock-kms-http');
-require('bedrock-meter');
-require('bedrock-meter-usage-reporter');
-const {handlers} = require('bedrock-meter-http');
-require('bedrock-ssm-mongodb');
-require('bedrock-edv-storage');
+import * as bedrock from '@bedrock/core';
+import '@bedrock/security-context';
+import '@bedrock/edv-storage';
+import '@bedrock/https-agent';
+import {passport} from '@bedrock/passport';
+import '@bedrock/profile';
+import '@bedrock/profile-http';
+import '@bedrock/kms';
+import '@bedrock/kms-http';
+import '@bedrock/mongodb';
+import '@bedrock/ssm-mongodb';
+import '@bedrock/meter';
+import '@bedrock/meter-usage-reporter';
+import {handlers} from '@bedrock/meter-http';
 
 // mock product IDs and reverse lookup for webkms/edv/etc service products
 const productIdMap = new Map();
@@ -64,7 +65,6 @@ bedrock.events.on('bedrock.init', async () => {
   handlers.setUseHandler({handler: ({meter} = {}) => ({meter})});
 });
 
-const {passport} = require('bedrock-passport');
 passport.authenticate = (strategyName, options, callback) => {
   // eslint-disable-next-line no-unused-vars
   return async function(req, res, next) {
@@ -86,7 +86,7 @@ passport.authenticate = (strategyName, options, callback) => {
   };
 };
 
-require('bedrock-test');
-require('bedrock-karma');
+import '@bedrock/test';
+import '@bedrock/karma';
 
 bedrock.start();

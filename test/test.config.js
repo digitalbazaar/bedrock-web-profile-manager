@@ -1,12 +1,16 @@
 /*!
- * Copyright (c) 2019-2021 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2019-2022 Digital Bazaar, Inc. All rights reserved.
  */
-'use strict';
-
-require('bedrock-did-io');
-
-const {config} = require('bedrock');
-const path = require('path');
+import {config} from '@bedrock/core';
+import path from 'path';
+import '@bedrock/https-agent';
+import '@bedrock/karma';
+import '@bedrock/mongodb';
+import '@bedrock/did-io';
+import '@bedrock/kms';
+import '@bedrock/kms-http';
+import '@bedrock/profile';
+import '@bedrock/server';
 
 config.karma.suites['bedrock-web-kms'] = path.join('web', '**', '*.js');
 
