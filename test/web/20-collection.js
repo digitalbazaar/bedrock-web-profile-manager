@@ -35,7 +35,7 @@ describe('Collection API', () => {
 
     const collection = await profileManager.getCollection({
       profileId,
-      referenceIdPrefix: 'example',
+      referenceId: 'example',
       type: 'test'
     });
     const doc1Id = await EdvClient.generateId();
@@ -67,19 +67,12 @@ describe('Collection API', () => {
     const {meter: edvMeter} = meters.find(
       m => m.meter.referenceId === 'profile:core:edv');
 
-    const {edvClient} = await profileManager.createProfileEdv(
+    await profileManager.createProfileEdv(
       {profileId, meterId: edvMeter.id, referenceId: 'example'});
 
-    await profileManager.initializeAccessManagement({
-      profileId,
-      profileContent: {foo: true},
-      edvId: edvClient.id,
-      hmac: edvClient.hmac,
-      keyAgreementKey: edvClient.keyAgreementKey
-    });
     const collection = await profileManager.getCollection({
       profileId,
-      referenceIdPrefix: 'user',
+      referenceId: 'example',
       type: 'test'
     });
     const doc1Id = await EdvClient.generateId();
@@ -113,19 +106,12 @@ describe('Collection API', () => {
     const {meter: edvMeter} = meters.find(
       m => m.meter.referenceId === 'profile:core:edv');
 
-    const {edvClient} = await profileManager.createProfileEdv(
+    await profileManager.createProfileEdv(
       {profileId, meterId: edvMeter.id, referenceId: 'example'});
 
-    await profileManager.initializeAccessManagement({
-      profileId,
-      profileContent: {foo: true},
-      edvId: edvClient.id,
-      hmac: edvClient.hmac,
-      keyAgreementKey: edvClient.keyAgreementKey
-    });
     const collection = await profileManager.getCollection({
       profileId,
-      referenceIdPrefix: 'user',
+      referenceIdPrefix: 'example',
       type: 'test'
     });
     const doc1Id = await EdvClient.generateId();
@@ -164,19 +150,12 @@ describe('Collection API', () => {
     const {meter: edvMeter} = meters.find(
       m => m.meter.referenceId === 'profile:core:edv');
 
-    const {edvClient} = await profileManager.createProfileEdv(
+    await profileManager.createProfileEdv(
       {profileId, meterId: edvMeter.id, referenceId: 'example'});
 
-    await profileManager.initializeAccessManagement({
-      profileId,
-      profileContent: {foo: true},
-      edvId: edvClient.id,
-      hmac: edvClient.hmac,
-      keyAgreementKey: edvClient.keyAgreementKey
-    });
     const collection = await profileManager.getCollection({
       profileId,
-      referenceIdPrefix: 'user',
+      referenceIdPrefix: 'example',
       type: 'test'
     });
     const doc1Id = await EdvClient.generateId();
@@ -217,19 +196,12 @@ describe('Collection API', () => {
     const {meter: edvMeter} = meters.find(
       m => m.meter.referenceId === 'profile:core:edv');
 
-    const {edvClient} = await profileManager.createProfileEdv(
+    await profileManager.createProfileEdv(
       {profileId, meterId: edvMeter.id, referenceId: 'example'});
 
-    await profileManager.initializeAccessManagement({
-      profileId,
-      profileContent: {foo: true},
-      edvId: edvClient.id,
-      hmac: edvClient.hmac,
-      keyAgreementKey: edvClient.keyAgreementKey
-    });
     const collection = await profileManager.getCollection({
       profileId,
-      referenceIdPrefix: 'user',
+      referenceId: 'example',
       type: 'test'
     });
     const doc1Id = await EdvClient.generateId();
