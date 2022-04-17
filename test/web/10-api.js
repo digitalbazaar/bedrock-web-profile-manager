@@ -11,7 +11,7 @@ const EDV_BASE_URL = `${window.location.origin}/edvs`;
 
 describe('Profile Manager API', () => {
   describe('createProfile API', () => {
-    it('successfully creates a profile', async () => {
+    it('should create a profile', async () => {
       const profileManager = new ProfileManager({
         edvBaseUrl: EDV_BASE_URL
       });
@@ -30,8 +30,8 @@ describe('Profile Manager API', () => {
       let error;
       let result;
       try {
-        const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-        result = await profileManager.createProfile(content);
+        result = await profileManager.createProfile(
+          {didMethod: 'v1', didOptions: {mode: 'test'}});
       } catch(e) {
         error = e;
       }
@@ -41,7 +41,7 @@ describe('Profile Manager API', () => {
       result.id.should.be.a('string');
       result.id.should.match(/^did\:v1\:test\:/);
     });
-    it('successfully creates a profile with a custom ProfileService',
+    it('should create a profile with a custom ProfileService',
       async () => {
         // using the mock we can have a deterministic profileDid
         const profileDid = 'did:v1:test:mock';
@@ -74,8 +74,8 @@ describe('Profile Manager API', () => {
         let error;
         let result;
         try {
-          const content = {didMethod: 'v1', didOptions};
-          result = await profileManager.createProfile(content);
+          result = await profileManager.createProfile(
+            {didMethod: 'v1', didOptions});
         } catch(e) {
           error = e;
         }
@@ -106,12 +106,12 @@ describe('Profile Manager API', () => {
         }
       });
     });
-    it('should succeed if profile exists', async () => {
+    it('should pass if profile exists', async () => {
       let error;
       let result;
       try {
-        const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-        const {id: profileId} = await profileManager.createProfile(content);
+        const {id: profileId} = await profileManager.createProfile(
+          {didMethod: 'v1', didOptions: {mode: 'test'}});
         result = await profileManager.getProfileSigner({profileId});
       } catch(e) {
         error = e;
@@ -150,6 +150,7 @@ describe('Profile Manager API', () => {
       error.message.should.contain('profileId');
     });
   });
+
   describe('getAgent api', () => {
     let profileManager;
     beforeEach(async () => {
@@ -168,12 +169,12 @@ describe('Profile Manager API', () => {
         }
       });
     });
-    it('should succeed if profile exists', async () => {
+    it('should pass if profile exists', async () => {
       let error;
       let result;
       try {
-        const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-        const {id: profileId} = await profileManager.createProfile(content);
+        const {id: profileId} = await profileManager.createProfile(
+          {didMethod: 'v1', didOptions: {mode: 'test'}});
         result = await profileManager.getAgent({profileId});
       } catch(e) {
         error = e;
@@ -211,114 +212,7 @@ describe('Profile Manager API', () => {
       error.message.should.contain('profileId');
     });
   });
-  describe('initializeAccessManagement api', () => {
-    let profileManager;
-    beforeEach(async () => {
-      profileManager = new ProfileManager({
-        edvBaseUrl: EDV_BASE_URL
-      });
 
-      await profileManager.setSession({
-        session: {
-          data: {
-            account: {
-              id: ACCOUNT_ID
-            }
-          },
-          on: () => {},
-        }
-      });
-    });
-    it('should successfully initialize', async () => {
-      let error;
-      const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-      let profileId;
-      let meters;
-      try {
-        ({id: profileId, meters} = await profileManager.createProfile(content));
-      } catch(e) {
-        error = e;
-      }
-      should.not.exist(error);
-
-      error = null;
-      let edvClient;
-      const {meter: edvMeter} = meters.find(
-        m => m.meter.referenceId === 'profile:core:edv');
-      try {
-        ({edvClient} = await profileManager.createProfileEdv(
-          {profileId, meterId: edvMeter.id, referenceId: 'example'}));
-      } catch(e) {
-        error = e;
-      }
-      should.not.exist(error);
-
-      error = null;
-      let result;
-      try {
-        result = await profileManager.initializeAccessManagement({
-          profileId,
-          profileContent: {foo: true},
-          edvId: edvClient.id,
-          hmac: edvClient.hmac,
-          keyAgreementKey: edvClient.keyAgreementKey
-        });
-      } catch(e) {
-        error = e;
-      }
-      should.not.exist(error);
-      should.exist(result);
-      result.should.have.property('profile');
-      result.profile.should.have.property('id');
-      result.profile.id.should.be.a('string');
-      result.profile.id.should.contain('did:v1:');
-      result.profile.should.have.property('accessManagement');
-      result.profile.should.have.property('type');
-      result.profile.type.should.include.members(['User', 'Profile']);
-      result.should.have.property('profileAgent');
-      result.profileAgent.should.have.property('id');
-      result.profileAgent.id.should.contain('did:key:');
-      result.profileAgent.should.have.property('type');
-      result.profileAgent.type.should.include.members(['User', 'Agent']);
-      result.profileAgent.should.have.property('zcaps');
-    });
-    it('should fail if profileId is undefined', async () => {
-      let error;
-      let result;
-      try {
-        result = await profileManager.initializeAccessManagement({
-          profileId: undefined,
-          profileContent: {foo: true},
-          profileAgentContent: {bar: false},
-          edvId: 'testEdvId'
-        });
-      } catch(e) {
-        error = e;
-      }
-      should.not.exist(result);
-      should.exist(error);
-      error.name.should.equal('TypeError');
-      error.message.should.contain('profileId');
-    });
-    it('should fail if profileId is an empty string', async () => {
-      let error;
-      let result;
-      try {
-        result = await profileManager.initializeAccessManagement({
-          profileId: '',
-          profileContent: {foo: true},
-          profileAgentContent: {bar: false},
-          edvId: 'testEdvId'
-        });
-      } catch(e) {
-        error = e;
-      }
-      should.not.exist(result);
-      should.exist(error);
-      error.name.should.equal('TypeError');
-      error.message.should.contain('profileId');
-    });
-  });
   describe('getProfile api', () => {
     let profileManager;
     beforeEach(async () => {
@@ -337,58 +231,18 @@ describe('Profile Manager API', () => {
         }
       });
     });
-    it('should succeed w/ initialized profile', async () => {
+    it('should pass', async () => {
       let error;
       let result;
       try {
-        const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-        const {id: profileId, meters} = await profileManager.createProfile(
-          content);
-        const {meter: edvMeter} = meters.find(
-          m => m.meter.referenceId === 'profile:core:edv');
-
-        const {edvClient} = await profileManager.createProfileEdv(
-          {profileId, meterId: edvMeter.id, referenceId: 'example'});
-
-        result = await profileManager.initializeAccessManagement({
-          profileId,
-          profileContent: {foo: true},
-          edvId: edvClient.id,
-          hmac: edvClient.hmac,
-          keyAgreementKey: edvClient.keyAgreementKey
-        });
+        const {id: profileId} = await profileManager.createProfile(
+          {didMethod: 'v1', didOptions: {mode: 'test'}});
         result = await profileManager.getProfile({id: profileId});
       } catch(e) {
         error = e;
       }
       should.not.exist(error);
       should.exist(result);
-    });
-    it(`should fail w/ uninitialized profile access management`, async () => {
-      let error;
-      let result;
-      try {
-        const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-        const {id} = await profileManager.createProfile(content);
-        result = await profileManager.getProfile({id});
-      } catch(e) {
-        error = e;
-      }
-      should.not.exist(result);
-      should.exist(error);
-    });
-    it(`should fail w/ unintialized profile access management`, async () => {
-      let error;
-      let result;
-      try {
-        const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-        const {id} = await profileManager.createProfile(content);
-        result = await profileManager.getProfile({id});
-      } catch(e) {
-        error = e;
-      }
-      should.not.exist(result);
-      should.exist(error);
     });
     it('should fail if profileId is undefined', async () => {
       let error;
@@ -417,6 +271,7 @@ describe('Profile Manager API', () => {
       error.message.should.contain('id');
     });
   });
+
   describe('getProfileKeystoreAgent api', () => {
     let profileManager;
     beforeEach(async () => {
@@ -435,12 +290,12 @@ describe('Profile Manager API', () => {
         }
       });
     });
-    it('should succeed if profile exists', async () => {
+    it('should pass if profile exists', async () => {
       let error;
       let result;
       try {
-        const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-        const {id: profileId} = await profileManager.createProfile(content);
+        const {id: profileId} = await profileManager.createProfile(
+          {didMethod: 'v1', didOptions: {mode: 'test'}});
         result = await profileManager.getProfileKeystoreAgent({profileId});
       } catch(e) {
         error = e;
@@ -481,6 +336,7 @@ describe('Profile Manager API', () => {
       error.message.should.contain('profileId');
     });
   });
+
   describe('getProfileMeters api', () => {
     let profileManager;
     beforeEach(async () => {
@@ -499,12 +355,12 @@ describe('Profile Manager API', () => {
         }
       });
     });
-    it('should succeed if profile exists', async () => {
+    it('should pass if profile exists', async () => {
       let error;
       let result;
       try {
-        const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-        const {id: profileId} = await profileManager.createProfile(content);
+        const {id: profileId} = await profileManager.createProfile(
+          {didMethod: 'v1', didOptions: {mode: 'test'}});
         result = await profileManager.getProfileMeters({profileId});
       } catch(e) {
         error = e;
@@ -543,100 +399,7 @@ describe('Profile Manager API', () => {
       error.message.should.contain('profileId');
     });
   });
-  describe('getAccessManager api', () => {
-    let profileManager;
-    beforeEach(async () => {
-      profileManager = new ProfileManager({
-        edvBaseUrl: EDV_BASE_URL
-      });
 
-      await profileManager.setSession({
-        session: {
-          data: {
-            account: {
-              id: ACCOUNT_ID
-            }
-          },
-          on: () => {},
-        }
-      });
-    });
-    it('should succeed w/ initialized profile access management',
-      async () => {
-        let error;
-        let result;
-        try {
-          const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-          const {id: profileId, meters} = await profileManager.createProfile(
-            content);
-          const {meter: edvMeter} = meters.find(
-            m => m.meter.referenceId === 'profile:core:edv');
-
-          const {edvClient} = await profileManager.createProfileEdv(
-            {profileId, meterId: edvMeter.id, referenceId: 'example'});
-
-          result = await profileManager.initializeAccessManagement({
-            profileId,
-            profileContent: {foo: true},
-            edvId: edvClient.id,
-            hmac: edvClient.hmac,
-            keyAgreementKey: edvClient.keyAgreementKey
-          });
-          result = await profileManager.getAccessManager(
-            {profileId});
-        } catch(e) {
-          error = e;
-        }
-        should.not.exist(error);
-        should.exist(result);
-        result.should.have.property('profile');
-        result.profile.should.have.property('id');
-        result.profile.id.should.contain('did:v1:');
-        result.profile.should.have.property('accessManagement');
-        result.should.have.property('profileManager');
-        result.should.have.property('users');
-      });
-    it('should fail w/ uninitialized profile access management', async () => {
-      let error;
-      let result;
-      try {
-        const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-        const {id: profileId} = await profileManager.createProfile(content);
-        result = await profileManager.getAccessManager(
-          {profileId});
-      } catch(e) {
-        error = e;
-      }
-      should.not.exist(result);
-      should.exist(error);
-    });
-    it('should fail if profileId is undefined', async () => {
-      let error;
-      let result;
-      try {
-        result = await profileManager.getAccessManager({profileId: undefined});
-      } catch(e) {
-        error = e;
-      }
-      should.not.exist(result);
-      should.exist(error);
-      error.name.should.equal('TypeError');
-      error.message.should.contain('profileId');
-    });
-    it('should fail if profileId is an empty string', async () => {
-      let error;
-      let result;
-      try {
-        result = await profileManager.getAccessManager({profileId: ''});
-      } catch(e) {
-        error = e;
-      }
-      should.not.exist(result);
-      should.exist(error);
-      error.name.should.equal('TypeError');
-      error.message.should.contain('profileId');
-    });
-  });
   describe('createProfileEdv api', () => {
     let profileManager;
     beforeEach(async () => {
@@ -710,6 +473,119 @@ describe('Profile Manager API', () => {
       error.message.should.contain('profileId');
     });
   });
+
+  describe('getAccessManager api', () => {
+    let profileManager;
+    beforeEach(async () => {
+      profileManager = new ProfileManager({
+        edvBaseUrl: EDV_BASE_URL
+      });
+
+      await profileManager.setSession({
+        session: {
+          data: {
+            account: {
+              id: ACCOUNT_ID
+            }
+          },
+          on: () => {},
+        }
+      });
+    });
+    it('should pass', async () => {
+      let error;
+      let result;
+      try {
+        const {id: profileId} = await profileManager.createProfile(
+          {didMethod: 'v1', didOptions: {mode: 'test'}});
+        result = await profileManager.getAccessManager({profileId});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(error);
+      should.exist(result);
+      result.should.have.property('profile');
+      result.profile.should.have.property('id');
+      result.profile.id.should.contain('did:v1:');
+      result.profile.should.have.property('accessManagement');
+      result.should.have.property('profileManager');
+      result.should.have.property('users');
+    });
+    it('should add zcaps for another EDV', async () => {
+      let error;
+      let result;
+      try {
+        const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
+        const {id: profileId, meters} = await profileManager.createProfile(
+          content);
+        const {meter: edvMeter} = meters.find(
+          m => m.meter.referenceId === 'profile:core:edv');
+
+        const referenceId = 'example';
+        const {edvClient} = await profileManager.createProfileEdv(
+          {profileId, meterId: edvMeter.id, referenceId});
+        const {invocationSigner} = await profileManager.getProfileSigner(
+          {profileId});
+        const profileAgent = await profileManager.getAgent({profileId});
+        const {zcaps} = await profileManager.delegateEdvCapabilities({
+          edvId: edvClient.id,
+          hmac: edvClient.hmac,
+          keyAgreementKey: edvClient.keyAgreementKey,
+          invocationSigner,
+          profileAgentId: profileAgent.id,
+          referenceIdPrefix: referenceId
+        });
+        const accessManager = await profileManager.getAccessManager(
+          {profileId});
+        result = await accessManager.updateUser({
+          id: profileAgent.id,
+          async mutator({existing}) {
+            const updatedDoc = Object.assign({}, existing);
+            updatedDoc.content.zcaps = Object.assign(
+              {}, updatedDoc.content.zcaps, zcaps);
+            return updatedDoc;
+          }
+        });
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(error);
+      should.exist(result);
+      result.should.include.keys(['id', 'zcaps']);
+      result.id.should.contain('did:key:');
+      result.zcaps.should.be.an('object');
+      result.zcaps.should.include.keys([
+        'example-edv-hmac', 'example-edv-kak', 'example-edv-documents'
+      ]);
+    });
+    it('should fail if profileId is undefined', async () => {
+      let error;
+      let result;
+      try {
+        result = await profileManager.getAccessManager({profileId: undefined});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('TypeError');
+      error.message.should.contain('profileId');
+    });
+    it('should fail if profileId is an empty string', async () => {
+      let error;
+      let result;
+      try {
+        result = await profileManager.getAccessManager({profileId: ''});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(result);
+      should.exist(error);
+      error.name.should.equal('TypeError');
+      error.message.should.contain('profileId');
+    });
+  });
+
   describe('delegateCapability api', () => {
     let profileManager;
     beforeEach(async () => {
@@ -842,8 +718,8 @@ describe('Profile Manager API', () => {
       error.name.should.equal('TypeError');
       error.message.should.contain('keyAgreementKey');
     });
-
   });
+
   describe('getCollection api', () => {
     let profileManager;
     beforeEach(() => {
@@ -886,6 +762,7 @@ describe('Profile Manager API', () => {
       error.message.should.contain('profileId');
     });
   });
+
   describe('getProfileEdvAccess api', () => {
     let profileManager;
     beforeEach(() => {
@@ -926,6 +803,7 @@ describe('Profile Manager API', () => {
       error.message.should.contain('profileId');
     });
   });
+
   describe('zcap expiration', () => {
     it('should delegate a new zcap with new expiration date when a ' +
       'zcap delegated to ephemeral DID has expired', async () => {

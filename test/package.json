@@ -10,9 +10,9 @@
     "coverage-ci": "node --preserve-symlinks test.js test --framework karma --config ./node_modules/@bedrock/karma/lib/coverageConfig.js"
   },
   "dependencies": {
-    "@bedrock/core": "^5.0.0",
     "@bedrock/account": "^7.0.0",
     "@bedrock/app-identity": "^2.0.0",
+    "@bedrock/core": "^5.0.0",
     "@bedrock/did-context": "^3.0.0",
     "@bedrock/did-io": "^7.0.0",
     "@bedrock/edv-storage": "^14.0.0",

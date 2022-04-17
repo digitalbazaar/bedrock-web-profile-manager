@@ -1,5 +1,25 @@
 # bedrock-web-profile-manager ChangeLog
 
+## 16.0.0 - 2022-04-xx
+
+### Added
+- Add option to specify an `id` and `mutator` function to the Collection
+  API and to `updateUser` on `AccessManager`.
+
+### Changed
+- **BREAKING**: `Collection` API no longer accepts `capability` nor
+  `invocationSigner`; these must be set on the `edvClient` that is passed
+  to the constructor.
+- **BREAKING**: `AccessManager` `createUser` is presently disabled and will
+  throw a `Not Implemented` error, properly reflecting its currently broken
+  state. A future version will eventually address this.
+
+### Removed
+- **BREAKING**: Remove `initializeAccessManagement`. Access management for
+  profiles must now be handled during profile provisioning on the backend
+  system. Use at least `@bedrock/profile@17` and `@bedrock/profile-http@16`
+  on a backend system to provide this functionality.
+
 ## 15.0.1 - 2022-04-11
 
 ### Fixed
