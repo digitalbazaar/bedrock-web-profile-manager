@@ -24,25 +24,18 @@ describe('Collection API', () => {
       }
     });
   });
-  it('should create a doc in a collection successfully', async () => {
-    const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-    const {id: profileId, meters} = await profileManager.createProfile(content);
+  it('should create a doc in a collection', async () => {
+    const {id: profileId, meters} = await profileManager.createProfile(
+      {didMethod: 'v1', didOptions: {mode: 'test'}});
     const {meter: edvMeter} = meters.find(
       m => m.meter.referenceId === 'profile:core:edv');
 
-    const {edvClient} = await profileManager.createProfileEdv(
+    await profileManager.createProfileEdv(
       {profileId, meterId: edvMeter.id, referenceId: 'example'});
 
-    await profileManager.initializeAccessManagement({
-      profileId,
-      profileContent: {foo: true},
-      edvId: edvClient.id,
-      hmac: edvClient.hmac,
-      keyAgreementKey: edvClient.keyAgreementKey
-    });
     const collection = await profileManager.getCollection({
       profileId,
-      referenceIdPrefix: 'user',
+      referenceIdPrefix: 'example',
       type: 'test'
     });
     const doc1Id = await EdvClient.generateId();
@@ -68,9 +61,9 @@ describe('Collection API', () => {
     result.indexed[0].should.have.keys(['hmac', 'sequence', 'attributes']);
     result.content.should.eql(doc1);
   });
-  it('should get all docs from a collection successfully', async () => {
-    const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-    const {id: profileId, meters} = await profileManager.createProfile(content);
+  it('should get all docs from a collection', async () => {
+    const {id: profileId, meters} = await profileManager.createProfile(
+      {didMethod: 'v1', didOptions: {mode: 'test'}});
     const {meter: edvMeter} = meters.find(
       m => m.meter.referenceId === 'profile:core:edv');
 
@@ -114,9 +107,9 @@ describe('Collection API', () => {
     contents.should.deep.include(doc1);
     contents.should.deep.include(doc2);
   });
-  it('should get a doc from a collection successfully', async () => {
-    const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-    const {id: profileId, meters} = await profileManager.createProfile(content);
+  it('should get a doc from a collection', async () => {
+    const {id: profileId, meters} = await profileManager.createProfile(
+      {didMethod: 'v1', didOptions: {mode: 'test'}});
     const {meter: edvMeter} = meters.find(
       m => m.meter.referenceId === 'profile:core:edv');
 
@@ -165,9 +158,9 @@ describe('Collection API', () => {
     result.indexed[0].should.have.keys(['hmac', 'sequence', 'attributes']);
     result.content.should.eql(doc2);
   });
-  it('should remove a doc from a collection successfully', async () => {
-    const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-    const {id: profileId, meters} = await profileManager.createProfile(content);
+  it('should remove a doc from a collection', async () => {
+    const {id: profileId, meters} = await profileManager.createProfile(
+      {didMethod: 'v1', didOptions: {mode: 'test'}});
     const {meter: edvMeter} = meters.find(
       m => m.meter.referenceId === 'profile:core:edv');
 
@@ -218,9 +211,9 @@ describe('Collection API', () => {
     should.not.exist(err2);
     result2.should.eql([]);
   });
-  it('should update a doc in a collection successfully', async () => {
-    const content = {didMethod: 'v1', didOptions: {mode: 'test'}};
-    const {id: profileId, meters} = await profileManager.createProfile(content);
+  it('should update a doc in a collection', async () => {
+    const {id: profileId, meters} = await profileManager.createProfile(
+      {didMethod: 'v1', didOptions: {mode: 'test'}});
     const {meter: edvMeter} = meters.find(
       m => m.meter.referenceId === 'profile:core:edv');
 

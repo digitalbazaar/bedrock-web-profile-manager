@@ -5,6 +5,10 @@
 ### Added
 - Add option to specify an `id` and `mutator` function to the Collection
   API and to `updateUser` on `AccessManager`.
+- Automatically add profile EDV access zcaps to the local profile agent when
+  a new profile EDV is created.
+- Add profile EDV access zcaps on demand to the local profile agent when an
+  existing profile EDV is first accessed.
 
 ### Changed
 - **BREAKING**: `Collection` API no longer accepts `capability` nor
