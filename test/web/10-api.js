@@ -497,7 +497,9 @@ describe('Profile Manager API', () => {
       try {
         const {id: profileId} = await profileManager.createProfile(
           {didMethod: 'v1', didOptions: {mode: 'test'}});
-        result = await profileManager.getAccessManager({profileId});
+        const {accessManager} = await profileManager.getAccessManager(
+          {profileId});
+        result = accessManager;
       } catch(e) {
         error = e;
       }

@@ -17,6 +17,9 @@
 - **BREAKING**: `AccessManager` `createUser` is presently disabled and will
   throw a `Not Implemented` error, properly reflecting its currently broken
   state. A future version will eventually address this.
+- **BREAKING**: `getAccessManager` returns an object with `accessManager` ste
+  to the access manager instance and `profile` and `profileAgent` set to the
+  profile and profile agent used.
 
 ### Removed
 - **BREAKING**: Remove `initializeAccessManagement`. Access management for
