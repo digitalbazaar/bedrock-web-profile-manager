@@ -3,7 +3,7 @@
   "version": "16.0.2-0",
   "type": "module",
   "description": "Profile management for Bedrock Web Apps",
-  "module": "./lib/index.js",
+  "exports": "./lib/index.js",
   "browser": {
     "./lib/crypto.js": "./lib/crypto-browser.js"
   },
