@@ -20,11 +20,11 @@
   ],
   "dependencies": {
     "@bedrock/web-profile": "^5.0.0",
-    "@digitalbazaar/ed25519-signature-2018": "^2.0.1",
+    "@digitalbazaar/ed25519-signature-2018": "^2.1.0",
     "@digitalbazaar/ed25519-signature-2020": "^3.0.0",
     "@digitalbazaar/edv-client": "^14.0.0",
     "@digitalbazaar/ezcap": "^2.0.6",
-    "@digitalbazaar/http-client": "^2.0.1",
+    "@digitalbazaar/http-client": "^3.1.0",
     "@digitalbazaar/lru-memoize": "^2.2.0",
     "@digitalbazaar/security-document-loader": "^1.1.1",
     "@digitalbazaar/webkms-client": "^10.0.0",
@@ -35,10 +35,11 @@
     "veres-one-context": "^12.0.0"
   },
   "devDependencies": {
-    "eslint": "^7.32.0",
-    "eslint-config-digitalbazaar": "^2.8.0",
-    "eslint-plugin-jsdoc": "^37.9.7",
-    "jsdoc": "^3.6.4",
+    "eslint": "^8.15.0",
+    "eslint-config-digitalbazaar": "^3.0.0",
+    "eslint-plugin-jsdoc": "^39.2.9",
+    "eslint-plugin-unicorn": "^42.0.0",
+    "jsdoc": "^3.6.10",
     "jsdoc-to-markdown": "^7.1.1"
   }
 }
