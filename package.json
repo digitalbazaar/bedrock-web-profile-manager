@@ -1,12 +1,15 @@
 {
   "name": "@bedrock/web-profile-manager",
   "version": "16.0.2-0",
-  "type": "module",
   "description": "Profile management for Bedrock Web Apps",
+  "type": "module",
   "exports": "./lib/index.js",
   "browser": {
     "./lib/crypto.js": "./lib/crypto-browser.js"
   },
+  "files": [
+    "lib/*"
+  ],
   "scripts": {
     "generate-readme": "jsdoc2md -t template.hbs *.js > README.md",
     "lint": "eslint ."
@@ -15,9 +18,6 @@
     "type": "git",
     "url": "https://github.com/digitalbazaar/bedrock-web-profile-manager"
   },
-  "files": [
-    "lib/*"
-  ],
   "dependencies": {
     "@bedrock/web-profile": "github:digitalbazaar/bedrock-web-profile#convert-to-module",
     "@digitalbazaar/ed25519-signature-2018": "github:digitalbazaar/ed25519-signature-2018#convert-to-module",
