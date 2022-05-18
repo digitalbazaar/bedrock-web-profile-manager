@@ -244,6 +244,25 @@ describe('Profile Manager API', () => {
       should.not.exist(error);
       should.exist(result);
     });
+    it('should use cache', async () => {
+      let error;
+      let result1;
+      let result2;
+      try {
+        const {id: profileId} = await profileManager.createProfile(
+          {didMethod: 'v1', didOptions: {mode: 'test'}});
+        result1 = await profileManager.getProfile({id: profileId});
+        result2 = await profileManager.getProfile(
+          {id: profileId, useCache: true});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(error);
+      should.exist(result1);
+      should.exist(result2);
+      // do not deep compare; asserting same object instances
+      result1.should.equal(result2);
+    });
     it('should fail if profileId is undefined', async () => {
       let error;
       let result;
@@ -269,6 +288,68 @@ describe('Profile Manager API', () => {
       should.exist(error);
       error.name.should.equal('TypeError');
       error.message.should.contain('id');
+    });
+  });
+
+  describe('getProfiles api', () => {
+    let profileManager;
+    beforeEach(async () => {
+      profileManager = new ProfileManager({
+        edvBaseUrl: EDV_BASE_URL
+      });
+
+      await profileManager.setSession({
+        session: {
+          data: {
+            account: {
+              id: ACCOUNT_ID
+            }
+          },
+          on: () => {},
+        }
+      });
+    });
+    it('should pass', async () => {
+      let error;
+      let result;
+      let profileId;
+      try {
+        ({id: profileId} = await profileManager.createProfile(
+          {didMethod: 'v1', didOptions: {mode: 'test'}}));
+        result = await profileManager.getProfiles();
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(error);
+      should.exist(result);
+      should.exist(profileId);
+      result.should.be.an('array');
+      result.length.should.greaterThan(0);
+      profileId.should.equal(result[result.length - 1].id);
+    });
+    it('should use cache', async () => {
+      let error;
+      let result1;
+      let result2;
+      try {
+        await profileManager.createProfile(
+          {didMethod: 'v1', didOptions: {mode: 'test'}});
+        result1 = await profileManager.getProfiles();
+        result2 = await profileManager.getProfiles({useCache: true});
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(error);
+      should.exist(result1);
+      should.exist(result2);
+      result1.should.be.an('array');
+      result2.should.be.an('array');
+      result1.length.should.equal(result2.length);
+      result1.length.should.be.greaterThan(0);
+      // do not deep compare; asserting same object instances
+      for(let i = 0; i < result1.length; ++i) {
+        result1[i].should.equal(result2[i]);
+      }
     });
   });
 

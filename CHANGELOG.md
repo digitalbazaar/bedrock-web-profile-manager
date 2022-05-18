@@ -1,5 +1,11 @@
 # bedrock-web-profile-manager ChangeLog
 
+## 17.1.0 - 2022-05-xx
+
+### Added
+- Add optional cache for profiles and profile agent records. The cache can be
+  used by passing `useCache: true` to `getProfile()` or `getProfiles()`.
+
 ## 17.0.0 - 2022-05-05
 
 ### Changed
