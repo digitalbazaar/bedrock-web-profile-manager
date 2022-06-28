@@ -4,6 +4,9 @@
 
 ### Changed
 - **BREAKING**: Use `exports` instead of `module`.
+- **BREAKING**: Use `globalThis` for browser crypto.
+- **BREAKING**: Require Web Crypto API. Older browsers and Node.js 14 users
+  need to install an appropriate polyfill.
 - Update dependencies.
 - Lint module.
 
