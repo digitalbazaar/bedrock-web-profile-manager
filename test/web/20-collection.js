@@ -1,8 +1,8 @@
 /*!
  * Copyright (c) 2019-2022 Digital Bazaar, Inc. All rights reserved.
  */
-import {ProfileManager} from '@bedrock/web-profile-manager';
 import {EdvClient} from '@digitalbazaar/edv-client';
+import {ProfileManager} from '@bedrock/web-profile-manager';
 
 const ACCOUNT_ID = 'urn:uuid:ffaf5d84-7dc2-4f7b-9825-cc8d2e5a5d06';
 const EDV_BASE_URL = `${window.location.origin}/edvs`;

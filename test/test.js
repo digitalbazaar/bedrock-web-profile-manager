@@ -2,10 +2,11 @@
  * Copyright (c) 2019-2022 Digital Bazaar, Inc. All rights reserved.
  */
 import * as bedrock from '@bedrock/core';
+import {handlers} from '@bedrock/meter-http';
+import {passport} from '@bedrock/passport';
 import '@bedrock/security-context';
 import '@bedrock/edv-storage';
 import '@bedrock/https-agent';
-import {passport} from '@bedrock/passport';
 import '@bedrock/profile';
 import '@bedrock/profile-http';
 import '@bedrock/kms';
@@ -14,7 +15,6 @@ import '@bedrock/mongodb';
 import '@bedrock/ssm-mongodb';
 import '@bedrock/meter';
 import '@bedrock/meter-usage-reporter';
-import {handlers} from '@bedrock/meter-http';
 
 // mock product IDs and reverse lookup for webkms/edv/etc service products
 const productIdMap = new Map();

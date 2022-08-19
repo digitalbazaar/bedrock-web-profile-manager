@@ -1,9 +1,9 @@
 /*!
  * Copyright (c) 2019-2022 Digital Bazaar, Inc. All rights reserved.
  */
+import {mockData} from './mock.data.js';
 import {ProfileManager} from '@bedrock/web-profile-manager';
 import {ProfileService} from '@bedrock/web-profile';
-import {mockData} from './mock.data.js';
 import sinon from 'sinon';
 
 const ACCOUNT_ID = 'urn:uuid:ffaf5d84-7dc2-4f7b-9825-cc8d2e5a5d06';

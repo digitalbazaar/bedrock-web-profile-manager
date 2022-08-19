@@ -19,7 +19,7 @@
     "url": "https://github.com/digitalbazaar/bedrock-web-profile-manager"
   },
   "dependencies": {
-    "@bedrock/web-profile": "github:digitalbazaar/bedrock-web-profile#convert-to-module",
+    "@bedrock/web-profile": "^6.0.0",
     "@digitalbazaar/ed25519-signature-2018": "^3.0.0",
     "@digitalbazaar/ed25519-signature-2020": "^4.0.1",
     "@digitalbazaar/edv-client": "^15.0.0",
@@ -35,9 +35,9 @@
   },
   "devDependencies": {
     "eslint": "^8.15.0",
-    "eslint-config-digitalbazaar": "^3.0.0",
+    "eslint-config-digitalbazaar": "^4.1.0",
     "eslint-plugin-jsdoc": "^39.2.9",
-    "eslint-plugin-unicorn": "^42.0.0",
+    "eslint-plugin-unicorn": "^43.0.2",
     "jsdoc": "^3.6.10",
     "jsdoc-to-markdown": "^7.1.1"
   }
