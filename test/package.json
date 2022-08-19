@@ -37,7 +37,7 @@
     "@bedrock/test": "^8.0.5",
     "@bedrock/validation": "^7.0.0",
     "@bedrock/veres-one-context": "^14.0.1",
-    "@bedrock/web-profile": "github:digitalbazaar/bedrock-web-profile#convert-to-module",
+    "@bedrock/web-profile": "^6.0.0",
     "@bedrock/web-profile-manager": "file:..",
     "@bedrock/zcap-storage": "^8.0.0",
     "@digitalbazaar/edv-client": "^15.0.0",
