@@ -325,7 +325,9 @@ describe('Profile Manager API', () => {
       should.exist(profileId);
       result.should.be.an('array');
       result.length.should.greaterThan(0);
-      profileId.should.equal(result[result.length - 1].id);
+      const profile = result.find(p => p.id === profileId);
+      should.exist(profile, `Expected to find a profile for ${profileId}`);
+      profile.should.be.an('object');
     });
     it('should use cache', async () => {
       let error;
@@ -387,7 +389,7 @@ describe('Profile Manager API', () => {
       should.exist(profileId);
       result.should.be.an('array');
       result.length.should.greaterThan(0);
-      profileId.should.equal(result[result.length - 1]);
+      result.should.include(profileId);
     });
     it('should use cache', async () => {
       let error;
