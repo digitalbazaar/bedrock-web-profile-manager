@@ -14,6 +14,7 @@
     `@digitalbazaar/http-client@4` that requires Node.js 18+.
   - Use `did-veres-one@16`. Updated dependencies use the newer default safe
     mode of jsonld.
+  - Add missing dependency `@digitalbazaar/webkms-context@2.1.0`.
 
 ## 19.0.0 - 2022-11-13
 
