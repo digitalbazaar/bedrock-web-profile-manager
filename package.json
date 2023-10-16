@@ -19,17 +19,17 @@
     "url": "https://github.com/digitalbazaar/bedrock-web-profile-manager"
   },
   "dependencies": {
-    "@bedrock/web-profile": "^6.0.0",
+    "@bedrock/web-profile": "^7.0.0",
     "@digitalbazaar/ed25519-signature-2018": "^4.0.0",
     "@digitalbazaar/ed25519-signature-2020": "^5.0.0",
-    "@digitalbazaar/edv-client": "^15.0.0",
+    "@digitalbazaar/edv-client": "^16.0.0",
     "@digitalbazaar/ezcap": "^4.0.0",
-    "@digitalbazaar/http-client": "^3.2.0",
+    "@digitalbazaar/http-client": "^4.0.0",
     "@digitalbazaar/lru-memoize": "^3.0.0",
     "@digitalbazaar/security-document-loader": "^2.0.0",
-    "@digitalbazaar/webkms-client": "^12.0.0",
+    "@digitalbazaar/webkms-client": "^13.0.0",
     "@digitalbazaar/zcap-context": "^2.0.0",
-    "did-veres-one": "^15.0.0",
+    "did-veres-one": "^16.0.0",
     "lru-cache": "^6.0.0",
     "veres-one-context": "^12.0.0"
   },
