@@ -19,7 +19,7 @@
     "@bedrock/express": "^8.0.0",
     "@bedrock/https-agent": "^4.0.0",
     "@bedrock/jsonld-document-loader": "^4.0.0",
-    "@bedrock/karma": "^6.0.0",
+    "@bedrock/karma": "^6.1.0",
     "@bedrock/kms": "^14.0.0",
     "@bedrock/kms-http": "^18.0.0",
     "@bedrock/ledger-context": "^24.0.0",
@@ -41,7 +41,6 @@
     "@bedrock/web-profile-manager": "file:..",
     "@bedrock/zcap-storage": "^8.0.0",
     "@digitalbazaar/edv-client": "^16.0.0",
-    "@vue/compiler-sfc": "^3.3.4",
     "sinon": "^14.0.0"
   }
 }
