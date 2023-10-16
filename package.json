@@ -34,11 +34,11 @@
     "veres-one-context": "^12.0.0"
   },
   "devDependencies": {
-    "eslint": "^8.15.0",
-    "eslint-config-digitalbazaar": "^4.1.0",
-    "eslint-plugin-jsdoc": "^39.2.9",
-    "eslint-plugin-unicorn": "^44.0.2",
-    "jsdoc": "^3.6.10",
-    "jsdoc-to-markdown": "^7.1.1"
+    "eslint": "^8.51.0",
+    "eslint-config-digitalbazaar": "^5.0.1",
+    "eslint-plugin-jsdoc": "^46.8.2",
+    "eslint-plugin-unicorn": "^48.0.1",
+    "jsdoc": "^4.0.2",
+    "jsdoc-to-markdown": "^8.0.0"
   }
 }
