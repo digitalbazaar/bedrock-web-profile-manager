@@ -28,6 +28,7 @@
     "@digitalbazaar/lru-memoize": "^3.0.0",
     "@digitalbazaar/security-document-loader": "^2.0.0",
     "@digitalbazaar/webkms-client": "^13.0.0",
+    "@digitalbazaar/webkms-context": "^2.1.0",
     "@digitalbazaar/zcap-context": "^2.0.0",
     "did-veres-one": "^16.0.0",
     "lru-cache": "^6.0.0",
