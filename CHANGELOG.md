@@ -1,5 +1,20 @@
 # bedrock-web-profile-manager ChangeLog
 
+## 20.0.0 - 2023-10-TBD
+
+### Changed
+- **BREAKING**: Drop support for Node.js < 18.
+- Update dependencies:
+  - Use `@bedrock/web-profile@7.0`. Drops support for Node.js < 18 and uses
+    `@digitalbazaar/http-client@4` that requires Node.js 18+.
+  - Use `@digitalbazaar/edv-client@16.0`. Drops support for Node.js < 18 and
+    uses `@digitalbazaar/http-client@4` and `canonicalize@2`.
+  - Use `@digitalbazaar/http-client@4`. Requires Node.js 18+.
+  - Use `@digitalbazaar/webkms-client@13.0`. Drops support for Node.js and uses
+    `@digitalbazaar/http-client@4` that requires Node.js 18+.
+  - Use `did-veres-one@16`. Updated dependencies use the newer default safe
+    mode of jsonld.
+
 ## 19.0.0 - 2022-11-13
 
 ### Changed
