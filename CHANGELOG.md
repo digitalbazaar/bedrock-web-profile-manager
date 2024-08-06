@@ -1,5 +1,15 @@
 # bedrock-web-profile-manager ChangeLog
 
+## 21.0.0 - 2024-08-xx
+
+### Changed
+- **BREAKING**: Update dependencies.
+  - `@digitalbazaar/security-document-loader@3`.
+    - Adds VC 2.0 support.
+  - `@digitalbazaar/webkms-client@14`.
+    - Major version update changing payloads.
+- Update minor, test, and dev dependencies.
+
 ## 20.0.0 - 2023-10-16
 
 ### Changed
