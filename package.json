@@ -1,6 +1,6 @@
 {
   "name": "@bedrock/web-profile-manager",
-  "version": "21.1.0",
+  "version": "21.1.1-0",
   "description": "Profile management for Bedrock Web Apps",
   "type": "module",
   "exports": "./lib/index.js",
