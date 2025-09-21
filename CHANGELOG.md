@@ -1,5 +1,17 @@
 # bedrock-web-profile-manager ChangeLog
 
+## 21.1.0 - 2025-mm-dd
+
+### Changed
+- Update dependencies:
+  - `@digitalbazaar/ed25519-signature-2018@4.1`
+  - `@digitalbazaar/edv-client@16.3`
+  - `@digitalbazaar/http-client@4.2`
+  - `@digitalbazaar/lru-memoize@4`
+  - `@digitalbazaar/security-document-loader@3.1`
+  - `@digitalbazaar/webkms-client@14.2`
+  - `lru-cache@11`.
+
 ## 21.0.0 - 2024-08-06
 
 ### Changed
