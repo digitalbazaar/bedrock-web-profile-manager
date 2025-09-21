@@ -727,7 +727,6 @@ describe('Profile Manager API', () => {
           {profileId, referenceId});
       } catch(e) {
         error = e;
-        console.log('error', e);
       }
       should.not.exist(error);
       should.exist(result);

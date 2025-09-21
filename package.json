@@ -30,7 +30,7 @@
     "@digitalbazaar/webkms-context": "^2.1.0",
     "@digitalbazaar/zcap-context": "^2.0.0",
     "did-veres-one": "^16.0.0",
-    "lru-cache": "^6.0.0",
+    "lru-cache": "^11.2.1",
     "veres-one-context": "^12.0.0"
   },
   "devDependencies": {
