@@ -1,5 +1,10 @@
 # bedrock-web-profile-manager ChangeLog
 
+## 22.0.0 - 2025-09-dd
+
+### Removed
+- **BREAKING**: Remove support for legacy `Ed25519Signature2018`.
+
 ## 21.1.0 - 2025-09-21
 
 ### Changed
