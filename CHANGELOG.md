@@ -1,5 +1,10 @@
 # bedrock-web-profile-manager ChangeLog
 
+## 22.1.0 - 2025-01-dd
+
+### Changed
+- Use `@digitalbazaar/webkms-client@14.3.0`.
+
 ## 22.0.0 - 2025-09-21
 
 ### Removed
